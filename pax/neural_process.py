@@ -1,79 +1,85 @@
+from typing import Callable
+
 import jax
 import jax.numpy as np
+import jax.random as random
 import haiku as hk
 import numpyro.distributions as dist
 
+from pax.attention import uniform_attention
 
-class NP:
+
+def latent_encoder_fn(dim):
+    def _f(x):
+        module = hk.Sequential([
+            hk.Linear(dim * 2)
+        ])
+        return module(x)
+    return _f
+
+
+class NP(hk.Module):
     def __init__(
         self,
-        deterministic_encoder: hk.Module,
-        latent_encoder: hk.Module,
-        decoder: hk.Module,
-        do_attention=False
+        deterministic_encoder: Callable,
+        latent_encoder: Callable,
+        latent_encoder_dim: int,
+        decoder: Callable,
+        attention=uniform_attention
     ):
-
+        super(NP, self).__init__()
         self._deterministic_encoder = deterministic_encoder
+
         self._latent_encoder = latent_encoder
+        self._latent_encoder_dim = latent_encoder_dim
+        self._latent_encoder_last = latent_encoder_fn(self._latent_encoder_dim)
+
         self._decoder = decoder
-        self._do_attention = do_attention
-        
+        self._attention = attention
 
-    def fit(
+    def __call__(
         self,
-        x_context: np.ndarray,
-        y_context: np.ndarray,
-        x_target: np.ndarray,
-        y_target: np.ndarray
+        x_context: np.DeviceArray,
+        y_context: np.DeviceArray,
+        x_target: np.DeviceArray
     ):
-        
-        x = np.hstack([x_context, x_target])
-        y = np.hstack([y_context, y_target])
+        assert all([i.ndim == 3 for i in (x_context, y_context, x_target)])
+        _, n, _ = x_target.shape
+        xy_context = np.concatenate([x_context, y_context], axis=-1)
 
-        z_context = self._map_xy_to_z_params(x_context, y_context)
-        z_all = self._map_xy_to_z_params(x, y)
+        zl = self._encode_latent(xy_context).sample(random.PRNGKey(2))
+        zd = self._encode_deterministic(xy_context, x_context, x_target)
+        z = np.concatenate([zd, zl], axis=-1)
+        z = np.tile(z, [1, n, 1])
+
+        mvn = self._decode(z, x_target)
+        return mvn
 
     def _encode_deterministic(
         self,
-        x_context: np.ndarray, 
-        y_context: np.ndarray,
-        x_target: np.ndarray = None
+        xy_context: np.DeviceArray,
+        x_context: np.DeviceArray,
+        x_target: np.DeviceArray
     ):
-        
-        input = np.vstack([x_context, y_context])
-        z = self._deterministic_encoder(input)
-        
-        if self._attention:
-            z = self._attend_to(z, x_context, x_target)
-
-        z = np.mean(z, axis=-1)
+        z = self._deterministic_encoder(xy_context)
+        z = self._attention(x_context, x_target, z)
         return z
 
-    def _encode_latent(
-        self, 
-        x_context: np.ndarray,
-        y_context: np.ndarray
-    ):
-        z = np.vstack([x_context, y_context])
-        latent = self._latent_encoder(z)
-        latent = np.mean(latent, axis=-1)
-        mu, log_sigma = np.split(latent, 2, axis=-1)
-        sigma = 0.1 + 0.9 * jax.nn.sigmoid(log_sigma)
-        
-        return dist.Normal(mu, sigma)
-    
+    def _encode_latent(self, xy_context: np.DeviceArray):
+        z = self._latent_encoder(xy_context)
+        z = np.mean(z, axis=1, keepdims=True)
+        z = self._latent_encoder_last(z)
+        mu, sigma = np.split(z, 2, axis=-1)
+        sigma = 0.1 + 0.9 * jax.nn.sigmoid(sigma)
+        return dist.Normal(loc=mu, scale=sigma)
+
     def _decode(
         self,
-        representation: np.ndarray, 
-        x_target:np.ndarray
+        z: np.DeviceArray,
+        x_target: np.DeviceArray
     ):
-        z = np.vstack([representation, x_target])
-        z = self._decoder(z)
-        mu, log_sigma = np.split(z, 2, axis=-1)
+        target = np.concatenate([z, x_target], axis=-1)
+        target = self._decoder(target)
+        mu, log_sigma = np.split(target, 2, axis=-1)
         sigma = 0.1 + 0.9 * jax.nn.softplus(log_sigma)
-        
-        return dist.Normal(mu, sigma)
-    
-    
-    def _aggregate(z: np.ndarray):
-        return np.mean(z, axis=-1)
+        return dist.Normal(loc=mu, scale=sigma)

@@ -41,7 +41,7 @@ setup(
     python_requires='>=3.8',
     install_requires=[
         'jaxlib',
-        'jax'
+        'jax',
         'optax',
         'dm-haiku',
         'blackjax',
