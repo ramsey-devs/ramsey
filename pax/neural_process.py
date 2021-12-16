@@ -1,10 +1,10 @@
 from typing import Callable
 
+import haiku as hk
 import jax
 import jax.numpy as np
-import jax.random as random
-import haiku as hk
 import numpyro.distributions as dist
+from chex import assert_rank, assert_axis_dimension
 from numpyro.distributions import kl_divergence
 
 from pax.attention import uniform_attention
@@ -45,19 +45,19 @@ class NP(hk.Module):
         x_target: np.DeviceArray,
         **kwargs
     ):
+        assert_rank([x_context, y_context, x_target], 3)
         if "y_target" in kwargs:
+            assert_rank(kwargs["y_target"], 3)
             return self._elbo(x_context, y_context, x_target, **kwargs)
 
-        assert all([i.ndim == 3 for i in (x_context, y_context, x_target)])
         _, n, _ = x_target.shape
         key = hk.next_rng_key()
 
         zl = self._encode_latent(x_context, y_context).sample(key)
         zd = self._encode_deterministic(x_context, y_context, x_target)
-        z = np.concatenate([zd, zl], axis=-1)
-        z = np.tile(z, [1, n, 1])
+        z = self._concat_and_tile(zd, zl, n)
+        mvn = self._decode(z, x_target, y_context)
 
-        mvn = self._decode(z, x_target)
         return mvn
 
     def _elbo(
@@ -67,24 +67,29 @@ class NP(hk.Module):
         x_target: np.DeviceArray,
         y_target: np.DeviceArray
     ):
-
-        assert all([i.ndim == 3 for i in (x_context, y_context, x_target)])
         _, n, _ = x_target.shape
         key = hk.next_rng_key()
 
         prior = self._encode_latent(x_context, y_context)
         posterior = self._encode_latent(x_target, y_target)
+
         zl = posterior.sample(key)
         zd = self._encode_deterministic(x_context, y_context, x_target)
-        z = np.concatenate([zd, zl], axis=-1)
-        z = np.tile(z, [1, n, 1])
+        z = self._concat_and_tile(zd, zl, n)
+        mvn = self._decode(z, x_target, y_target)
 
-        mvn = self._decode(z, x_target)
-        lp__ = mvn.log_prob(y_target)
-        kl__ = np.mean(kl_divergence(posterior, prior), axis=-1, keepdims=True)
-        kl__ = np.tile(kl__, [1, n])
-        elbo = np.mean(lp__ - kl__ / n)
+        lp__ = np.sum(mvn.log_prob(y_target), axis=1)
+        kl__ = np.sum(kl_divergence(posterior, prior), axis=-1)
+        elbo = np.mean(lp__ - kl__)
+
         return mvn, -elbo
+
+    def _concat_and_tile(self, zd, zl, n):
+        z = np.concatenate([zd, zl], axis=-1)
+        assert_axis_dimension(z, 1, 1)
+        z = np.tile(z, [1, n, 1])
+        assert_axis_dimension(z, 1, n)
+        return z
 
     def _encode_deterministic(
         self,
@@ -113,10 +118,16 @@ class NP(hk.Module):
     def _decode(
         self,
         z: np.DeviceArray,
-        x_target: np.DeviceArray
+        x_target: np.DeviceArray,
+        y: np.DeviceArray,
     ):
         target = np.concatenate([z, x_target], axis=-1)
         target = self._decoder(target)
         mu, log_sigma = np.split(target, 2, axis=-1)
         sigma = 0.1 + 0.9 * jax.nn.softplus(log_sigma)
+
+        assert_axis_dimension(mu, 0, x_target.shape[0])
+        assert_axis_dimension(mu, 1, x_target.shape[1])
+        assert_axis_dimension(mu, 2, y.shape[2])
+
         return dist.Normal(loc=mu, scale=sigma)
