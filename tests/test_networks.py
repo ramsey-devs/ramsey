@@ -66,11 +66,9 @@ def f(x, y, z):
 x = x[np.newaxis, :, :]
 x_t = np.hstack([x, x])
 y = y[np.newaxis, :, :]
+y_t = np.hstack([y, y])
 
 f = hk.transform(f)
 params = f.init(random.PRNGKey(1), x=x, y=x, z=x_t)
 
-print(":----------:")
-v = f.apply(params=params, x=x, y=y, z=x_t, rng=random.PRNGKey(2))
-
-print(v.shape)
+params, objectives = train(f, params)
