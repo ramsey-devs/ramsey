@@ -22,15 +22,9 @@ jobs:
     - name: Install dependencies
       run: |
         pip install tox
-    - name: Run format
+    - name: Run format, sort, lints and types
       run: |
-        tox -e format
-    - name: Run lints
-      run: |
-        tox -e lints
-    - name: Run types
-      run: |
-        tox -e types
+        tox -e  format,sort,lints,types
     - name: Run tests
       run: |
         tox -e tests
