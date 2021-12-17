@@ -1,18 +1,17 @@
 import jax
-from jax import random
 import optax
-
 from haiku import Transformed
 from haiku._src.data_structures import FlatMapping
+from jax import random
 
 
 def train(
-    fn: Transformed,
+    fn: Transformed,  # pylint: disable=invalid-name
     params: FlatMapping,
     rng=random.PRNGKey,
     n_iter=10000,
     stepsize=0.001,
-    **kwargs
+    **kwargs,
 ):
     def _objective(params):
         _, obj = fn.apply(params=params, rng=rng, **kwargs)
