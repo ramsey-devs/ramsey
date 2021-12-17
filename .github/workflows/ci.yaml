@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [ main, devel ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - 3.9
+          - 3.10
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install tox
+    - name: Run format
+      run: |
+        tox -e format
+    - name: Run lints
+      run: |
+        tox -e lints
+    - name: Run types
+      run: |
+        tox -e types
+    - name: Run tests
+      run: |
+        tox -e tests

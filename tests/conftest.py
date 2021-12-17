@@ -6,7 +6,7 @@ from jax.nn import relu
 from numpyro import distributions as dist
 
 from pax.models import NP
-from pax.covariance_functions import  covariance, exponentiated_quadratic
+from pax.covariance_functions import covariance, exponentiated_quadratic
 
 
 @pytest.fixture()
