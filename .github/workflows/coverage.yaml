@@ -24,4 +24,10 @@ jobs:
     - name: Compute code coverage
       run: |
         tox -e coverage
-        codecov
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        env_vars: OS,PYTHON
+        fail_ci_if_error: true
+        verbose: true
+        files: coverage.xml
