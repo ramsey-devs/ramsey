@@ -13,15 +13,15 @@ def train(
     stepsize=0.001,
     **kwargs,
 ):
-    def _objective(params):
-        _, obj = fn.apply(params=params, rng=rng, **kwargs)
+    def _objective(par):
+        _, obj = fn.apply(params=par, rng=rng, **kwargs)
         return obj
 
     @jax.jit
-    def _update(params, opt_state):
-        val, grads = jax.value_and_grad(_objective)(params)
-        updates, new_state = optimizer.update(grads, opt_state)
-        new_params = optax.apply_updates(params, updates)
+    def _update(par, state):
+        val, grads = jax.value_and_grad(_objective)(par)
+        updates, new_state = optimizer.update(grads, state)
+        new_params = optax.apply_updates(par, updates)
         return new_params, new_state, val
 
     optimizer = optax.adam(stepsize)
@@ -29,7 +29,7 @@ def train(
 
     objectives = [0.0] * n_iter
     for step in range(n_iter):
-        params, opt_state, val = _update(params, opt_state)
-        objectives[step] = float(val)
+        params, opt_state, objective = _update(params, opt_state)
+        objectives[step] = float(objective)
 
     return params, objectives

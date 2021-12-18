@@ -1,0 +1,64 @@
+from jax import numpy as np
+from jax import random
+import numpyro.distributions as dist
+
+from pax.covariance_functions import covariance, exponentiated_quadratic
+
+
+# pylint: disable=too-many-locals,invalid-name
+def sample_from_sinus_function(key, batch_size=10, num_observations=100):
+    x = np.linspace(-np.pi, np.pi, num_observations).reshape(
+        (num_observations, 1)
+    )
+    ys = []
+    fs = []
+    for _ in range(batch_size):
+        key, sample_key1, sample_key2, sample_key3 = random.split(key, 4)
+        a = 2 * random.uniform(sample_key1) - 1
+        b = random.uniform(sample_key2) - 0.5
+        f = a * np.sin(x - b)
+        y = f + random.normal(sample_key3, shape=(num_observations, 1)) * 0.10
+        f.append(f.reshape((1, num_observations, 1)))
+        ys.append(y.reshape((1, num_observations, 1)))
+
+    x_target = np.tile(x, [batch_size, 1, 1])
+    y_target = np.vstack(np.array(ys))
+    f_target = np.vstack(np.array(fs))
+
+    return x_target, y_target, f_target
+
+
+# pylint: disable=too-many-locals,invalid-name
+def sample_from_gaussian_process(
+    key, batch_size=10, num_observations=100, num_dim=1
+):
+    x = random.normal(key, shape=(num_observations * num_dim,)).reshape(
+        (num_observations, num_dim)
+    )
+    ys = []
+    fs = []
+    for _ in range(batch_size):
+        key, sample_key1, sample_key2, sample_key3, sample_key4 = random.split(
+            key, 5
+        )
+        rho = dist.InverseGamma(5, 5).sample(sample_key1)
+        sigma = dist.InverseGamma(5, 5).sample(sample_key2)
+        K = covariance(
+            exponentiated_quadratic, {"rho": rho, "sigma": sigma}, x, x
+        )
+        f = random.multivariate_normal(
+            sample_key3,
+            mean=np.zeros(num_observations),
+            cov=K + np.diag(np.ones(num_observations)) * 1e8,
+        )
+        y = random.multivariate_normal(
+            sample_key4, mean=f, cov=np.eye(num_observations) * 0.05
+        )
+        fs.append(f.reshape((1, num_observations, 1)))
+        ys.append(y.reshape((1, num_observations, 1)))
+
+    x_target = np.tile(x, [batch_size, 1, 1])
+    y_target = np.vstack(np.array(ys))
+    f_target = np.vstack(np.array(fs))
+
+    return x_target, y_target, f_target

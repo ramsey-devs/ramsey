@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Callable, Union, List
 
 import haiku as hk
 import jax
@@ -12,9 +12,9 @@ from pax._src.neural_process.attention import uniform_attention
 __all__ = ["NP"]
 
 
-def latent_encoder_fn(dim):
+def latent_encoder_fn(dims):
     def _f(x):  # pylint: disable=invalid-name
-        module = hk.Sequential([hk.Linear(dim * 2)])
+        module = hk.nets.MLP(dims)
         return module(x)
 
     return _f
@@ -39,7 +39,7 @@ class NP(hk.Module):
         self,
         deterministic_encoder: Union[Callable, hk.Module],
         latent_encoder: Union[Callable, hk.Module],
-        latent_encoder_dim: int,
+        latent_encoder_dims: Union[int, List[int]],
         decoder: Union[Callable, hk.Module],
         attention="uniform",
     ):
@@ -60,7 +60,7 @@ class NP(hk.Module):
             either a function that wraps an `hk.Module` and calls it or a
             `hk.Module`. The latent encoder can be any network, but is
             typically an MLP
-        latent_encoder_dim: int
+        latent_encoder_dims: Union[int, List[int]]
             dimensionality of the latent Gaussian. After the latent encoder is
             used and the output is aggregated, another MLP is used to
             parameterize a latent Gaussian distribution. `latent_encoder_dim`
@@ -79,11 +79,11 @@ class NP(hk.Module):
         self._deterministic_encoder = deterministic_encoder
 
         self._latent_encoder = latent_encoder
-        self._latent_encoder_dim = latent_encoder_dim
+        if not isinstance(latent_encoder_dims, List):
+            latent_encoder_dims = [latent_encoder_dims]
+        self._latent_encoder_dim = latent_encoder_dims
         self._latent_encoder_last = latent_encoder_fn(self._latent_encoder_dim)
-
         self._decoder = decoder
-
         self._attention = _get_attention(attention)
 
     def __call__(
