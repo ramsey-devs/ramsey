@@ -18,14 +18,14 @@ def sample_from_sinus_function(key, batch_size=10, num_observations=100):
         b = random.uniform(sample_key2) - 0.5
         f = a * np.sin(x - b)
         y = f + random.normal(sample_key3, shape=(num_observations, 1)) * 0.10
-        f.append(f.reshape((1, num_observations, 1)))
+        fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 
-    x_target = np.tile(x, [batch_size, 1, 1])
-    y_target = np.vstack(np.array(ys))
-    f_target = np.vstack(np.array(fs))
+    x = np.tile(x, [batch_size, 1, 1])
+    y = np.vstack(np.array(ys))
+    f = np.vstack(np.array(fs))
 
-    return x_target, y_target, f_target
+    return (x, y), f
 
 
 # pylint: disable=too-many-locals,invalid-name
@@ -41,7 +41,7 @@ def sample_from_gaussian_process(
         key, sample_key1, sample_key2, sample_key3, sample_key4 = random.split(
             key, 5
         )
-        rho = dist.InverseGamma(5, 5).sample(sample_key1)
+        rho = dist.InverseGamma(1, 1).sample(sample_key1)
         sigma = dist.InverseGamma(5, 5).sample(sample_key2)
         K = covariance(
             exponentiated_quadratic, {"rho": rho, "sigma": sigma}, x, x
@@ -49,7 +49,7 @@ def sample_from_gaussian_process(
         f = random.multivariate_normal(
             sample_key3,
             mean=np.zeros(num_observations),
-            cov=K + np.diag(np.ones(num_observations)) * 1e8,
+            cov=K + np.diag(np.ones(num_observations)) * 1e-5,
         )
         y = random.multivariate_normal(
             sample_key4, mean=f, cov=np.eye(num_observations) * 0.05
@@ -57,8 +57,8 @@ def sample_from_gaussian_process(
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 
-    x_target = np.tile(x, [batch_size, 1, 1])
-    y_target = np.vstack(np.array(ys))
-    f_target = np.vstack(np.array(fs))
+    x = np.tile(x, [batch_size, 1, 1])
+    y = np.vstack(np.array(ys))
+    f = np.vstack(np.array(fs))
 
-    return x_target, y_target, f_target
+    return (x, y), f

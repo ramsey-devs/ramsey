@@ -1,4 +1,4 @@
-from typing import Callable, Union, List
+from typing import Callable, Union, Tuple
 
 import haiku as hk
 import jax
@@ -7,17 +7,10 @@ import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
 from numpyro.distributions import kl_divergence
 
+from pax._src.family import Family, Gaussian
 from pax._src.neural_process.attention import uniform_attention
 
 __all__ = ["NP"]
-
-
-def latent_encoder_fn(dims):
-    def _f(x):  # pylint: disable=invalid-name
-        module = hk.nets.MLP(dims)
-        return module(x)
-
-    return _f
 
 
 def _get_attention(attention: str):
@@ -37,10 +30,12 @@ class NP(hk.Module):
 
     def __init__(
         self,
-        deterministic_encoder: Union[Callable, hk.Module],
-        latent_encoder: Union[Callable, hk.Module],
-        latent_encoder_dims: Union[int, List[int]],
         decoder: Union[Callable, hk.Module],
+        latent_encoder: Tuple[
+            Union[Callable, hk.Module], Union[Callable, hk.Module]
+        ],
+        deterministic_encoder: Union[Callable, hk.Module, None] = None,
+        family: Family = Gaussian(),
         attention="uniform",
     ):
         """
@@ -51,39 +46,41 @@ class NP(hk.Module):
 
         Parameters
         ----------
-
-        deterministic_encoder: Union[Callable, hk.Module]
-            either a function that wraps an `hk.Module` and calls it or a
-            `hk.Module`. The deterministic encoder can be any network, but is
-            typically an MLP
-        latent_encoder: Union[Callable, hk.Module]
-            either a function that wraps an `hk.Module` and calls it or a
-            `hk.Module`. The latent encoder can be any network, but is
-            typically an MLP
-        latent_encoder_dims: Union[int, List[int]]
-            dimensionality of the latent Gaussian. After the latent encoder is
-            used and the output is aggregated, another MLP is used to
-            parameterize a latent Gaussian distribution. `latent_encoder_dim`
-            determines the dimensionality of this distribution
         decoder: Union[Callable, hk.Module]
             either a function that wraps an `hk.Module` and calls it or a
             `hk.Module`. The decoder can be any network, but is
             typically an MLP. Note that the _last_ layer of the decoder needs to
             have twice the number of nodes as the data you try to model!
             That means if your response is univariate
+        latent_encoder:  tuple[Union[Callable, hk.Module],
+                               Union[Callable, hk.Module]]
+            a tuple of either functions that wrap `hk.Module`s and calls them or
+            two `hk.Module`s. The latent encoder can be any network, but is
+            typically an MLP. The first element of the tuple is a neural network
+            used before the aggregation step, while the second element of
+            the tuple encodes is a neural network used to
+            compute mean(s) and standard deviation(s) of the latent Gaussian.
+        deterministic_encoder: Union[Callable, hk.Module, None]
+            either a function that wraps an `hk.Module` and calls it or a
+            `hk.Module`. The deterministic encoder can be any network, but is
+            typically an MLP
+        family: Family
+            distributional family of the response variable
         attention: str
             attention type to apply. Can be either of 'uniform'.
         """
 
         super().__init__()
         self._deterministic_encoder = deterministic_encoder
-
-        self._latent_encoder = latent_encoder
-        if not isinstance(latent_encoder_dims, List):
-            latent_encoder_dims = [latent_encoder_dims]
-        self._latent_encoder_dim = latent_encoder_dims
-        self._latent_encoder_last = latent_encoder_fn(self._latent_encoder_dim)
+        if len(latent_encoder) != 2:
+            raise ValueError(
+                "'latent_encoder' needs to be a tuple containing "
+                "two haiku modules"
+            )
+        self._latent_encoder = latent_encoder[0]
+        self._latent_encoder_last = latent_encoder[1]
         self._decoder = decoder
+        self._family = family
         self._attention = _get_attention(attention)
 
     def __call__(
@@ -135,14 +132,19 @@ class NP(hk.Module):
         mvn = self._decode(representation, x_target, y_target)
 
         lp__ = np.sum(mvn.log_prob(y_target), axis=1)
-        kl__ = np.sum(kl_divergence(posterior, prior), axis=-1)
+        kl__ = np.sum(kl_divergence(prior, posterior), axis=-1)
         elbo = np.mean(lp__ - kl__)
 
         return mvn, -elbo
 
     @staticmethod
     def _concat_and_tile(z_deterministic, z_latent, num_observations):
-        representation = np.concatenate([z_deterministic, z_latent], axis=-1)
+        if z_deterministic is None:
+            representation = z_latent
+        else:
+            representation = np.concatenate(
+                [z_deterministic, z_latent], axis=-1
+            )
         assert_axis_dimension(representation, 1, 1)
         representation = np.tile(representation, [1, num_observations, 1])
         assert_axis_dimension(representation, 1, num_observations)
@@ -154,6 +156,8 @@ class NP(hk.Module):
         y_context: np.ndarray,
         x_target: np.ndarray,
     ):
+        if self._deterministic_encoder is None:
+            return None
         xy_context = np.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)
         z_deterministic = self._attention(x_context, x_target, z_deterministic)
@@ -177,11 +181,4 @@ class NP(hk.Module):
     ):
         target = np.concatenate([representation, x_target], axis=-1)
         target = self._decoder(target)
-        mean, log_sigma = np.split(target, 2, axis=-1)
-        sigma = 0.1 + 0.9 * jax.nn.softplus(log_sigma)
-
-        assert_axis_dimension(mean, 0, x_target.shape[0])
-        assert_axis_dimension(mean, 1, x_target.shape[1])
-        assert_axis_dimension(mean, 2, y.shape[2])
-
-        return dist.Normal(loc=mean, scale=sigma)
+        return self._family(target, x_target, y)

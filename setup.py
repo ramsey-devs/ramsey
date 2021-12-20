@@ -29,7 +29,7 @@ def _version():
 setup(
     name="pax",
     version=_version(),
-    description="Probabilistic models using Jax",
+    description="A library for nonparametric probabilistic models using `haiku`",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/dirmeier/pax",
