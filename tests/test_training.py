@@ -1,26 +1,26 @@
 import haiku as hk
 import jax.random as random
 
-from pax._src.train import train
+from pax._src.train import train_neural_process
 
 
 def test_neural_process_training(simple_data_set, module):
     key = random.PRNGKey(1)
-    x_context, y_context, x_target, y_target = simple_data_set
+    _, _, x_target, y_target = simple_data_set
 
     f = hk.transform(module)
     params = f.init(
-        key, x_context=x_context, y_context=y_context, x_target=x_target
+        key, x_context=x_target, y_context=y_target, x_target=x_target
     )
 
     key, train_key = random.split(key)
-    train(
+    train_neural_process(
         f,
         params,
         train_key,
         n_iter=100,
-        x_context=x_context,
-        y_context=y_context,
-        x_target=x_target,
-        y_target=y_target,
+        x=x_target,
+        y=y_target,
+        n_context=10,
+        n_target=10,
     )

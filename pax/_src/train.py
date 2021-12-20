@@ -1,9 +1,9 @@
 import jax
-from jax import numpy as np
-from jax import random
 import optax
 from haiku import Transformed
 from haiku._src.data_structures import FlatMapping
+from jax import numpy as np
+from jax import random
 
 
 # pylint: disable=too-many-locals

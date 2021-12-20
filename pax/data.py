@@ -1,6 +1,6 @@
+import numpyro.distributions as dist
 from jax import numpy as np
 from jax import random
-import numpyro.distributions as dist
 
 from pax.covariance_functions import covariance, exponentiated_quadratic
 

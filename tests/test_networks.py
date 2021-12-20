@@ -12,10 +12,14 @@ def test_module_dimensionality(simple_data_set):
 
     def module(**kwargs):
         np = NP(
-            hk.nets.MLP([4, 4], name="deterministic_encoder"),
-            hk.nets.MLP([3, 3], name="latent_encoder"),
-            3,
-            hk.nets.MLP([3, 2], name="decoder"),
+            decoder=hk.nets.MLP([3, 2], name="decoder"),
+            deterministic_encoder=hk.nets.MLP(
+                [4, 4], name="deterministic_encoder"
+            ),
+            latent_encoder=(
+                hk.nets.MLP([3, 3], name="latent_encoder1"),
+                hk.nets.MLP([3, 6], name="latent_encoder2"),
+            ),
         )
         return np(**kwargs)
 
@@ -24,9 +28,10 @@ def test_module_dimensionality(simple_data_set):
         key, x_context=x_context, y_context=y_context, x_target=x_target
     )
 
-    chex.assert_shape(params["latent_encoder/~/linear_0"]["w"], (2, 3))
-    chex.assert_shape(params["latent_encoder/~/linear_1"]["w"], (3, 3))
-    chex.assert_shape(params["np/~_encode_latent/linear"]["w"], (3, 2 * 3))
+    chex.assert_shape(params["latent_encoder1/~/linear_0"]["w"], (2, 3))
+    chex.assert_shape(params["latent_encoder1/~/linear_1"]["w"], (3, 3))
+    chex.assert_shape(params["latent_encoder2/~/linear_0"]["w"], (3, 3))
+    chex.assert_shape(params["latent_encoder2/~/linear_1"]["w"], (3, 2 * 3))
     chex.assert_shape(params["deterministic_encoder/~/linear_0"]["w"], (2, 4))
     chex.assert_shape(params["deterministic_encoder/~/linear_1"]["w"], (4, 4))
     chex.assert_shape(params["decoder/~/linear_0"]["w"], (3 + 4 + 1, 3))
@@ -54,10 +59,14 @@ def test_modules(simple_data_set, module):
 def test_modules_false_decoder(simple_data_set):
     def f(**kwargs):
         np = NP(
-            hk.nets.MLP([5, 5, 2]),
-            hk.nets.MLP([5, 10, 1]),
-            3,
-            hk.nets.MLP([10, 10, 1]),
+            decoder=hk.nets.MLP([3, 3], name="decoder"),
+            deterministic_encoder=hk.nets.MLP(
+                [4, 4], name="deterministic_encoder"
+            ),
+            latent_encoder=(
+                hk.nets.MLP([3, 3], name="latent_encoder1"),
+                hk.nets.MLP([3, 6], name="latent_encoder2"),
+            ),
         )
         return np(**kwargs)
 

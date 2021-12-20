@@ -47,10 +47,12 @@ def simple_data_set():
 
 def _f1(**kwargs):
     np = NP(
-        hk.nets.MLP([5, 5, 2]),
-        hk.nets.MLP([5, 10, 1]),
-        3,
-        hk.nets.MLP([10, 10, 2]),
+        decoder=hk.nets.MLP([3, 2], name="decoder"),
+        deterministic_encoder=hk.nets.MLP([4, 4], name="deterministic_encoder"),
+        latent_encoder=(
+            hk.nets.MLP([3, 3], name="latent_encoder"),
+            hk.nets.MLP([3, 6], name="latent_encoder"),
+        ),
     )
     return np(**kwargs)
 
@@ -60,7 +62,11 @@ def _f2(**kwargs):
         mlp = hk.Sequential([hk.Linear(10), relu, hk.Linear(2)])
         return mlp(x)
 
-    np = NP(hk.nets.MLP([5, 5, 2]), _f, 3, hk.nets.MLP([10, 10, 2]))
+    np = NP(
+        decoder=hk.nets.MLP([3, 2], name="decoder"),
+        deterministic_encoder=hk.nets.MLP([4, 4], name="deterministic_encoder"),
+        latent_encoder=(hk.nets.MLP([3, 3], name="latent_encoder"), _f,),
+    )
     return np(**kwargs)
 
 

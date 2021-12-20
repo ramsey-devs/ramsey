@@ -1,10 +1,9 @@
 import abc
 
-from chex import assert_axis_dimension
-
 import jax.numpy as np
-from jax.nn import softplus
 import numpyro.distributions as dist
+from chex import assert_axis_dimension
+from jax.nn import softplus
 
 
 # pylint: disable=too-few-public-methods
