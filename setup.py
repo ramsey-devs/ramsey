@@ -49,7 +49,7 @@ setup(
         "blackjax",
         "numpyro",
     ],
-    extras_require={"dev": ["pre-commit", "black", "tox"]},
+    extras_require={"dev": ["pre-commit", "black", "isort", "tox"]},
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Science/Research",

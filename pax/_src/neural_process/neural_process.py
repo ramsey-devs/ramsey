@@ -25,7 +25,8 @@ class NP(hk.Module):
     A neural process
 
     Implements the core structure of a neural process, i.e., two encoders
-    and a decoder as haiku module.
+    and a decoder, as a haiku module. Needs to be called directly within
+    `hk.transform` with the respective arguments.
     """
 
     def __init__(
@@ -39,28 +40,24 @@ class NP(hk.Module):
         attention="uniform",
     ):
         """
-        Constructor
-
-        Instantiates a neural process. Needs to be called directly within
-        `hk.transform` with the respective arguments.
+        Instantiates a neural process
 
         Parameters
         ----------
-        decoder: Union[Callable, hk.Module]
+        decoder: hk.Module
             either a function that wraps an `hk.Module` and calls it or a
             `hk.Module`. The decoder can be any network, but is
             typically an MLP. Note that the _last_ layer of the decoder needs to
             have twice the number of nodes as the data you try to model!
             That means if your response is univariate
-        latent_encoder:  tuple[Union[Callable, hk.Module],
-                               Union[Callable, hk.Module]]
+        latent_encoder:  Tuple[hk.Module, hk.Module]
             a tuple of either functions that wrap `hk.Module`s and calls them or
             two `hk.Module`s. The latent encoder can be any network, but is
             typically an MLP. The first element of the tuple is a neural network
             used before the aggregation step, while the second element of
             the tuple encodes is a neural network used to
             compute mean(s) and standard deviation(s) of the latent Gaussian.
-        deterministic_encoder: Union[Callable, hk.Module, None]
+        deterministic_encoder: Union[hk.Module, None]
             either a function that wraps an `hk.Module` and calls it or a
             `hk.Module`. The deterministic encoder can be any network, but is
             typically an MLP

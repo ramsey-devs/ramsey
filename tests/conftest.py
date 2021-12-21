@@ -5,10 +5,11 @@ from jax import random
 from jax.nn import relu
 from numpyro import distributions as dist
 
-from pax.covariance_functions import covariance, exponentiated_quadratic
+from pax.covariance_functions import exponentiated_quadratic
 from pax.models import NP
 
 
+#  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
 @pytest.fixture()
 def simple_data_set():
     key = random.PRNGKey(0)
@@ -19,13 +20,11 @@ def simple_data_set():
     key, sample_key = random.split(key, 2)
     x = random.normal(key, shape=(n * p,)).reshape((n, p))
     ys = []
-    for i in range(batch_size):
+    for _ in range(batch_size):
         key, sample_key1, sample_key2, sample_key3 = random.split(key, 4)
         rho = dist.InverseGamma(5, 5).sample(sample_key1)
         sigma = dist.InverseGamma(5, 5).sample(sample_key2)
-        K = covariance(
-            exponentiated_quadratic, {"rho": rho, "sigma": sigma}, x, x
-        )
+        K = exponentiated_quadratic(x, x, sigma, rho)
         y = random.multivariate_normal(
             sample_key3, mean=np.zeros(n), cov=K + np.diag(np.ones(n)) * 0.05
         ).reshape((1, n, 1))
@@ -45,6 +44,7 @@ def simple_data_set():
     return x_context, y_context, x_target, y_target
 
 
+#  pylint: disable:redefined-outer-name
 def _f1(**kwargs):
     np = NP(
         decoder=hk.nets.MLP([3, 2], name="decoder"),
@@ -65,7 +65,10 @@ def _f2(**kwargs):
     np = NP(
         decoder=hk.nets.MLP([3, 2], name="decoder"),
         deterministic_encoder=hk.nets.MLP([4, 4], name="deterministic_encoder"),
-        latent_encoder=(hk.nets.MLP([3, 3], name="latent_encoder"), _f,),
+        latent_encoder=(
+            hk.nets.MLP([3, 3], name="latent_encoder"),
+            _f,
+        ),
     )
     return np(**kwargs)
 

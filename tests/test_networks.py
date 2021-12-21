@@ -1,14 +1,15 @@
 import chex
 import haiku as hk
-import jax.random as random
 import pytest
+from jax import random
 
 from pax.models import NP
 
 
+#  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
 def test_module_dimensionality(simple_data_set):
     key = random.PRNGKey(1)
-    x_context, y_context, x_target, y_target = simple_data_set
+    x_context, y_context, x_target, _ = simple_data_set
 
     def module(**kwargs):
         np = NP(

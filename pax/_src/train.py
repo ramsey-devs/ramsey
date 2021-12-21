@@ -1,3 +1,4 @@
+import haiku as hk
 import jax
 import optax
 from haiku import Transformed
@@ -33,20 +34,37 @@ def train_neural_process(
         )
         return obj
 
+    @jax.jit
+    def step(params, opt_state, rng, x_context, y_context, x_target, y_target):
+        loss, grads = jax.value_and_grad(_objective)(
+            params, rng, x_context, y_context, x_target, y_target
+        )
+        updates, opt_state = optimizer.update(grads, opt_state)
+        params = optax.apply_updates(params, updates)
+        return params, opt_state, loss
+
+    rng_seq = hk.PRNGSequence(rng)
     optimizer = optax.adam(stepsize)
     opt_state = optimizer.init(params)
 
     objectives = [0.0] * n_iter
     for _ in range(n_iter):
-        rng, split_key = random.split(rng, 2)
         x_context, y_context, x_target, y_target = _split_data(
-            split_key, x, y, n_context, n_target
+            next(rng_seq), x, y, n_context, n_target
         )
-        grads = jax.grad(_objective)(
-            params, rng, x_context, y_context, x_target, y_target
+        params, opt_state, loss_value = step(
+            params,
+            opt_state,
+            next(rng_seq),
+            x_context,
+            y_context,
+            x_target,
+            y_target,
         )
-        updates, opt_state = optimizer.update(grads, opt_state)
-        params = optax.apply_updates(params, updates)
+        objectives[_] = loss_value
+        if _ % 1000 == 0:
+            elbo = -float(loss_value)
+            print(f"ELBO at {_}: {elbo}")
 
     return params, objectives
 

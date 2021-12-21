@@ -1,9 +1,10 @@
 import haiku as hk
-import jax.random as random
+from jax import random
 
 from pax._src.train import train_neural_process
 
 
+#  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
 def test_neural_process_training(simple_data_set, module):
     key = random.PRNGKey(1)
     _, _, x_target, y_target = simple_data_set

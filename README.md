@@ -5,11 +5,13 @@
 [![codecov](https://codecov.io/gh/dirmeier/pax/branch/main/graph/badge.svg)](https://codecov.io/gh/dirmeier/pax)
 [![codacy](https://app.codacy.com/project/badge/Grade/98715c0867ff4136a9b3a05340a0e6d6)](https://www.codacy.com/gh/dirmeier/pax/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dirmeier/pax&amp;utm_campaign=Badge_Grade)
 
-> Nonparametric probabilistic models using `haiku`
+> Nonparametric probabilistic modelling
 
 ## About
 
-A library for nonparametric probabilistic models using `haiku`
+Pax is a library for nonparametric probabilistic modelling using Haiku and JAX.
+It builds upon the same module system that Haiku is using and hence fully compatible with
+Haiku's and JAX's API.
 
 ## Installation
 
@@ -22,7 +24,7 @@ pip install git+https://github.com/dirmeier/pax@v0.0.1
 ## Example usage
 
 `pax` is fully compatible with `haiku`'s module system which it uses to build neural networks
-and define parameters. For instance, a simple neural process can be constructed as shown below.
+and define parameters. For instance, a simple neural process can be constructed like this:
 
 ```python
 import haiku as hk
@@ -35,7 +37,9 @@ def neural_process(**kwargs):
     dim = 128
     np = NP(
         decoder=hk.nets.MLP([dim] * 3 + [2]),
-        latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2]))
+        latent_encoder=(
+            hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])
+        )
     )
     return np(**kwargs)
 

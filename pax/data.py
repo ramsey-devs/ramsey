@@ -2,7 +2,7 @@ import numpyro.distributions as dist
 from jax import numpy as np
 from jax import random
 
-from pax.covariance_functions import covariance, exponentiated_quadratic
+from pax.covariance_functions import exponentiated_quadratic
 
 
 # pylint: disable=too-many-locals,invalid-name
@@ -43,9 +43,8 @@ def sample_from_gaussian_process(
         )
         rho = dist.InverseGamma(1, 1).sample(sample_key1)
         sigma = dist.InverseGamma(5, 5).sample(sample_key2)
-        K = covariance(
-            exponentiated_quadratic, {"rho": rho, "sigma": sigma}, x, x
-        )
+        K = exponentiated_quadratic(x, x, rho, sigma)
+
         f = random.multivariate_normal(
             sample_key3,
             mean=np.zeros(num_observations),
