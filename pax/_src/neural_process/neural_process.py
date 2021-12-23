@@ -1,4 +1,4 @@
-from typing import Callable, Tuple, Union
+from typing import Tuple, Union
 
 import haiku as hk
 import jax
@@ -8,18 +8,13 @@ from chex import assert_axis_dimension, assert_rank
 from numpyro.distributions import kl_divergence
 
 from pax._src.family import Family, Gaussian
-from pax._src.neural_process.attention import uniform_attention
 
 __all__ = ["NP"]
 
-
-def _get_attention(attention: str):
-    attentions = ["uniform"]
-    if attention == "uniform":
-        return uniform_attention
-    raise ValueError(f"attention type should be in {'/'.join(attentions)}")
+from pax._src.neural_process.attention.attention import Attention
 
 
+# pylint: disable=too-many-instance-attributes
 class NP(hk.Module):
     """
     A neural process
@@ -31,13 +26,19 @@ class NP(hk.Module):
 
     def __init__(
         self,
-        decoder: Union[Callable, hk.Module],
-        latent_encoder: Tuple[
-            Union[Callable, hk.Module], Union[Callable, hk.Module]
+        decoder: hk.Module,
+        latent_encoder: Union[
+            Tuple[hk.Module, hk.Module],
+            Tuple[Attention, hk.Module, hk.Module],
         ],
-        deterministic_encoder: Union[Callable, hk.Module, None] = None,
+        deterministic_encoder: Union[
+            None,
+            hk.Module,
+            Tuple[hk.Module, Attention],
+            Tuple[Attention, hk.Module],
+            Tuple[Attention, hk.Module, Attention],
+        ] = None,
         family: Family = Gaussian(),
-        attention="uniform",
     ):
         """
         Instantiates a neural process
@@ -64,21 +65,52 @@ class NP(hk.Module):
         family: Family
             distributional family of the response variable
         attention: str
-            attention type to apply. Can be either of 'uniform'.
+            attention type to apply. Can be either of 'uniform'
         """
 
         super().__init__()
-        self._deterministic_encoder = deterministic_encoder
-        if len(latent_encoder) != 2:
-            raise ValueError(
-                "'latent_encoder' needs to be a tuple containing "
-                "two haiku modules"
-            )
-        self._latent_encoder = latent_encoder[0]
-        self._latent_encoder_last = latent_encoder[1]
+        [
+            self._deterministic_self_attention,
+            self._deterministic_encoder,
+            self._deterministic_cross_attention,
+        ] = self._set_deterministic(deterministic_encoder)
+        [
+            self._latent_self_attention,
+            self._latent_encoder,
+            self._latent_variable_encoder,
+        ] = self._set_latent(latent_encoder)
         self._decoder = decoder
         self._family = family
-        self._attention = _get_attention(attention)
+
+    @staticmethod
+    def _set_deterministic(deterministic_encoder):
+        # don't use deterministic path
+        if deterministic_encoder is None:
+            return None, None, None
+        # use deterministic path w/o attention
+        if isinstance(deterministic_encoder, hk.Module):
+            return None, deterministic_encoder, None
+        # use deterministic path w attention
+        if len(deterministic_encoder) == 2:
+            # use self-attention
+            if isinstance(deterministic_encoder[0], hk.Module):
+                return None, deterministic_encoder[0], deterministic_encoder[1]
+            # use cross-attention
+            return deterministic_encoder[0], deterministic_encoder[1], None
+        # use deterministic path with self-attention and cross-attention
+        if len(deterministic_encoder) == 3:
+            return deterministic_encoder
+        raise ValueError("deterministic encoder set incorrectly")
+
+    @staticmethod
+    def _set_latent(latent_encoder):
+        # use latent path
+        if len(latent_encoder) == 2:
+            return None, latent_encoder[0], latent_encoder[1]
+        # use latent path with self-attention
+        if len(latent_encoder) == 3:
+            return latent_encoder
+        raise ValueError("latent encoder set incorrectly")
 
     def __call__(
         self,
@@ -157,14 +189,16 @@ class NP(hk.Module):
             return None
         xy_context = np.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)
-        z_deterministic = self._attention(x_context, x_target, z_deterministic)
+        z_deterministic = self._deterministic_cross_attention(
+            x_context, x_target, z_deterministic
+        )
         return z_deterministic
 
     def _encode_latent(self, x_context: np.ndarray, y_context: np.ndarray):
         xy_context = np.concatenate([x_context, y_context], axis=-1)
         z_latent = self._latent_encoder(xy_context)
         z_latent = np.mean(z_latent, axis=1, keepdims=True)
-        z_latent = self._latent_encoder_last(z_latent)
+        z_latent = self._latent_variable_encoder(z_latent)
 
         mean, sigma = np.split(z_latent, 2, axis=-1)
         sigma = 0.1 + 0.9 * jax.nn.sigmoid(sigma)
