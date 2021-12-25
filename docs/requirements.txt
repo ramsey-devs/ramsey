@@ -1,5 +1,8 @@
+git+git://github.com/dirmeier/palettes@v0.1.1
+matplotlib
 nbsphinx
 pydata-sphinx-theme
+seaborn
 sphinx
 sphinx_autodoc_typehints
 sphinx_fontawesome

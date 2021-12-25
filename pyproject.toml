@@ -27,5 +27,6 @@ disable = [
     "missing-module-docstring",
     "missing-function-docstring",
     "no-name-in-module",
-    "too-many-arguments"
+    "too-many-arguments",
+    "duplicate-code"
 ]

@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple
 
 import haiku as hk
 import jax
@@ -11,10 +11,8 @@ from pax._src.family import Family, Gaussian
 
 __all__ = ["NP"]
 
-from pax._src.neural_process.attention.attention import Attention
 
-
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,duplicate-code
 class NP(hk.Module):
     """
     A neural process
@@ -27,17 +25,8 @@ class NP(hk.Module):
     def __init__(
         self,
         decoder: hk.Module,
-        latent_encoder: Union[
-            Tuple[hk.Module, hk.Module],
-            Tuple[Attention, hk.Module, hk.Module],
-        ],
-        deterministic_encoder: Union[
-            None,
-            hk.Module,
-            Tuple[hk.Module, Attention],
-            Tuple[Attention, hk.Module],
-            Tuple[Attention, hk.Module, Attention],
-        ] = None,
+        latent_encoder: Tuple[hk.Module, hk.Module],
+        deterministic_encoder: hk.Module,
         family: Family = Gaussian(),
     ):
         """
@@ -64,53 +53,18 @@ class NP(hk.Module):
             typically an MLP
         family: Family
             distributional family of the response variable
-        attention: str
-            attention type to apply. Can be either of 'uniform'
         """
 
         super().__init__()
-        [
-            self._deterministic_self_attention,
-            self._deterministic_encoder,
-            self._deterministic_cross_attention,
-        ] = self._set_deterministic(deterministic_encoder)
-        [
-            self._latent_self_attention,
-            self._latent_encoder,
-            self._latent_variable_encoder,
-        ] = self._set_latent(latent_encoder)
+        [self._latent_encoder, self._latent_variable_encoder] = (
+            latent_encoder[0],
+            latent_encoder[1],
+        )
+        self._deterministic_encoder = deterministic_encoder
         self._decoder = decoder
         self._family = family
-
-    @staticmethod
-    def _set_deterministic(deterministic_encoder):
-        # don't use deterministic path
-        if deterministic_encoder is None:
-            return None, None, None
-        # use deterministic path w/o attention
-        if isinstance(deterministic_encoder, hk.Module):
-            return None, deterministic_encoder, None
-        # use deterministic path w attention
-        if len(deterministic_encoder) == 2:
-            # use self-attention
-            if isinstance(deterministic_encoder[0], hk.Module):
-                return None, deterministic_encoder[0], deterministic_encoder[1]
-            # use cross-attention
-            return deterministic_encoder[0], deterministic_encoder[1], None
-        # use deterministic path with self-attention and cross-attention
-        if len(deterministic_encoder) == 3:
-            return deterministic_encoder
-        raise ValueError("deterministic encoder set incorrectly")
-
-    @staticmethod
-    def _set_latent(latent_encoder):
-        # use latent path
-        if len(latent_encoder) == 2:
-            return None, latent_encoder[0], latent_encoder[1]
-        # use latent path with self-attention
-        if len(latent_encoder) == 3:
-            return latent_encoder
-        raise ValueError("latent encoder set incorrectly")
+        self._latent_self_attention = lambda k, v, z: z
+        self._deterministic_self_attention = lambda k, v, z: z
 
     def __call__(
         self,
@@ -167,6 +121,7 @@ class NP(hk.Module):
         return mvn, -elbo
 
     @staticmethod
+    # pylint: disable=duplicate-code
     def _concat_and_tile(z_deterministic, z_latent, num_observations):
         if z_deterministic is None:
             representation = z_latent
@@ -183,20 +138,22 @@ class NP(hk.Module):
         self,
         x_context: np.ndarray,
         y_context: np.ndarray,
-        x_target: np.ndarray,
+        x_target: np.ndarray,  # pylint: disable=unused-argument
     ):
         if self._deterministic_encoder is None:
             return None
         xy_context = np.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)
-        z_deterministic = self._deterministic_cross_attention(
-            x_context, x_target, z_deterministic
-        )
+        z_deterministic = np.mean(z_deterministic, axis=1, keepdims=True)
         return z_deterministic
 
+    # pylint: disable=duplicate-code
     def _encode_latent(self, x_context: np.ndarray, y_context: np.ndarray):
         xy_context = np.concatenate([x_context, y_context], axis=-1)
+
         z_latent = self._latent_encoder(xy_context)
+        z_latent = self._latent_self_attention(z_latent, z_latent, z_latent)
+
         z_latent = np.mean(z_latent, axis=1, keepdims=True)
         z_latent = self._latent_variable_encoder(z_latent)
 

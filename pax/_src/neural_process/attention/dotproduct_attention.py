@@ -1,20 +1,16 @@
-import haiku as hk
 import jax.numpy as np
 from jax import nn
 
 from pax._src.neural_process.attention.attention import Attention
 
 
-class DotProductAttention(Attention, hk.Module):
+class DotProductAttention(Attention):
     """
     Dot-product attention
     """
 
-    def __init__(self):
-        super().__init__()
-
     def __call__(self, key: np.ndarray, value: np.ndarray, query: np.ndarray):
-        self._check_dimensions(key, value, query)
+        key, value, query = super().__call__(key, value, query)
         _, _, d_k = query.shape
         scale = np.sqrt(d_k)
         weights = np.einsum("bik,bjk->bij", query, key) / scale
