@@ -9,11 +9,31 @@ from pax._src.neural_process.attention.attention import Attention
 class MultiHeadAttention(Attention):
     """
     Multi-head attention
+
+    As described in [1]
+
+    References
+    ----------
+    .. [1] Vaswani, Ashish, et al. "Attention is all you need."
+       Advances in Neural Information Processing Systems. 2017.
     """
 
     def __init__(
         self, num_heads, head_size, embedding: Optional[hk.Module] = None
     ):
+        """
+        Instantiates a multi-head attender
+
+        Parameters
+        ----------
+        num_heads: int
+            number of heads
+        head_size: int
+            size of the heads for keys, values and queries
+        embedding: hk.Module
+            neural network module to embed keys and queries before attention
+        """
+
         super().__init__(embedding)
         self._attention = hk.MultiHeadAttention(
             num_heads,

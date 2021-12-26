@@ -16,9 +16,14 @@ class DANP(ANP):
     """
     A doubly-attentive neural process
 
-    Implements the core structure of a neural process, i.e., two encoders
-    and a decoder, as a haiku module. Needs to be called directly within
-    `hk.transform` with the respective arguments.
+    Implements the core structure of a 'doubly-attentive' neural process [1],
+    i.e., a deterministic encoder, a latent encoder with self-attention module,
+    and a decoder with both self- and cross-attention modules.
+
+    References
+    ----------
+    .. [1] Kim, Hyunjik, et al. "Attentive Neural Processes."
+       International Conference on Learning Representations. 2019.
     """
 
     def __init__(
@@ -34,22 +39,17 @@ class DANP(ANP):
         Parameters
         ----------
         decoder: hk.Module
-            either a function that wraps an `hk.Module` and calls it or a
-            `hk.Module`. The decoder can be any network, but is
-            typically an MLP. Note that the _last_ layer of the decoder needs to
-            have twice the number of nodes as the data you try to model!
-            That means if your response is univariate
-        latent_encoder:  Tuple[hk.Module, hk.Module]
-            a tuple of either functions that wrap `hk.Module`s and calls them or
-            two `hk.Module`s. The latent encoder can be any network, but is
-            typically an MLP. The first element of the tuple is a neural network
-            used before the aggregation step, while the second element of
-            the tuple encodes is a neural network used to
-            compute mean(s) and standard deviation(s) of the latent Gaussian.
-        deterministic_encoder: Union[hk.Module, None]
-            either a function that wraps an `hk.Module` and calls it or a
-            `hk.Module`. The deterministic encoder can be any network, but is
-            typically an MLP
+            the decoder can be any network, but is typically an MLP. Note
+            that the _last_ layer of the decoder needs to
+            have twice the number of nodes as the data you try to model
+        latent_encoder: Tuple[hk.Module, Attention, hk.Module]
+            a tuple of two `hk.Module`s and an attention object. The first and
+            last elements are the usual modules required for a neural process,
+            the attention object computes self-attention before the aggregation
+        deterministic_encoder: Tuple[hk.Module, Attention, Attention]
+            ea tuple of a `hk.Module` and an Attention object. The first
+            `attention` object is used for self-attention, the second one
+            is used for cross-attention
         family: Family
             distributional family of the response variable
         """

@@ -44,16 +44,26 @@ See also the installation instructions for Haiku and Jax.
 
 ..  toctree::
      Home <self>
+    :hidden:
 
 ..  toctree::
     :caption: Tutorials
-    :maxdepth: 2
+    :maxdepth: 1
+    :hidden:
 
     notebooks/neural_process
 
 ..  toctree::
+    :maxdepth: 1
+    :caption: Examples
+    :hidden:
+
+    examples/attentive_neural_process
+
+..  toctree::
     :caption: API
-    :maxdepth: 2
+    :maxdepth: 1
+    :hidden:
 
     api
 

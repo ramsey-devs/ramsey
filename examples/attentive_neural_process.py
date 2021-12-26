@@ -1,3 +1,10 @@
+"""
+Attentive neural process
+========================
+
+Sdasd asda asdnasidbasd
+"""
+
 import haiku as hk
 import jax.numpy as np
 import jax.random as random

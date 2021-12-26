@@ -2,11 +2,11 @@ import haiku as hk
 import pytest
 from jax import numpy as np
 from jax import random
-from jax.nn import relu
 from numpyro import distributions as dist
 
+from pax.attention import MultiHeadAttention
 from pax.covariance_functions import exponentiated_quadratic
-from pax.models import NP
+from pax.models import ANP, DANP, NP
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
@@ -44,35 +44,52 @@ def simple_data_set():
     return x_context, y_context, x_target, y_target
 
 
-#  pylint: disable:redefined-outer-name
-def _f1(**kwargs):
+def __lnp(**kwargs):
     np = NP(
-        decoder=hk.nets.MLP([3, 2], name="decoder"),
-        deterministic_encoder=hk.nets.MLP([4, 4], name="deterministic_encoder"),
+        decoder=hk.nets.MLP([3, 2]),
+        latent_encoder=(hk.nets.MLP([3, 3]), hk.nets.MLP([3, 6])),
+    )
+    return np(**kwargs)
+
+
+def __np(**kwargs):
+    np = NP(
+        decoder=hk.nets.MLP([3, 2]),
+        deterministic_encoder=hk.nets.MLP([4, 4]),
+        latent_encoder=(hk.nets.MLP([3, 3]), hk.nets.MLP([3, 6])),
+    )
+    return np(**kwargs)
+
+
+def __anp(**kwargs):
+    np = ANP(
+        decoder=hk.nets.MLP([3, 2]),
+        deterministic_encoder=(
+            hk.nets.MLP([4, 4]),
+            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
+        ),
+        latent_encoder=(hk.nets.MLP([3, 3]), hk.nets.MLP([3, 6])),
+    )
+    return np(**kwargs)
+
+
+def __danp(**kwargs):
+    np = DANP(
+        decoder=hk.nets.MLP([3, 2]),
+        deterministic_encoder=(
+            hk.nets.MLP([4, 4]),
+            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
+            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
+        ),
         latent_encoder=(
-            hk.nets.MLP([3, 3], name="latent_encoder"),
-            hk.nets.MLP([3, 6], name="latent_encoder"),
+            hk.nets.MLP([3, 3]),
+            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
+            hk.nets.MLP([3, 6]),
         ),
     )
     return np(**kwargs)
 
 
-def _f2(**kwargs):
-    def _f(x):
-        mlp = hk.Sequential([hk.Linear(10), relu, hk.Linear(2)])
-        return mlp(x)
-
-    np = NP(
-        decoder=hk.nets.MLP([3, 2], name="decoder"),
-        deterministic_encoder=hk.nets.MLP([4, 4], name="deterministic_encoder"),
-        latent_encoder=(
-            hk.nets.MLP([3, 3], name="latent_encoder"),
-            _f,
-        ),
-    )
-    return np(**kwargs)
-
-
-@pytest.fixture(params=[_f1, _f2])
+@pytest.fixture(params=[__lnp, __np, __anp, __danp])
 def module(request):
     yield request.param

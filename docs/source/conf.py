@@ -1,8 +1,9 @@
+import glob
+import os
+
 project = "pax"
 copyright = "2021, Simon Dirmeier"
 author = "Simon Dirmeier"
-
-
 release = "0.0.1"
 
 extensions = [
@@ -14,11 +15,21 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
+    "sphinx_gallery.gen_gallery",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-static_path  = ["_static"]
+
+sphinx_gallery_conf = {
+    "examples_dirs": ["../../examples"],
+    "gallery_dirs": ["examples"],
+    "filename_pattern": "/plot_",
+    "ignore_pattern": "(__init__)",
+    "min_reported_time": 1,
+}
+
+html_static_path = ["_static"]
 templates_path = ["_templates"]
 
 autodoc_default_options = {
@@ -32,6 +43,8 @@ exclude_patterns = [
     "Thumbs.db",
     ".DS_Store",
     "notebooks/.ipynb_checkpoints",
+    "examples/*ipynb",
+    "examples/*py"
 ]
 
 html_theme = "sphinx_rtd_theme"
