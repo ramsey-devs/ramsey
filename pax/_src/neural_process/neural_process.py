@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 
 import haiku as hk
 import jax
@@ -26,7 +26,7 @@ class NP(hk.Module):
         self,
         decoder: hk.Module,
         latent_encoder: Tuple[hk.Module, hk.Module],
-        deterministic_encoder: hk.Module,
+        deterministic_encoder: Optional[hk.Module],
         family: Family = Gaussian(),
     ):
         """
@@ -63,8 +63,6 @@ class NP(hk.Module):
         self._deterministic_encoder = deterministic_encoder
         self._decoder = decoder
         self._family = family
-        self._latent_self_attention = lambda k, v, z: z
-        self._deterministic_self_attention = lambda k, v, z: z
 
     def __call__(
         self,
@@ -147,16 +145,15 @@ class NP(hk.Module):
         z_deterministic = np.mean(z_deterministic, axis=1, keepdims=True)
         return z_deterministic
 
-    # pylint: disable=duplicate-code
     def _encode_latent(self, x_context: np.ndarray, y_context: np.ndarray):
         xy_context = np.concatenate([x_context, y_context], axis=-1)
-
         z_latent = self._latent_encoder(xy_context)
-        z_latent = self._latent_self_attention(z_latent, z_latent, z_latent)
+        return self._encode_latent_gaussian(z_latent)
 
+    # pylint: disable=duplicate-code
+    def _encode_latent_gaussian(self, z_latent):
         z_latent = np.mean(z_latent, axis=1, keepdims=True)
         z_latent = self._latent_variable_encoder(z_latent)
-
         mean, sigma = np.split(z_latent, 2, axis=-1)
         sigma = 0.1 + 0.9 * jax.nn.sigmoid(sigma)
         return dist.Normal(loc=mean, scale=sigma)

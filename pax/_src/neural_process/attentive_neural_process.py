@@ -77,9 +77,6 @@ class ANP(NP):
     ):
         xy_context = np.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)
-        z_deterministic = self._deterministic_self_attention(
-            z_deterministic, z_deterministic, z_deterministic
-        )
         z_deterministic = self._deterministic_cross_attention(
             x_context, z_deterministic, x_target
         )

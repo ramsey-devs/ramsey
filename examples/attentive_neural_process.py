@@ -5,6 +5,7 @@ import jax.random as random
 import matplotlib.pyplot as plt
 
 from pax import train_neural_process
+from pax._src.neural_process.doubly_attentive_neural_process import DANP
 from pax.attention import MultiHeadAttention
 from pax.data import sample_from_gaussian_process
 from pax.models import ANP
@@ -19,15 +20,29 @@ key, sample_key = random.split(key, 2)
 
 def neural_process(**kwargs):
     dim = 128
-    np = ANP(
+    np = DANP(
         decoder=hk.nets.MLP([dim] * 3 + [2]),
         latent_encoder=(
             hk.nets.MLP([dim] * 3),
+            MultiHeadAttention(
+                num_heads=1,
+                head_size=8,
+                embedding=hk.nets.MLP([16] * 2)
+            ),
             hk.nets.MLP([dim, dim * 2])
         ),
         deterministic_encoder=(
             hk.nets.MLP([dim] * 3),
-            MultiHeadAttention(num_heads=8, head_size=8)
+            MultiHeadAttention(
+                num_heads=1,
+                head_size=8,
+                embedding=hk.nets.MLP([16] * 2)
+            ),
+            MultiHeadAttention(
+                num_heads=8,
+                head_size=8,
+                embedding=hk.nets.MLP([dim] * 2)
+            )
         )
     )
     return np(**kwargs)

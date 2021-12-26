@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import haiku as hk
+import jax.numpy as np
 
 from pax._src.family import Family, Gaussian
 
@@ -28,7 +29,7 @@ class DANP(ANP):
         family: Family = Gaussian(),
     ):
         """
-        Instantiates a doubly-attentivee neural process
+        Instantiates a doubly-attentive neural process
 
         Parameters
         ----------
@@ -61,3 +62,25 @@ class DANP(ANP):
         )
         self._latent_self_attention = latent_encoder[1]
         self._deterministic_self_attention = deterministic_encoder[1]
+
+    def _encode_latent(self, x_context: np.ndarray, y_context: np.ndarray):
+        xy_context = np.concatenate([x_context, y_context], axis=-1)
+        z_latent = self._latent_encoder(xy_context)
+        z_latent = self._latent_self_attention(z_latent, z_latent, z_latent)
+        return self._encode_latent_gaussian(z_latent)
+
+    def _encode_deterministic(
+        self,
+        x_context: np.ndarray,
+        y_context: np.ndarray,
+        x_target: np.ndarray,
+    ):
+        xy_context = np.concatenate([x_context, y_context], axis=-1)
+        z_deterministic = self._deterministic_encoder(xy_context)
+        z_deterministic = self._deterministic_self_attention(
+            z_deterministic, z_deterministic, z_deterministic
+        )
+        z_deterministic = self._deterministic_cross_attention(
+            x_context, z_deterministic, x_target
+        )
+        return z_deterministic
