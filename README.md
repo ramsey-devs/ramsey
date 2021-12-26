@@ -10,7 +10,7 @@
 ## About
 
 Pax is a library for nonparametric probabilistic modelling using Haiku and JAX.
-It builds upon the same module system that Haiku is using and hence fully compatible with
+It builds upon the same module system that Haiku is using and is hence fully compatible with
 Haiku's and JAX's API.
 
 ## Installation
@@ -43,13 +43,10 @@ def neural_process(**kwargs):
     )
     return np(**kwargs)
 
-neural_process = hk.transform(neural_process)
-```
-
-```python
 key = random.PRNGKey(23)
-
 (x, y), _ = sample_from_sinus_function(key)
+
+neural_process = hk.transform(neural_process)
 params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
 ```
 

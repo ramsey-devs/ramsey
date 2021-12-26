@@ -18,7 +18,9 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
+static_path  = ["_static"]
 templates_path = ["_templates"]
+
 autodoc_default_options = {
     "member-order": "bysource",
     "special-members": True,

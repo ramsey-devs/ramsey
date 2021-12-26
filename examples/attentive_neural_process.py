@@ -1,11 +1,9 @@
 import haiku as hk
 import jax.numpy as np
 import jax.random as random
-
 import matplotlib.pyplot as plt
 
-from pax import train_neural_process
-from pax._src.neural_process.doubly_attentive_neural_process import DANP
+from pax.train import train_neural_process
 from pax.attention import MultiHeadAttention
 from pax.data import sample_from_gaussian_process
 from pax.models import ANP
@@ -20,27 +18,17 @@ key, sample_key = random.split(key, 2)
 
 def neural_process(**kwargs):
     dim = 128
-    np = DANP(
+    np = ANP(
         decoder=hk.nets.MLP([dim] * 3 + [2]),
         latent_encoder=(
             hk.nets.MLP([dim] * 3),
-            MultiHeadAttention(
-                num_heads=1,
-                head_size=8,
-                embedding=hk.nets.MLP([16] * 2)
-            ),
             hk.nets.MLP([dim, dim * 2])
         ),
         deterministic_encoder=(
             hk.nets.MLP([dim] * 3),
             MultiHeadAttention(
-                num_heads=1,
-                head_size=8,
-                embedding=hk.nets.MLP([16] * 2)
-            ),
-            MultiHeadAttention(
                 num_heads=8,
-                head_size=8,
+                head_size=16,
                 embedding=hk.nets.MLP([dim] * 2)
             )
         )
@@ -55,12 +43,8 @@ params = neural_process.init(
     init_key, x_context=x_target, y_context=y_target, x_target=x_target
 )
 
-yy = neural_process.apply(
-    params=params, rng=init_key, x_context=x_target, y_context=y_target, x_target=x_target
-)
-
 key, train_key = random.split(key, 2)
-n_context, n_target = 30, 40
+n_context, n_target = 10, 20
 params, objectives = train_neural_process(
     neural_process,
     params,

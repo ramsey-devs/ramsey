@@ -7,7 +7,7 @@ import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
 from numpyro.distributions import kl_divergence
 
-from pax._src.family import Family, Gaussian
+from pax.family import Family, Gaussian
 
 __all__ = ["NP"]
 
@@ -26,7 +26,7 @@ class NP(hk.Module):
         self,
         decoder: hk.Module,
         latent_encoder: Tuple[hk.Module, hk.Module],
-        deterministic_encoder: Optional[hk.Module],
+        deterministic_encoder: Optional[hk.Module] = None,
         family: Family = Gaussian(),
     ):
         """

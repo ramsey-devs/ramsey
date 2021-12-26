@@ -6,4 +6,5 @@ seaborn
 sphinx
 sphinx_autodoc_typehints
 sphinx_fontawesome
+sphinx_gallery
 sphinxcontrib-fulltoc

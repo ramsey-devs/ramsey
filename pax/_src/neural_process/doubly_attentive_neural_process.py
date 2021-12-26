@@ -3,7 +3,7 @@ from typing import Tuple
 import haiku as hk
 import jax.numpy as np
 
-from pax._src.family import Family, Gaussian
+from pax.family import Family, Gaussian
 
 __all__ = ["DANP"]
 

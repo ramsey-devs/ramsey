@@ -4,8 +4,8 @@ import haiku as hk
 import jax.numpy as np
 from chex import assert_axis_dimension
 
-from pax._src.family import Family, Gaussian
 from pax._src.neural_process.attention.attention import Attention
+from pax.family import Family, Gaussian
 
 __all__ = ["ANP"]
 
