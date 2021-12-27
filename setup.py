@@ -18,7 +18,7 @@ def _read_requirements(fl):
 
 def _version():
     version = None
-    for line in open(join(PROJECT_PATH, "pax", "__init__.py")):
+    for line in open(join(PROJECT_PATH, "ramsey", "__init__.py")):
         if line.startswith("__version__"):
             version = re.match(r"__version__.*(\d+\.\d+\.\d+).*", line).group(1)
     if version is None:
@@ -27,12 +27,12 @@ def _version():
 
 
 setup(
-    name="pax",
+    name="ramsey",
     version=_version(),
-    description="A library for nonparametric probabilistic models using `haiku`",
+    description="A library for probabilistic models using Haiku and JAX",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/dirmeier/pax",
+    url="https://github.com/dirmeier/ramsey",
     author="Simon Dirmeier",
     author_email="simon.dirmeier@protonmail.com",
     license="Apache 2.0",
@@ -46,10 +46,9 @@ setup(
         "chex",
         "optax",
         "dm-haiku",
-        "blackjax",
         "numpyro",
     ],
-    extras_require={"dev": ["pre-commit", "black", "isort", "tox"]},
+    extras_require={"dev": ["pre-commit", "black", "isort", "pylint", "tox"]},
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Science/Research",

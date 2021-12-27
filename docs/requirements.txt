@@ -1,4 +1,3 @@
-git+git://github.com/dirmeier/palettes@v0.1.1
 matplotlib
 nbsphinx
 pydata-sphinx-theme

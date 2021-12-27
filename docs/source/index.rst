@@ -1,18 +1,19 @@
-:github_url: https://github.com/dirmeier/pax/
+:github_url: https://github.com/dirmeier/ramsey/
 
-Pax documentation
-=================
+Ramsey documentation
+====================
 
-Pax is a library for nonparametric probabilistic modelling using Haiku and JAX.
-It builds upon the same module system that Haiku is using and is hence fully compatible with
-Haiku's and JAX's API.
+Ramsey is a library for probabilistic models using Haiku and JAX.
+It builds upon the same module system that Haiku is using
+and is hence fully compatible with Haiku's and NumPyro's API. Ramsey implements
+(or rather intends to implement) neural and Gaussian process models.
 
 .. code-block:: python
 
     import haiku as hk
     import jax.random as random
-    from pax.data import sample_from_sinus_function
-    from pax.models import NP
+    from ramsey.data import sample_from_sinus_function
+    from ramsey.models import NP
 
     def neural_process(**kwargs):
         dim = 128
@@ -38,9 +39,20 @@ To install the latest GitHub release, just call the following on the command lin
 
 .. code-block:: bash
 
-    pip install git+https://github.com/dirmeier/pax@v0.0.1
+    pip install git+https://github.com/dirmeier/ramsey@v0.0.1
 
-See also the installation instructions for Haiku and Jax.
+See also the installation instructions for Haiku and JAX.
+
+Why Ramsey
+----------
+
+Just as other probabilistic languages are named after researchers in the field (e.g., Stan, Edward, Turing), Ramsey takes
+its name from one of my favourite philosophers/mathematicians, `Frank Ramsey <https://plato.stanford.edu/entries/ramsey/>`_.
+
+License
+-------
+
+Ramsey is licensed under the Apache 2.0 License
 
 ..  toctree::
      Home <self>
@@ -66,8 +78,3 @@ See also the installation instructions for Haiku and Jax.
     :hidden:
 
     api
-
-License
--------
-
-Pax is licensed under the Apache 2.0 License

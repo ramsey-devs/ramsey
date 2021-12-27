@@ -2,7 +2,7 @@ from typing import Union
 
 import jax.numpy as np
 
-from pax._src.gaussian_process.covariance.base import (
+from ramsey._src.gaussian_process.covariance.base import (
     covariance,
     squared_distance,
 )

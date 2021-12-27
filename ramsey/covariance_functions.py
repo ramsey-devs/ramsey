@@ -1,4 +1,4 @@
-from pax._src.gaussian_process.covariance.stationary import (
+from ramsey._src.gaussian_process.covariance.stationary import (
     exponentiated_quadratic,
 )
 

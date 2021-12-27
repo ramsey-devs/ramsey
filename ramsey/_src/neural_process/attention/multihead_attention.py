@@ -3,7 +3,7 @@ from typing import Optional
 import haiku as hk
 import jax.numpy as np
 
-from pax._src.neural_process.attention.attention import Attention
+from ramsey._src.neural_process.attention.attention import Attention
 
 
 class MultiHeadAttention(Attention):

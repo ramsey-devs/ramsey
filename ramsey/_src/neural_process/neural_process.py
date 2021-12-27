@@ -7,7 +7,7 @@ import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
 from numpyro.distributions import kl_divergence
 
-from pax.family import Family, Gaussian
+from ramsey.family import Family, Gaussian
 
 __all__ = ["NP"]
 
