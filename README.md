@@ -1,15 +1,17 @@
 # Ramsey
 
-[![Project Status](http://www.repostatus.org/badges/latest/concept.svg)](http://www.repostatus.org/#concept)
+[![status](http://www.repostatus.org/badges/latest/concept.svg)](http://www.repostatus.org/#concept)
 [![ci](https://github.com/dirmeier/ramsey/actions/workflows/ci.yaml/badge.svg)](https://github.com/dirmeier/ramsey/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/dirmeier/ramsey/branch/main/graph/badge.svg)](https://codecov.io/gh/dirmeier/ramsey)
 [![codacy](https://app.codacy.com/project/badge/Grade/98715c0867ff4136a9b3a05340a0e6d6)](https://www.codacy.com/gh/dirmeier/ramsey/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dirmeier/ramsey&amp;utm_campaign=Badge_Grade)
+[![documentation](https://readthedocs.org/projects/ramsey/badge/?version=latest)](https://ramsey.readthedocs.io/en/latest/?badge=latest)
+[![version](https://img.shields.io/pypi/v/ramsey.svg?colorB=black&style=flat)](https://pypi.org/project/ramsey/)
 
 > Probabilistic modelling using Haiku and JAX
 
 ## About
 
-Ramsey is a library for probabilistic models using Haiku and JAX.
+Ramsey is a library for probabilistic modelling using Haiku and JAX.
 It builds upon the same module system that Haiku is using
 and is hence fully compatible with Haiku's and NumPyro's API.
 Ramsey implements (or rather intends to implement) neural and Gaussian process
@@ -17,10 +19,17 @@ models and normalizing flows.
 
 ## Installation
 
-To install the latest GitHub release, just call the following on the command line:
+To install from PyPI, call:
 
 ```bash
-pip install git+https://github.com/dirmeier/ramsey@v0.0.1
+pip install ramsey
+```
+
+To install the latest GitHub <RELEASE>, just call the following on the
+command line:
+
+```bash
+pip install git+https://github.com/dirmeier/ramsey@<RELEASE>
 ```
 
 See also the installation instructions for Haiku and JAX.
@@ -56,8 +65,10 @@ params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
 
 ## Why Ramsey
 
-Just as other probabilistic languages are named after researchers in the field (e.g., Stan, Edward, Turing), Ramsey takes
-its name from one of my favourite philosophers/mathematicians, [Frank Ramsey](https://plato.stanford.edu/entries/ramsey/).
+Just as the names of other probabilistic languages are inspired by researchers in the field
+(e.g., Stan, Edward, Turing), Ramsey takes
+its name from one of my favourite philosophers/mathematicians,
+[Frank Ramsey](https://plato.stanford.edu/entries/ramsey/).
 
 ## Author
 

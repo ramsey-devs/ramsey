@@ -1,3 +1,4 @@
+jupyter
 matplotlib
 nbsphinx
 pydata-sphinx-theme
@@ -6,4 +7,5 @@ sphinx
 sphinx_autodoc_typehints
 sphinx_fontawesome
 sphinx_gallery
+sphinx_rtd_theme
 sphinxcontrib-fulltoc
