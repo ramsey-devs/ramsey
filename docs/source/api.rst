@@ -1,30 +1,30 @@
-pax
-===
+ramsey
+======
 
-.. currentmodule:: pax
+.. currentmodule:: ramsey
 
-pax.attention
--------------
+ramsey.attention
+----------------
 
-.. currentmodule:: pax.attention
+.. currentmodule:: ramsey.attention
 
 ..  autoclass:: MultiHeadAttention
     :members:
 
 
-pax.covariance_functions
-------------------------
+ramsey.covariance_functions
+---------------------------
 
-.. currentmodule:: pax.covariance_functions
+.. currentmodule:: ramsey.covariance_functions
 
 .. autofunction::
     exponentiated_quadratic
 
 
-pax.data
---------
+ramsey.data
+-----------
 
-.. automodule:: pax.data
+.. automodule:: ramsey.data
 
 .. autosummary::
 
@@ -32,10 +32,10 @@ pax.data
     sample_from_gaussian_process
 
 
-pax.family
-----------
+ramsey.family
+-------------
 
-.. automodule:: pax.family
+.. automodule:: ramsey.family
 
 ..  autoclass:: Gaussian
     :members:
@@ -44,10 +44,10 @@ pax.family
     :members:
 
 
-pax.models
-----------
+ramsey.models
+-------------
 
-..  automodule:: pax.models
+..  automodule:: ramsey.models
 
 ..  autoclass:: NP
     :members:
@@ -59,10 +59,10 @@ pax.models
     :members:
 
 
-pax.train
----------
+ramsey.train
+------------
 
-.. automodule:: pax.train
+.. automodule:: ramsey.train
 
 .. autosummary::
 

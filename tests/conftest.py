@@ -4,9 +4,9 @@ from jax import numpy as np
 from jax import random
 from numpyro import distributions as dist
 
-from pax.attention import MultiHeadAttention
-from pax.covariance_functions import exponentiated_quadratic
-from pax.models import ANP, DANP, NP
+from ramsey.attention import MultiHeadAttention
+from ramsey.covariance_functions import exponentiated_quadratic
+from ramsey.models import ANP, DANP, NP
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name

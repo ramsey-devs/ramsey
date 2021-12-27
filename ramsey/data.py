@@ -2,7 +2,7 @@ import numpyro.distributions as dist
 from jax import numpy as np
 from jax import random
 
-from pax.covariance_functions import exponentiated_quadratic
+from ramsey.covariance_functions import exponentiated_quadratic
 
 
 # pylint: disable=too-many-locals,invalid-name

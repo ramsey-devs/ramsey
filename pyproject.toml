@@ -34,7 +34,7 @@ disable = [
 [[tool.mypy.overrides]]
 # silence mypy with incorrect 'Optional' warnings
 module = [
-    "pax._src.neural_process.attentive_neural_process",
-    "pax._src.neural_process.doubly_attentive_neural_process"
+    "ramsey._src.neural_process.attentive_neural_process",
+    "ramsey._src.neural_process.doubly_attentive_neural_process"
 ]
 no_strict_optional = true

@@ -1,7 +1,7 @@
 import glob
 import os
 
-project = "pax"
+project = "ramsey"
 copyright = "2021, Simon Dirmeier"
 author = "Simon Dirmeier"
 release = "0.0.1"

@@ -3,12 +3,12 @@ from typing import Tuple
 import haiku as hk
 import jax.numpy as np
 
-from pax.family import Family, Gaussian
+from ramsey.family import Family, Gaussian
 
 __all__ = ["DANP"]
 
-from pax._src.neural_process.attention.attention import Attention
-from pax._src.neural_process.attentive_neural_process import ANP
+from ramsey._src.neural_process.attention.attention import Attention
+from ramsey._src.neural_process.attentive_neural_process import ANP
 
 
 # pylint: disable=too-many-instance-attributes

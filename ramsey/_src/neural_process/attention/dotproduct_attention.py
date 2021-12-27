@@ -1,7 +1,7 @@
 import jax.numpy as np
 from jax import nn
 
-from pax._src.neural_process.attention.attention import Attention
+from ramsey._src.neural_process.attention.attention import Attention
 
 
 class DotProductAttention(Attention):
