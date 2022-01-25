@@ -4,13 +4,11 @@ import haiku as hk
 import jax.numpy as np
 from chex import assert_axis_dimension
 
-from ramsey._src.neural_process.attention.attention import Attention
-from ramsey.family import Family, Gaussian
+from ramsey._src.attention.attention import Attention
+from ramsey._src.family import Family, Gaussian
+from ramsey._src.neural_process.neural_process import NP
 
 __all__ = ["ANP"]
-
-
-from ramsey._src.neural_process.neural_process import NP
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
