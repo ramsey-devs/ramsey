@@ -7,7 +7,7 @@ import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
 from numpyro.distributions import kl_divergence
 
-from ramsey.family import Family, Gaussian
+from ramsey._src.family import Family, Gaussian
 
 __all__ = ["NP"]
 
@@ -166,4 +166,16 @@ class NP(hk.Module):
     ):
         target = np.concatenate([representation, x_target], axis=-1)
         target = self._decoder(target)
-        return self._family(target, x_target, y)
+        family = self._family(target)
+        self._check_posterior_predictive_axis(family, x_target, y)
+        return family
+
+    @staticmethod
+    def _check_posterior_predictive_axis(
+        family: dist.Distribution,
+        x_target: np.ndarray,
+        y: np.ndarray,  # pylint: disable=invalid-name
+    ):
+        assert_axis_dimension(family.mean, 0, x_target.shape[0])
+        assert_axis_dimension(family.mean, 1, x_target.shape[1])
+        assert_axis_dimension(family.mean, 2, y.shape[2])
