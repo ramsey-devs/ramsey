@@ -69,7 +69,3 @@ Just as the names of other probabilistic languages are inspired by researchers i
 (e.g., Stan, Edward, Turing), Ramsey takes
 its name from one of my favourite philosophers/mathematicians,
 [Frank Ramsey](https://plato.stanford.edu/entries/ramsey/).
-
-## Author
-
-Simon Dirmeier <a href="mailto:simon.dirmeier @ protonmail com">simon.dirmeier @ protonmail com</a>

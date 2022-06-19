@@ -1,7 +1,7 @@
 import haiku as hk
 from jax import random
 
-from ramsey._src.train import train_neural_process
+from ramsey._src.train_neural_process import train_neural_process
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name

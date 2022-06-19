@@ -29,12 +29,12 @@ def _version():
 setup(
     name="ramsey",
     version=_version(),
-    description="A library for probabilistic models using Haiku and JAX",
+    description="A library for probabilistic modelling using Haiku and JAX",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/dirmeier/ramsey",
+    url="https://github.com/ramsey-devs/ramsey",
     author="Simon Dirmeier",
-    author_email="simon.dirmeier@protonmail.com",
+    author_email="sfyrbnd@pm.me",
     license="Apache 2.0",
     keywords="bayes jax probabilistic models gaussian process neural process",
     packages=find_packages(),
@@ -48,7 +48,10 @@ setup(
         "dm-haiku",
         "numpyro",
     ],
-    extras_require={"dev": ["pre-commit", "black", "isort", "pylint", "tox"]},
+    extras_require={
+        "dev": ["pre-commit", "black", "isort", "pylint", "tox"],
+        "examples": ["matplotlib"],
+    },
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Science/Research",
