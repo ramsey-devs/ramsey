@@ -12,9 +12,9 @@
 ## About
 
 Ramsey is a library for probabilistic modelling using Haiku and JAX.
-It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's, NumPyro's API.
-Ramsey implements (or rather intends to implement) neural and Gaussian process models, normalizing flows,
-and diffusion and score-based models.
+
+It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's and NumPyro's API.
+Ramsey implements (or rather intends to implement) neural and Gaussian process models, normalizing flows, and diffusion and score-based models.
 
 ## Installation
 
@@ -65,6 +65,4 @@ params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
 ## Why Ramsey
 
 Just as the names of other probabilistic languages are inspired by researchers in the field
-(e.g., Stan, Edward, Turing), Ramsey takes
-its name from one of my favourite philosophers/mathematicians,
-[Frank Ramsey](https://plato.stanford.edu/entries/ramsey/).
+(e.g., Stan, Edward, Turing), Ramsey takes its name from one of my favourite philosophers/mathematicians, [Frank Ramsey](https://plato.stanford.edu/entries/ramsey/).
