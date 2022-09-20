@@ -3,6 +3,7 @@ import jax.numpy as np
 import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_axis_dimension_gt, assert_rank
 from jax import nn
+
 from ramsey.family import Family, Gaussian
 
 __all__ = ["DeepAR"]

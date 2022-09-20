@@ -3,6 +3,7 @@ from typing import Tuple
 import haiku as hk
 import jax.numpy as np
 from chex import assert_axis_dimension, assert_rank
+
 from ramsey.attention import Attention
 from ramsey.family import Family, Gaussian
 from ramsey.models import ANP
@@ -65,4 +66,4 @@ class RANP(ANP):
         target, _ = hk.dynamic_unroll(
             self._decoder, target, self._decoder.initial_state(num_observations)
         )
-        return self._family(target, x_target, y)
+        return self._family(target)

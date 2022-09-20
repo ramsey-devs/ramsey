@@ -28,7 +28,8 @@ disable = [
     "missing-function-docstring",
     "no-name-in-module",
     "too-many-arguments",
-    "duplicate-code"
+    "duplicate-code",
+    "invalid-name"
 ]
 
 [[tool.mypy.overrides]]
