@@ -1,5 +1,5 @@
-ramsey
-======
+ramsey package
+==============
 
 .. currentmodule:: ramsey
 

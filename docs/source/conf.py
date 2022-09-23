@@ -1,25 +1,27 @@
 import glob
 import os
+from datetime import date
 
-project = "ramsey"
-copyright = "2021, Simon Dirmeier"
-author = "Simon Dirmeier"
-release = "0.0.1"
+project = "Ramsey"
+copyright = f"{date.today().year}, the Ramsey developers"
+author = "Ramsey developers"
+release = "0.0.2"
 
 extensions = [
+    "nbsphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
     "sphinx_gallery.gen_gallery",
-    "nbsphinx",
+    "sphinx_math_dollar",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
-
 
 sphinx_gallery_conf = {
     "examples_dirs": ["../../examples"],
@@ -29,14 +31,15 @@ sphinx_gallery_conf = {
     "min_reported_time": 1,
 }
 
-html_static_path = ["_static"]
 templates_path = ["_templates"]
+html_static_path = ["_static"]
 
 autodoc_default_options = {
     "member-order": "bysource",
     "special-members": True,
     "exclude-members": "__repr__, __str__, __weakref__",
 }
+
 exclude_patterns = [
     "_build",
     "build",
@@ -47,10 +50,18 @@ exclude_patterns = [
     "examples/*py"
 ]
 
-html_theme = "sphinx_rtd_theme"
-
 intersphinx_mapping = {
     "haiku": ("https://dm-haiku.readthedocs.io/en/latest/", None),
     "jax": ("https://jax.readthedocs.io/en/latest/", None),
     "numpyro": ("https://num.pyro.ai/en/stable/", None),
 }
+
+html_theme = "sphinx_book_theme"
+
+html_theme_options = {
+    "repository_url": "https://github.com/ramsey-devs/ramsey",
+    "use_repository_button": True,
+    "use_download_button": False,
+}
+
+html_title = "Ramsey"
