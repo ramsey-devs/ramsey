@@ -2,9 +2,9 @@ import glob
 import os
 from datetime import date
 
-project = "ramsey"
-copyright = f"{date.today().year}, the ramsey developers"
-author = "ramsey developers"
+project = "Ramsey"
+copyright = f"{date.today().year}, the Ramsey developers"
+author = "Ramsey developers"
 release = "0.0.2"
 
 extensions = [
@@ -64,4 +64,4 @@ html_theme_options = {
     "use_download_button": False,
 }
 
-html_title = "ramsey"
+html_title = "Ramsey"

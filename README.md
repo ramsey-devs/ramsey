@@ -11,27 +11,10 @@
 
 ## About
 
-Ramsey is a library for probabilistic modelling using Haiku and JAX.
-
-It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's and NumPyro's API.
-Ramsey implements (or rather intends to implement) neural and Gaussian process models, normalizing flows, and diffusion and score-based models.
-
-## Installation
-
-To install from PyPI, call:
-
-```bash
-pip install ramsey
-```
-
-To install the latest GitHub <RELEASE>, just call the following on the
-command line:
-
-```bash
-pip install git+https://github.com/dirmeier/ramsey@<RELEASE>
-```
-
-See also the installation instructions for Haiku and JAX.
+Ramsey is a library for probabilistic modelling using [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax).
+It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's, NumPyro's API.
+Ramsey implements (or rather intends to implement) neural and Gaussian process models, normalizing flows,
+and diffusion and score-based models.
 
 ## Example usage
 
@@ -61,6 +44,34 @@ key = random.PRNGKey(23)
 neural_process = hk.transform(neural_process)
 params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
 ```
+
+## Installation
+
+To install from PyPI, call:
+
+```bash
+pip install ramsey
+```
+
+To install the latest GitHub <RELEASE>, just call the following on the
+command line:
+
+```bash
+pip install git+https://github.com/dirmeier/ramsey@<RELEASE>
+```
+
+See also the installation instructions for [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax), if
+you plan to use Ramsey on GPU/TPU.
+
+## Contributing
+
+Contributions in the form of pull requests are more than welcome. A good way to start is to check out issues labelled
+["good first issue"](https://github.com/ramsey-devs/ramsey/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+
+In order to contribute:
+
+1) Install Ramsey and dev dependencies via `pip install -e '.[dev]'`,
+2) test your contribution/implementation by calling `tox` on the (Unix) command line before submitting a PR.
 
 ## Why Ramsey
 

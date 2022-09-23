@@ -3,7 +3,7 @@
 Ramsey documentation
 ====================
 
-Ramsey is a library for probabilistic modelling using Haiku and JAX.
+Ramsey is a library for probabilistic modelling using `Haiku <https://github.com/deepmind/dm-haiku>`_ and `JAX <https://github.com/google/jax>`_.
 It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's, NumPyro's API.
 Ramsey implements (or rather intends to implement) neural and Gaussian process models, normalizing flows,
 and diffusion and score-based models.
@@ -32,9 +32,16 @@ and diffusion and score-based models.
         random.PRNGKey(1), x_context=x, y_context=y, x_target=x
     )
 
+
+Why Ramsey
+----------
+
+Just as the names of other probabilistic languages are inspired by researchers in the field
+(e.g., Stan, Edward, Turing), Ramsey takes its name from one of my favourite philosophers/mathematicians,
+`Frank Ramsey <https://plato.stanford.edu/entries/ramsey/>`_.
+
 Installation
 ------------
-
 
 To install from PyPI, call:
 
@@ -49,16 +56,19 @@ command line:
 
     pip install git+https://github.com/dirmeier/ramsey@<RELEASE>
 
+See also the installation instructions for `Haiku <https://github.com/deepmind/dm-haiku>`_ and `JAX <https://github.com/google/jax>`_, if
+you plan to use Ramsey on GPU/TPU.
 
-See also the installation instructions for Haiku and JAX.
+Contributing
+------------
 
-Why Ramsey
-----------
+Contributions in the form of pull requests are more than welcome. A good way to start is to check out issues labelled
+`"good first issue" <https://github.com/ramsey-devs/ramsey/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22>`_.
 
-Just as the names of other probabilistic languages are inspired by researchers in the field
-(e.g., Stan, Edward, Turing), Ramsey takes
-its name from one of my favourite philosophers/mathematicians,
-`Frank Ramsey <https://plato.stanford.edu/entries/ramsey/>`_.
+In order to contribute:
+
+1) Install Ramsey and dev dependencies via :code:`pip install -e '.[dev]'`,
+2) test your contribution/implementation by calling :code:`tox` on the (Unix) command line before submitting a PR.
 
 License
 -------
