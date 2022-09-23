@@ -1,11 +1,12 @@
 jupyter
 matplotlib
 nbsphinx
-pydata-sphinx-theme
 seaborn
 sphinx
+sphinx-autobuild
+sphinx-book-theme
+sphinx-math-dollar
 sphinx_autodoc_typehints
 sphinx_fontawesome
 sphinx_gallery
-sphinx_rtd_theme
 sphinxcontrib-fulltoc

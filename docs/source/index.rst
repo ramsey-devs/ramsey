@@ -4,9 +4,9 @@ Ramsey documentation
 ====================
 
 Ramsey is a library for probabilistic modelling using Haiku and JAX.
-It builds upon the same module system that Haiku is using
-and is hence fully compatible with Haiku's and NumPyro's API. Ramsey implements
-(or rather intends to implement) neural and Gaussian process models.
+It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's, NumPyro's API.
+Ramsey implements (or rather intends to implement) neural and Gaussian process models, normalizing flows,
+and diffusion and score-based models.
 
 .. code-block:: python
 
@@ -63,11 +63,8 @@ its name from one of my favourite philosophers/mathematicians,
 License
 -------
 
-Ramsey is licensed under the Apache 2.0 License
+Ramsey is licensed under a Apache 2.0 License
 
-..  toctree::
-     Home <self>
-    :hidden:
 
 ..  toctree::
     :caption: Tutorials
@@ -84,7 +81,7 @@ Ramsey is licensed under the Apache 2.0 License
     examples/attentive_neural_process
 
 ..  toctree::
-    :caption: API
+    :caption: API reference
     :maxdepth: 1
     :hidden:
 
