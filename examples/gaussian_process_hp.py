@@ -5,6 +5,7 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 from typing import Iterator, NamedTuple
+import time
 
 
 
@@ -57,9 +58,6 @@ def load_dataset(key, num_samples, train_split = 1):
     x_test = jnp.delete(x,idx_train)
     y_test = jnp.delete(y,idx_train)
 
-    print(jnp.shape(x_train))
-    print(jnp.shape(x_test))
-
     train_data = Dataset(x_train,y_train)
     test_data = Dataset(x_test, y_test)
 
@@ -67,59 +65,75 @@ def load_dataset(key, num_samples, train_split = 1):
     return train_data, test_data
     
 
-def update_rule(param, update):
-  return param - 0.02 * update
 
 
-
-key = jax.random.PRNGKey(23)
-
-m = hk.transform(model_fn)
-m = hk.without_apply_rng(m)
-
-def loss(params: hk.Params, x, y):
-
-  y_est = m.apply(params, x)
-
-  return mse(y,y_est)
+def main():
 
 
+  key = jax.random.PRNGKey(23)
 
-train_data, test_data = load_dataset(key, 200, train_split = 0.8)
+  m = hk.transform(model_fn)
+  m = hk.without_apply_rng(m)
 
+  opt = optax.adam(1e-3)
 
-params = m.init(key, train_data.x)
+  @jax.jit
+  def loss(params: hk.Params, x, y):
+    y_est = m.apply(params, x)
+    return mse(y,y_est)
 
+  @jax.jit
+  def update(params, state, x, y):
+    grads = jax.grad(loss)(params, x, y)
+    updates, state = opt.update(grads, state)
+    params = optax.apply_updates(params, updates)
+    return params, state
 
-# optimiser = optax.adam(1e-3)
+  @jax.jit
+  def evaluate(params, x, y):
+    y_est = m.apply(params, x)
+    error = mse(y_est, y)
+    return error
 
+  train_data, test_data = load_dataset(key, 200, train_split = 0.8)
 
-for step in range(5000):
+  start = time.time()
 
+  params = m.init(key, train_data.x)
+  state = opt.init(params)
   
-  grads = jax.grad(loss)(params, train_data.x, train_data.y)
-  params = jax.tree_util.tree_map(update_rule, params, grads)
 
-  if step % 100 == 0:
+  for step in range(5000):
 
-     y_train_est = m.apply(params, train_data.x)
-     y_test_est = m.apply(params, test_data.x)
-     
-     mse_train = mse(y_train_est, train_data.y)
-     mse_test= mse(y_test_est, test_data.y)
+    params, state = update(params, state, train_data.x, train_data.y)
 
-     print('step=%d, mse_train=%.3f, mse_test=%.3f' % (step, mse_train, mse_test))
+    # params = jax.tree_util.tree_map(update_rule, params, grads)
+
+    if step % 100 == 0:
+      
+      mse_train = evaluate(params, train_data.x, train_data.y)
+      mse_test= evaluate(params, test_data.x, test_data.y)
+
+      print('step=%d, mse_train=%.3f, mse_test=%.3f' % (step, mse_train, mse_test))
 
 
-y_train_est = m.apply(params, train_data.x)
-y_test_est = m.apply(params, test_data.x)
+  end = time.time()
+  print('Training time: %.3fs' % (end - start))
 
-plt.scatter(train_data.x, train_data.y, color='blue', marker='+', label='y_train')
-plt.scatter(train_data.x, y_train_est, color='blue', marker='o', label='y_train_est')
+  x = jnp.concatenate((train_data.x, test_data.x))
+  x = jnp.linspace(jnp.min(x), jnp.max(x), num = 200)
+  y = m.apply(params, x)
+  
 
-plt.scatter(test_data.x, test_data.y, color='green', marker='+', label='y_test')
-plt.scatter(test_data.x, y_test_est, color='green', marker='o', label='y_test_est')
+  plt.scatter(train_data.x, train_data.y, color='blue', marker='+', label='y_train')
+  plt.scatter(test_data.x, test_data.y, color='green', marker='+', label='y_test')
+  plt.plot(x, y, color='orange', label='fit')
 
-plt.legend()
-plt.grid()
-plt.show(block = True)
+  plt.legend()
+  plt.grid()
+  plt.show(block = True)
+
+
+
+if __name__ == "__main__":
+  main()
