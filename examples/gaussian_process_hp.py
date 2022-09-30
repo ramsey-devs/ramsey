@@ -43,6 +43,9 @@ def load_dataset(key, num_samples, train_split = 1):
 
     n_train = int(num_samples * train_split)
 
+    print('  Training Set: %d/%d Samples (%.1f%%)' % (n_train, num_samples, train_split*100))
+    print('  Test Set:     %d/%d Samples (%.1f%%)' % (num_samples-n_train, num_samples, (1-train_split)*100))
+
     x = jnp.squeeze(x)
     y = jnp.squeeze(y)
     f = jnp.squeeze(f)
@@ -66,9 +69,7 @@ def load_dataset(key, num_samples, train_split = 1):
     
 
 
-
 def main():
-
 
   key = jax.random.PRNGKey(23)
 
@@ -95,30 +96,29 @@ def main():
     error = mse(y_est, y)
     return error
 
+  print('Load Dataset')
   train_data, test_data = load_dataset(key, 200, train_split = 0.8)
 
+  print('Start Training')
   start = time.time()
 
   params = m.init(key, train_data.x)
   state = opt.init(params)
   
-
   for step in range(5000):
 
     params, state = update(params, state, train_data.x, train_data.y)
 
-    # params = jax.tree_util.tree_map(update_rule, params, grads)
-
     if step % 100 == 0:
-      
       mse_train = evaluate(params, train_data.x, train_data.y)
       mse_test= evaluate(params, test_data.x, test_data.y)
-
-      print('step=%d, mse_train=%.3f, mse_test=%.3f' % (step, mse_train, mse_test))
+      print('  step=%d, mse_train=%.3f, mse_test=%.3f' % (step, mse_train, mse_test))
 
 
   end = time.time()
-  print('Training time: %.3fs' % (end - start))
+
+
+  print('  Training Duration: %.3fs' % (end - start))
 
   x = jnp.concatenate((train_data.x, test_data.x))
   x = jnp.linspace(jnp.min(x), jnp.max(x), num = 200)
