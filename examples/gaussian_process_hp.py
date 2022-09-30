@@ -28,10 +28,9 @@ class Model(hk.Module):
     return a*jnp.sin(b*x+c)+d
 
 
-def loss_fn(x, y):
-  m = Model() 
-  loss = mse(y,m(x))
-  return loss
+def model_fn(x):
+  m = Model()
+  return m(x)
 
 class Dataset():
   def __init__(self, x, y) -> None:
@@ -69,44 +68,57 @@ def load_dataset(key, num_samples, train_split = 1):
     
 
 def update_rule(param, update):
-  return param - 0.01 * update
+  return param - 0.02 * update
 
 
 
 key = jax.random.PRNGKey(23)
 
-loss = hk.transform(loss_fn)
-loss = hk.without_apply_rng(loss)
+m = hk.transform(model_fn)
+m = hk.without_apply_rng(m)
+
+def loss(params: hk.Params, x, y):
+
+  y_est = m.apply(params, x)
+
+  return mse(y,y_est)
+
+
 
 train_data, test_data = load_dataset(key, 200, train_split = 0.8)
 
 
-params = loss.init(key, train_data.x, train_data.y)
+params = m.init(key, train_data.x)
 
 
 # optimiser = optax.adam(1e-3)
 
 
-for step in range(1000):
+for step in range(5000):
 
   
-  grads = jax.grad(loss.apply)(params, train_data.x, train_data.y)
+  grads = jax.grad(loss)(params, train_data.x, train_data.y)
   params = jax.tree_util.tree_map(update_rule, params, grads)
 
   if step % 100 == 0:
 
-     y_est_train = loss.apply(params, train_data.x, train_data.y)
-     y_est_test = loss.apply(params, test_data.x, test_data.y)
+     y_train_est = m.apply(params, train_data.x)
+     y_test_est = m.apply(params, test_data.x)
      
-     mse_train = mse(y_est_train, train_data.y)
-     mse_test= mse(y_est_test, test_data.y)
+     mse_train = mse(y_train_est, train_data.y)
+     mse_test= mse(y_test_est, test_data.y)
 
-     print('step=%d, mse_train=%.2f, mse_test=%.2f' % (step, mse_train, mse_test))
+     print('step=%d, mse_train=%.3f, mse_test=%.3f' % (step, mse_train, mse_test))
 
 
+y_train_est = m.apply(params, train_data.x)
+y_test_est = m.apply(params, test_data.x)
 
 plt.scatter(train_data.x, train_data.y, color='blue', marker='+', label='y_train')
+plt.scatter(train_data.x, y_train_est, color='blue', marker='o', label='y_train_est')
+
 plt.scatter(test_data.x, test_data.y, color='green', marker='+', label='y_test')
+plt.scatter(test_data.x, y_test_est, color='green', marker='o', label='y_test_est')
 
 plt.legend()
 plt.grid()
