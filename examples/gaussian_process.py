@@ -37,8 +37,8 @@ f = jnp.squeeze(f)
 
 # create datapoints to train GP
 idx = jax.random.randint(key, shape=(n,1), minval=0, maxval=jnp.shape(x)[0])
-x_test = x[idx]
-y_test = y[idx]
+x_train = x[idx]
+y_train = y[idx]
 
 # define the prior GP
 m = 50
@@ -54,7 +54,7 @@ gp = gaussian_process.apply(params, key, mu, cov)
 sample = hk.transform(_sample)
 params = sample.init(key, gp)
 
-plt.scatter(x_test,y_test, color="orange", marker="+")
+plt.scatter(x_train,y_train, color="orange", marker="+")
 plt.plot(x, f)
 
 m = 3
