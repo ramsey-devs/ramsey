@@ -1,43 +1,76 @@
 import haiku as hk
 import jax
-import jax.numpy as np
-import numpyro.distributions as dist
-from chex import assert_axis_dimension, assert_rank
-from ramsey._src.family import Family, Gaussian
+import jax.numpy as jnp
+import optax
 
 __all__ = ["GP"]
 
 
-# pylint: disable=too-many-instance-attributes,duplicate-code
-class GP(hk.Module):
+class GPModel(hk.Module):
 
+  def __init__(self, name = None):
 
-    def __init__(
-        self,
-        mu: np.ndarray,
-        cov: np.ndarray
-    ):
-        assert_axis_dimension(mu, 1, 1)
-        assert_axis_dimension(mu, 0, np.shape(cov)[0])
-        assert_axis_dimension(mu, 0, np.shape(cov)[1])        
+    super().__init__(name=name)
 
-        super().__init__()
-        self.mu = mu
-        self.cov = cov
+    self.a = hk.get_parameter("a", [], init=jnp.ones)
+    self.b = hk.get_parameter("b", [], init=jnp.ones)
+    self.c = hk.get_parameter("c", [], init=jnp.ones)
+    self.d = hk.get_parameter("d", [], init=jnp.ones)
 
-    def __call__(self):
-        print('I am the _call__ method')
+  def __call__(self, x):
+    return self.a*jnp.sin(self.b*x+self.c)+self.d
 
-    def sample(self):
+class GP:
 
+    def __init__(self) -> None:
+        self.key = jax.random.PRNGKey(23)
+        m = hk.transform(self._model_fn)
+        self.m = hk.without_apply_rng(m)
 
-        if(np.all(np.linalg.eigvals(self.cov)>0)):
-            print('Covariance matirx is positive definite.')
-        else:
-            print('Warning: Covariance matirx is not positive definite.')
+    def _model_fn(self, x):
+        m = GPModel()
+        return m(x)
 
-        key = hk.next_rng_key()
+    def _mse(self, labels, predictions):
+        return jnp.square(jnp.subtract(labels,predictions)).mean()
 
-        ys = jax.random.multivariate_normal(key, self.mu[:,0], self.cov, method='svd')
+    def train(self, x, y):
+        
+        print('Start Training')
 
-        return ys
+        opt = optax.adam(1e-3)
+
+        @jax.jit
+        def loss(params: hk.Params, x, y):
+            y_est = self.m.apply(params, x)
+            return self._mse(y,y_est)
+
+        @jax.jit
+        def update(params, state, x, y):
+            grads = jax.grad(loss)(params, x, y)
+            updates, state = opt.update(grads, state)
+            params = optax.apply_updates(params, updates)
+            return params, state
+
+        @jax.jit
+        def evaluate(params, x, y):
+            y_est = self.m.apply(params, x)
+            error = self._mse(y_est, y)
+            return error
+    
+        params = self.m.init(self.key, x)
+        state = opt.init(params)
+    
+        for step in range(5000):
+
+            params, state = update(params, state, x, y)
+
+            if step % 100 == 0:
+                mse_train = evaluate(params, x, y)
+                mse_test= evaluate(params, x, y)
+                print('  step=%d, mse_train=%.3f, mse_test=%.3f' % (step, mse_train, mse_test))
+
+        self.params = params
+
+    def predict(self, x):
+        return self.m.apply(self.params, x)

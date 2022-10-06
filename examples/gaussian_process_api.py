@@ -1,37 +1,15 @@
-import haiku as hk
 import jax
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
-import numpy as np
-import optax
-from typing import Iterator, NamedTuple
 import time
-
-
-
 from ramsey.data import sample_from_sinus_function
 
-from ramsey.covariance_functions import exponentiated_quadratic as rbf
+
 
 from ramsey.models import GP
 
-def mse(labels, predictions):
-  return jnp.square(jnp.subtract(labels,predictions)).mean()
 
 
-class Model(hk.Module):
-  def __call__(self, x):
-    a = hk.get_parameter("a", [], init=jnp.ones)
-    b = hk.get_parameter("b", [], init=jnp.ones)
-    c = hk.get_parameter("c", [], init=jnp.ones)
-    d = hk.get_parameter("d", [], init=jnp.ones)
-
-    return a*jnp.sin(b*x+c)+d
-
-
-def model_fn(x):
-  m = Model()
-  return m(x)
 
 class Dataset():
   def __init__(self, x, y) -> None:
@@ -73,56 +51,20 @@ def main():
 
   key = jax.random.PRNGKey(23)
 
-  m = hk.transform(model_fn)
-  m = hk.without_apply_rng(m)
-
-  opt = optax.adam(1e-3)
-
-  @jax.jit
-  def loss(params: hk.Params, x, y):
-    y_est = m.apply(params, x)
-    return mse(y,y_est)
-
-  @jax.jit
-  def update(params, state, x, y):
-    grads = jax.grad(loss)(params, x, y)
-    updates, state = opt.update(grads, state)
-    params = optax.apply_updates(params, updates)
-    return params, state
-
-  @jax.jit
-  def evaluate(params, x, y):
-    y_est = m.apply(params, x)
-    error = mse(y_est, y)
-    return error
-
   print('Load Dataset')
   train_data, test_data = load_dataset(key, 200, train_split = 0.8)
 
-  print('Start Training')
-  start = time.time()
-
-  params = m.init(key, train_data.x)
-  state = opt.init(params)
+  gp = GP()
   
-  for step in range(5000):
-
-    params, state = update(params, state, train_data.x, train_data.y)
-
-    if step % 100 == 0:
-      mse_train = evaluate(params, train_data.x, train_data.y)
-      mse_test= evaluate(params, test_data.x, test_data.y)
-      print('  step=%d, mse_train=%.3f, mse_test=%.3f' % (step, mse_train, mse_test))
-
-
+  start = time.time()
+  gp.train(train_data.x, train_data.y)
   end = time.time()
-
-
   print('  Training Duration: %.3fs' % (end - start))
+
 
   x = jnp.concatenate((train_data.x, test_data.x))
   x = jnp.linspace(jnp.min(x), jnp.max(x), num = 200)
-  y = m.apply(params, x)
+  y = gp.predict(x)
   
 
   plt.scatter(train_data.x, train_data.y, color='blue', marker='+', label='y_train')
