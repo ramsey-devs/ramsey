@@ -9,8 +9,6 @@ from ramsey.data import sample_from_sinus_function
 from ramsey.models import GP
 
 
-
-
 class Dataset():
   def __init__(self, x, y) -> None:
     self.x = x
@@ -51,9 +49,9 @@ def load_dataset(num_samples, train_split = 1):
 def main():
 
   print('Load Dataset')
-  train_data, test_data = load_dataset(200, train_split = 0.8)
+  train_data, test_data = load_dataset(200, train_split = 0.3)
 
-  
+  print('Create GP')
   gp = GP()
   
   print('Start Training')
@@ -62,15 +60,18 @@ def main():
   end = time.time()
   print('  Training Duration: %.3fs' % (end - start))
 
-
-  x = jnp.concatenate((train_data.x, test_data.x))
-  x = jnp.linspace(jnp.min(x), jnp.max(x), num = 200)
-  y = gp.predict(x)
+  print('Predict')
+  # x = jnp.concatenate((train_data.x, test_data.x))
+  # x = jnp.linspace(jnp.min(x), jnp.max(x), num = 200)
+  x = jnp.ones((len(train_data.x),1))
+  print(jnp.shape(x))
+  mu, cov = gp.predict(x)
   
-
+  print(str(mu))
+  
   plt.scatter(train_data.x, train_data.y, color='blue', marker='+', label='y_train')
   plt.scatter(test_data.x, test_data.y, color='green', marker='+', label='y_test')
-  plt.plot(x, y, color='orange', label='fit')
+  plt.plot(x, mu, color='orange', label='fit')
 
   plt.legend()
   plt.grid()
