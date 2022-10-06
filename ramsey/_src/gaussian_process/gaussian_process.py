@@ -35,8 +35,6 @@ class GP:
         return jnp.square(jnp.subtract(labels,predictions)).mean()
 
     def train(self, x, y):
-        
-        print('Start Training')
 
         opt = optax.adam(1e-3)
 

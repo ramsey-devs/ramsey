@@ -38,6 +38,7 @@ class GP(hk.Module):
 
         key = hk.next_rng_key()
 
-        ys = jax.random.multivariate_normal(key, self.mu[:,0], self.cov, method='svd')
+        ys = jax.random.multivariate_normal(key, self.mu.ravel(), self.cov, method='svd')
+
 
         return ys

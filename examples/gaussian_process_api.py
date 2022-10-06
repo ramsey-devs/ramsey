@@ -16,7 +16,8 @@ class Dataset():
     self.x = x
     self.y = y
 
-def load_dataset(key, num_samples, train_split = 1):
+def load_dataset(num_samples, train_split = 1):
+    key = jax.random.PRNGKey(23)
     (x, y), f = sample_from_sinus_function(key, batch_size = 1, num_observations=num_samples)
 
     n_train = int(num_samples * train_split)
@@ -49,13 +50,13 @@ def load_dataset(key, num_samples, train_split = 1):
 
 def main():
 
-  key = jax.random.PRNGKey(23)
-
   print('Load Dataset')
-  train_data, test_data = load_dataset(key, 200, train_split = 0.8)
+  train_data, test_data = load_dataset(200, train_split = 0.8)
 
+  
   gp = GP()
   
+  print('Start Training')
   start = time.time()
   gp.train(train_data.x, train_data.y)
   end = time.time()

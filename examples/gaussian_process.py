@@ -10,7 +10,7 @@ from ramsey.data import sample_from_sinus_function
 from ramsey.covariance_functions import exponentiated_quadratic as rbf
 
 
-from ramsey.models import GP
+from ramsey._src.gaussian_process.gaussian_process_test import GP
 
 
 def _gaussian_process(mu, cov):
