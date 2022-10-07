@@ -20,8 +20,6 @@ class RBFKernel(hk.Module):
     self.sigma = hk.get_parameter("sigma", [], init=jnp.ones)
 
   def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
-    
-        print('RBFKernel __call__()')
         
         shape_x1 = jnp.shape(x1)
         shape_x2 = jnp.shape(x2)
@@ -42,6 +40,8 @@ class RBFKernel(hk.Module):
         chex.assert_equal(shape_x1[1], shape_x2[1])
 
         cov = rbf(x1,x2, self.sigma, self.rho)
+
+        # print(cov)
                 
         chex.assert_shape(cov, (n,m))
 
@@ -64,7 +64,8 @@ class GP:
     def _mll_loss(self, params: hk.Params, x, y):
 
         noise = 0.1
-        K = self.k.apply(params, x, x) + noise**2 * jnp.eye(len(x))
+        K = self.k.apply(params, x, x)
+        K = K + noise**2 * jnp.eye(len(x))
         
         data_fit = -0.5 * y.dot(inv(K).dot(y))
         complexity_penalty = -0.5 * jnp.log(det(K))
@@ -81,35 +82,32 @@ class GP:
 
         opt = optax.adam(1e-3)
 
-        loss = self._mll_loss
+        # loss = self._mll_loss
 
-        @jax.jit
+        # @jax.jit
         def update(params, state, x, y):
-            grads = jax.grad(loss)(params, x, y)
+            grads = jax.grad(self._mll_loss)(params, x, y)
             updates, state = opt.update(grads, state)
             params = optax.apply_updates(params, updates)
             return params, state
 
-        @jax.jit
+        # @jax.jit
         def evaluate(params, x, y):
-            error = loss(params, x, y)
+            error = self._mll_loss(params, x, y)
             return error
     
         params = self.k.init(self.key, x[0].reshape((1,1)), x[0].reshape((1,1)))
 
-        print('----------- Initial Parameter ------------')
-        print(params)
-
         state = opt.init(params)
     
-        for step in range(1000):
+        for step in range(100):
 
             params, state = update(params, state, x, y)
 
             if step % 100 == 0:
-                print(params)
                 loss = evaluate(params, x, y)
                 print('  step=%d, loss=%.3f' % (step, loss))
+                print(' ' + str(params))
 
         self.params = params
 

@@ -49,7 +49,7 @@ def load_dataset(num_samples, train_split = 1):
 def main():
 
   print('Load Dataset')
-  train_data, test_data = load_dataset(200, train_split = 0.3)
+  train_data, test_data = load_dataset(100, train_split = 0.2)
 
   print('Create GP')
   gp = GP()
@@ -60,18 +60,18 @@ def main():
   end = time.time()
   print('  Training Duration: %.3fs' % (end - start))
 
-  print('Predict')
-  # x = jnp.concatenate((train_data.x, test_data.x))
-  # x = jnp.linspace(jnp.min(x), jnp.max(x), num = 200)
-  x = jnp.ones((len(train_data.x),1))
-  print(jnp.shape(x))
-  mu, cov = gp.predict(x)
+  print('Start Prediction')
+  start = time.time()
+  x_s = jnp.concatenate((train_data.x, test_data.x))
+  x_s = jnp.linspace(jnp.min(x_s), jnp.max(x_s), num = 200)
+  mu, cov = gp.predict(x_s)
+  end = time.time()
+  print('  Prediction Duration: %.3fs' % (end - start))
   
-  print(str(mu))
-  
+
   plt.scatter(train_data.x, train_data.y, color='blue', marker='+', label='y_train')
-  plt.scatter(test_data.x, test_data.y, color='green', marker='+', label='y_test')
-  plt.plot(x, mu, color='orange', label='fit')
+  # plt.scatter(test_data.x, test_data.y, color='green', marker='+', label='y_test')
+  plt.plot(x_s, mu, color='orange', label='fit')
 
   plt.legend()
   plt.grid()
