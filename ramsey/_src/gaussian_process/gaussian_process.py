@@ -1,9 +1,8 @@
 import haiku as hk
 import jax
-import jax.numpy as jnp
+from jax import numpy as jnp
 import numpy as np
 import optax
-from jax.numpy.linalg import cholesky, det, inv
 from ramsey.covariance_functions import exponentiated_quadratic as rbf
 import chex
 
@@ -41,16 +40,16 @@ class RBFKernel(hk.Module):
 
         cov = rbf(x1,x2, self.sigma, self.rho)
 
-        # print(cov)
-                
         chex.assert_shape(cov, (n,m))
 
         return cov
 
 class GP:
 
-    def __init__(self) -> None:
+    def __init__(self, sigma_noise) -> None:
         self.key = jax.random.PRNGKey(23)
+
+        self.stddev_noise = sigma_noise**2
 
         # transform kernel
         k = hk.transform(self._kernel_fn)
@@ -60,20 +59,18 @@ class GP:
         k = RBFKernel()
         return k(x1, x2)
 
-    # http://krasserm.github.io/2018/03/19/gaussian-processes/
     def _mll_loss(self, params: hk.Params, x, y):
-
-        noise = 0.1
-        K = self.k.apply(params, x, x)
-        K = K + noise**2 * jnp.eye(len(x))
         
-        data_fit = -0.5 * y.dot(inv(K).dot(y))
-        complexity_penalty = -0.5 * jnp.log(det(K))
-        norm_const = -0.5 * len(x) * jnp.log(2*jnp.pi)
+        K = self.k.apply(params, x, x) + self.stddev_noise * jnp.eye(len(x))
+        
+        data_fit = jnp.dot(y.T, jnp.linalg.inv(K))
+        data_fit = jnp.dot(data_fit, y)
 
-        loss = data_fit + complexity_penalty + norm_const
+        complexity_penalty = jnp.log(jnp.linalg.det(K))
 
-        return -loss
+        loss = data_fit + complexity_penalty
+
+        return loss
 
     def train(self, x, y):
 
@@ -82,29 +79,36 @@ class GP:
 
         opt = optax.adam(1e-3)
 
-        # loss = self._mll_loss
+        objective = self._mll_loss
 
         # @jax.jit
         def update(params, state, x, y):
-            grads = jax.grad(self._mll_loss)(params, x, y)
+            objective_grad = jax.grad(objective)
+            grads = objective_grad(params, x, y)
             updates, state = opt.update(grads, state)
             params = optax.apply_updates(params, updates)
             return params, state
 
         # @jax.jit
         def evaluate(params, x, y):
-            error = self._mll_loss(params, x, y)
-            return error
+            return objective(params, x, y)
+
     
         params = self.k.init(self.key, x[0].reshape((1,1)), x[0].reshape((1,1)))
 
         state = opt.init(params)
     
-        for step in range(100):
+        for step in range(25):
 
             params, state = update(params, state, x, y)
 
-            if step % 100 == 0:
+            # loss = evaluate(params, x, y)
+            # print('  step=%d, loss=%.3f' % (step, loss))
+
+            # K = self.k.apply(params, self.x_train, self.x_train)
+            # print(K)
+
+            if step % 5 == 0:
                 loss = evaluate(params, x, y)
                 print('  step=%d, loss=%.3f' % (step, loss))
                 print(' ' + str(params))
@@ -112,12 +116,12 @@ class GP:
         self.params = params
 
     def predict(self, x_s):
-        noise = 0.1
-        K_tt = self.k.apply(self.params, self.x_train, self.x_train) + noise**2 * jnp.eye(len(self.x_train))
+
+        K_tt = self.k.apply(self.params, self.x_train, self.x_train) + self.stddev_noise* jnp.eye(len(self.x_train))
         K_ts = self.k.apply(self.params, self.x_train, x_s)
         K_ss = self.k.apply(self.params, x_s, x_s) + 1e-8 * jnp.eye(len(x_s))
 
-        K_tt_inv = inv(K_tt)
+        K_tt_inv = jnp.linalg.inv(K_tt)
 
          # Equation (7)
         mu_s = K_ts.T.dot(K_tt_inv).dot(self.y_train)

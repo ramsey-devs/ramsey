@@ -52,7 +52,7 @@ def main():
   train_data, test_data = load_dataset(100, train_split = 0.2)
 
   print('Create GP')
-  gp = GP()
+  gp = GP(sigma_noise=0.1)
   
   print('Start Training')
   start = time.time()
