@@ -92,8 +92,8 @@ class GP:
         self.k = hk.without_apply_rng(k)
 
     def _kernel_fn(self, x1, x2):
-        # k = RBFKernel()
-        k = LinearKernel()
+        k = RBFKernel()
+        # k = LinearKernel()
         return k(x1, x2)
 
     def _mll_loss(self, params: hk.Params, x, y):

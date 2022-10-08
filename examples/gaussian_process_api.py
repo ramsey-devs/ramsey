@@ -1,3 +1,4 @@
+from trace import CoverageResults
 import jax
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
@@ -14,9 +15,9 @@ def main():
 
   print('Load Dataset')
   n_samples = 10
-  sigma_noise = 0.2
+  sigma_noise = 0.5
   # x, y, f = sample_from_sine(key, n_samples, sigma_noise, f=0.25)
-  x, y, f = sample_from_gp_with_rbf_kernel(key, n_samples, sigma_noise, sigma=2, rho=4)
+  x, y, f = sample_from_gp_with_rbf_kernel(key, n_samples, sigma_noise, sigma=0.1, rho=1)
 
   print('Create GP')
   gp = GP(sigma_noise)
@@ -28,10 +29,11 @@ def main():
   print('  Training Duration: %.3fs' % (end - start))
 
   print('Start Prediction')
+  N = 200
   start = time.time()
-
-  x_s = jnp.linspace(jnp.min(x), jnp.max(x), num = 200)
+  x_s = jnp.linspace(jnp.min(x), jnp.max(x), num = N)
   mu, cov = gp.predict(x_s)
+  std = jnp.reshape(jnp.diagonal(cov), (N, 1))
   end = time.time()
   print('  Prediction Duration: %.3fs' % (end - start))
   
@@ -39,6 +41,17 @@ def main():
   plt.scatter(x, y, color='blue', marker='+', label='y')
   plt.scatter(x, f, color='green', marker='+', label='f')
   plt.plot(x_s, mu, color='orange', label='fit')
+
+  lower_conf_bound = jnp.subtract(mu, 1.96*std)
+  upper_conf_bound = jnp.add(mu, 1.96*std)
+
+  plt.fill_between(
+    x_s,
+    lower_conf_bound.ravel(),
+    upper_conf_bound.ravel(),
+    alpha=0.5,
+    label=r'95% confidence interval',
+  )
 
   plt.legend()
   plt.grid()
