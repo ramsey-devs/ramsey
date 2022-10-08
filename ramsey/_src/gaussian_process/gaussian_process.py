@@ -1,13 +1,45 @@
-from re import A
 import haiku as hk
 import jax
 from jax import numpy as jnp
+from jax.numpy import dot
+from jax.numpy.linalg import inv, det
+
+
 import numpy as np
 import optax
 from ramsey.covariance_functions import exponentiated_quadratic as rbf
 import chex
 
 __all__ = ["GP"]
+
+
+class KernelUtils():
+
+
+    def shape_input(x : jnp.ndarray):
+        
+        shape = jnp.shape(x)
+        
+        if shape == (len(x),):
+
+            x = x.reshape((len(x),1))
+            
+        return x
+
+    def check_input_dim(x1 : jnp.ndarray, x2 : jnp.ndarray):
+
+        shape_x1 = jnp.shape(x1)
+        shape_x2 = jnp.shape(x2)
+
+        chex.assert_equal(shape_x1[1], shape_x2[1])
+
+    def check_cov_dim(x1 : jnp.ndarray, x2 : jnp.ndarray, cov : jnp.ndarray):
+
+        n = jnp.shape(x1)[0]
+        m = jnp.shape(x2)[0]
+
+        chex.assert_shape(cov, (n,m))
+
 
 
 class LinearKernel(hk.Module):
@@ -18,30 +50,17 @@ class LinearKernel(hk.Module):
 
   def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
         
-    shape_x1 = jnp.shape(x1)
-    shape_x2 = jnp.shape(x2)
+    x1 = KernelUtils.shape_input(x1)
+    x2 = KernelUtils.shape_input(x2)
 
-    if shape_x1 == (len(x1),):
-
-        x1 = x1.reshape((len(x1),1))
-        shape_x1 = jnp.shape(x1)
-
-    if shape_x2 == (len(x2),):
-
-        x2 = x2.reshape((len(x2),1))
-        shape_x2 = jnp.shape(x2)
-
-    n = shape_x1[0]
-    m = shape_x2[0]
-
-    chex.assert_equal(shape_x1[1], shape_x2[1])
+    KernelUtils.check_input_dim(x1, x2)
 
     a = hk.get_parameter("a", [], init=jnp.ones)
     b = hk.get_parameter("b", [], init=jnp.ones)
 
     cov = a * jnp.dot(x1,x2.T) + b
 
-    chex.assert_shape(cov, (n,m))
+    KernelUtils.check_cov_dim(x1, x2, cov)
 
     return cov
 
@@ -53,30 +72,17 @@ class RBFKernel(hk.Module):
 
   def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
         
-        shape_x1 = jnp.shape(x1)
-        shape_x2 = jnp.shape(x2)
+        x1 = KernelUtils.shape_input(x1)
+        x2 = KernelUtils.shape_input(x2)
 
-        if shape_x1 == (len(x1),):
-
-            x1 = x1.reshape((len(x1),1))
-            shape_x1 = jnp.shape(x1)
-
-        if shape_x2 == (len(x2),):
-
-            x2 = x2.reshape((len(x2),1))
-            shape_x2 = jnp.shape(x2)
-
-        n = shape_x1[0]
-        m = shape_x2[0]
-
-        chex.assert_equal(shape_x1[1], shape_x2[1])
+        KernelUtils.check_input_dim(x1, x2)
 
         rho = hk.get_parameter("rho", [], init=jnp.ones)
         sigma = hk.get_parameter("sigma", [], init=jnp.ones)
 
         cov = rbf(x1,x2, sigma = sigma, rho = rho)
 
-        chex.assert_shape(cov, (n,m))
+        KernelUtils.check_cov_dim(x1, x2, cov)
 
         return cov
 
@@ -92,18 +98,17 @@ class GP:
         self.k = hk.without_apply_rng(k)
 
     def _kernel_fn(self, x1, x2):
-        k = RBFKernel()
-        # k = LinearKernel()
+        # k = RBFKernel()
+        k = LinearKernel()
         return k(x1, x2)
 
     def _mll_loss(self, params: hk.Params, x, y):
         
         K = self.k.apply(params, x, x) + self.stddev_noise * jnp.eye(len(x))
-        
-        data_fit = jnp.dot(y.T, jnp.linalg.inv(K))
-        data_fit = jnp.dot(data_fit, y)
 
-        complexity_penalty = jnp.log(jnp.linalg.det(K))
+        data_fit = y.T.dot(inv(K)).dot(y)
+        
+        complexity_penalty = jnp.log(det(K))
 
         loss = data_fit + complexity_penalty
 
@@ -115,7 +120,8 @@ class GP:
         self.x_train = x
         self.y_train = y
 
-        opt = optax.adam(1e-3)
+        lr = 1e-3
+        opt = optax.adam(lr)
 
         objective = self._mll_loss
 
@@ -136,20 +142,17 @@ class GP:
 
         state = opt.init(params)
     
-        for step in range(10000+1):
+        for step in range(5000):
 
             params, state = update(params, state, x, y)
 
-            # loss = evaluate(params, x, y)
-            # print('  step=%d, loss=%.3f' % (step, loss))
-
-            # K = self.k.apply(params, self.x_train, self.x_train)
-            # print(K)
-
-            if step % 100 == 0:
+            if (step % 100 == 0):
                 loss = evaluate(params, x, y)
+                K = self.k.apply(params, x, x) + self.stddev_noise * jnp.eye(len(x))
                 print('  step=%d, loss=%.3f' % (step, loss))
-                print(' ' + str(params))
+                print('  cond(K)=%.2f' % (jnp.linalg.cond(K)))
+                # print(' ' + str(params))
+                
 
         self.params = params
 
@@ -163,10 +166,8 @@ class GP:
 
         K_tt_inv = jnp.linalg.inv(K_tt)
 
-         # Equation (7)
         mu_s = K_ts.T.dot(K_tt_inv).dot(self.y_train)
 
-        # Equation (8)
         cov_s = K_ss - K_ts.T.dot(K_tt_inv).dot(K_ts)
     
         return mu_s, cov_s

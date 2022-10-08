@@ -14,10 +14,10 @@ def main():
   key = jax.random.PRNGKey(18)
 
   print('Load Dataset')
-  n_samples = 10
-  sigma_noise = 0.5
-  # x, y, f = sample_from_sine(key, n_samples, sigma_noise, f=0.25)
-  x, y, f = sample_from_gp_with_rbf_kernel(key, n_samples, sigma_noise, sigma=0.1, rho=1)
+  n_samples = 15
+  sigma_noise = 0.1
+  x, y, f = sample_from_sine(key, n_samples, sigma_noise, frequency=0.25)
+  #x, y, f = sample_from_gp_with_rbf_kernel(key, n_samples, sigma_noise, sigma=0.1, rho=1)
 
   print('Create GP')
   gp = GP(sigma_noise)
