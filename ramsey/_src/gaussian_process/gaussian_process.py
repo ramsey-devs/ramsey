@@ -1,173 +1,44 @@
 import haiku as hk
 import jax
-from jax import numpy as jnp
-from jax.numpy import dot
-from jax.numpy.linalg import inv, det
-
-
-import numpy as np
-import optax
-from ramsey.covariance_functions import exponentiated_quadratic as rbf
-import chex
+import jax.numpy as np
+import numpyro.distributions as dist
+from chex import assert_axis_dimension, assert_rank
+from ramsey._src.family import Family, Gaussian
 
 __all__ = ["GP"]
 
 
-class KernelUtils():
+# pylint: disable=too-many-instance-attributes,duplicate-code
+class GP(hk.Module):
 
 
-    def shape_input(x : jnp.ndarray):
-        
-        shape = jnp.shape(x)
-        
-        if shape == (len(x),):
+    def __init__(
+        self,
+        mu: np.ndarray,
+        cov: np.ndarray
+    ):
+        assert_axis_dimension(mu, 1, 1)
+        assert_axis_dimension(mu, 0, np.shape(cov)[0])
+        assert_axis_dimension(mu, 0, np.shape(cov)[1])        
 
-            x = x.reshape((len(x),1))
-            
-        return x
+        super().__init__()
+        self.mu = mu
+        self.cov = cov
 
-    def check_input_dim(x1 : jnp.ndarray, x2 : jnp.ndarray):
+    def __call__(self):
+        print('I am the _call__ method')
 
-        shape_x1 = jnp.shape(x1)
-        shape_x2 = jnp.shape(x2)
-
-        chex.assert_equal(shape_x1[1], shape_x2[1])
-
-    def check_cov_dim(x1 : jnp.ndarray, x2 : jnp.ndarray, cov : jnp.ndarray):
-
-        n = jnp.shape(x1)[0]
-        m = jnp.shape(x2)[0]
-
-        chex.assert_shape(cov, (n,m))
+    def sample(self):
 
 
+        if(np.all(np.linalg.eigvals(self.cov)>0)):
+            print('Covariance matirx is positive definite.')
+        else:
+            print('Warning: Covariance matirx is not positive definite.')
 
-class LinearKernel(hk.Module):
+        key = hk.next_rng_key()
 
-  def __init__(self, name = None):
+        ys = jax.random.multivariate_normal(key, self.mu.ravel(), self.cov, method='svd')
 
-    super().__init__(name=name)
 
-  def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
-        
-    x1 = KernelUtils.shape_input(x1)
-    x2 = KernelUtils.shape_input(x2)
-
-    KernelUtils.check_input_dim(x1, x2)
-
-    a = hk.get_parameter("a", [], init=jnp.ones)
-    b = hk.get_parameter("b", [], init=jnp.ones)
-
-    cov = a * jnp.dot(x1,x2.T) + b
-
-    KernelUtils.check_cov_dim(x1, x2, cov)
-
-    return cov
-
-class RBFKernel(hk.Module):
-
-  def __init__(self, name = None):
-
-    super().__init__(name=name)
-
-  def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
-        
-        x1 = KernelUtils.shape_input(x1)
-        x2 = KernelUtils.shape_input(x2)
-
-        KernelUtils.check_input_dim(x1, x2)
-
-        rho = hk.get_parameter("rho", [], init=jnp.ones)
-        sigma = hk.get_parameter("sigma", [], init=jnp.ones)
-
-        cov = rbf(x1,x2, sigma = sigma, rho = rho)
-
-        KernelUtils.check_cov_dim(x1, x2, cov)
-
-        return cov
-
-class GP:
-
-    def __init__(self, sigma_noise) -> None:
-        self.key = jax.random.PRNGKey(23)
-
-        self.stddev_noise = sigma_noise**2
-
-        # transform kernel
-        k = hk.transform(self._kernel_fn)
-        self.k = hk.without_apply_rng(k)
-
-    def _kernel_fn(self, x1, x2):
-        # k = RBFKernel()
-        k = LinearKernel()
-        return k(x1, x2)
-
-    def _mll_loss(self, params: hk.Params, x, y):
-        
-        K = self.k.apply(params, x, x) + self.stddev_noise * jnp.eye(len(x))
-
-        data_fit = y.T.dot(inv(K)).dot(y)
-        
-        complexity_penalty = jnp.log(det(K))
-
-        loss = data_fit + complexity_penalty
-
-        loss = jnp.reshape(loss, ())
-        return loss
-
-    def train(self, x, y):
-
-        self.x_train = x
-        self.y_train = y
-
-        lr = 1e-3
-        opt = optax.adam(lr)
-
-        objective = self._mll_loss
-
-        @jax.jit
-        def update(params, state, x, y):
-            objective_grad = jax.grad(objective)
-            grads = objective_grad(params, x, y)
-            updates, state = opt.update(grads, state)
-            params = optax.apply_updates(params, updates)
-            return params, state
-
-        @jax.jit
-        def evaluate(params, x, y):
-            return objective(params, x, y)
-
-    
-        params = self.k.init(self.key, x, x)
-
-        state = opt.init(params)
-    
-        for step in range(5000):
-
-            params, state = update(params, state, x, y)
-
-            if (step % 100 == 0):
-                loss = evaluate(params, x, y)
-                K = self.k.apply(params, x, x) + self.stddev_noise * jnp.eye(len(x))
-                print('  step=%d, loss=%.3f' % (step, loss))
-                print('  cond(K)=%.2f' % (jnp.linalg.cond(K)))
-                # print(' ' + str(params))
-                
-
-        self.params = params
-
-    def predict(self, x_s):
-
-        print(' ' + str(self.params))
-
-        K_tt = self.k.apply(self.params, self.x_train, self.x_train) + self.stddev_noise* jnp.eye(len(self.x_train))
-        K_ts = self.k.apply(self.params, self.x_train, x_s)
-        K_ss = self.k.apply(self.params, x_s, x_s)
-
-        K_tt_inv = jnp.linalg.inv(K_tt)
-
-        mu_s = K_ts.T.dot(K_tt_inv).dot(self.y_train)
-
-        cov_s = K_ss - K_ts.T.dot(K_tt_inv).dot(K_ts)
-    
-        return mu_s, cov_s
+        return ys

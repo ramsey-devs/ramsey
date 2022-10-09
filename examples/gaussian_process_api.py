@@ -1,30 +1,32 @@
-from trace import CoverageResults
 import jax
+import haiku as hk
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 import time
 from ramsey._src.gaussian_process.data import sample_from_sine, sample_from_gp_with_rbf_kernel
+from ramsey._src.gaussian_process.kernel import RBFKernel
 
-
-from ramsey.models import GP
+from ramsey.models.high_level import GP
 
 
 def main():
 
-  key = jax.random.PRNGKey(18)
+  key = hk.PRNGSequence(6)
 
   print('Load Dataset')
-  n_samples = 15
+  n_samples = 10
   sigma_noise = 0.1
-  x, y, f = sample_from_sine(key, n_samples, sigma_noise, frequency=0.25)
-  #x, y, f = sample_from_gp_with_rbf_kernel(key, n_samples, sigma_noise, sigma=0.1, rho=1)
+  #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
+  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma=1, rho=2.5)
 
   print('Create GP')
-  gp = GP(sigma_noise)
+
+  kernel = RBFKernel()
+  gp = GP(key, kernel, sigma_noise)
   
   print('Start Training')
   start = time.time()
-  gp.train(x, y)
+  gp.train(x, y, n_iter = 1000, n_restart = 20)
   end = time.time()
   print('  Training Duration: %.3fs' % (end - start))
 

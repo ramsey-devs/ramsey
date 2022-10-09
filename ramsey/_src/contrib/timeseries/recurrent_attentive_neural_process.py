@@ -6,7 +6,7 @@ from chex import assert_axis_dimension, assert_rank
 
 from ramsey.attention import Attention
 from ramsey.family import Family, Gaussian
-from ramsey.models import ANP
+from ramsey.models.low_level import ANP
 
 __all__ = ["RANP"]
 
