@@ -4,8 +4,6 @@ from ramsey.covariance_functions import exponentiated_quadratic as rbf
 import chex
 import abc
 
-
-
 class Kernel(abc.ABC):
     """
     Kernel Interface
