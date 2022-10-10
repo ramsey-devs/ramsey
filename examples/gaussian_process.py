@@ -5,6 +5,8 @@ from jax import numpy as jnp
 from jax.numpy.linalg import inv, det
 import matplotlib.pyplot as plt
 import optax
+import chex
+from typing import Tuple
 
 from ramsey._src.gaussian_process.kernel import RBFKernel
 
@@ -18,18 +20,17 @@ def main():
 
   print('\n--------------------------------------------------')
   print('Load Dataset')
-  n_samples = 10
-  sigma_noise = 0.05
+  n_samples = 20
+  sigma_noise = 0.1
   #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
-  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma=1, rho=0.5)
+  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma=1, rho=9.56)
   n_predict = 200
   x_s = jnp.linspace(jnp.min(x), jnp.max(x), num = n_predict)
 
   print('\n--------------------------------------------------')
   print('Create GP')
 
-
-  def _gaussian_process(**kwargs):
+  def _gaussian_process(**kwargs) -> hk.Transformed:
 
     gp = GP(
       kernel=RBFKernel(),
@@ -49,10 +50,10 @@ def main():
   start = time.time()
 
   n_iter = 10000
-  n_restart = 5
+  n_restart = 10
   init_lr = 1e-3
 
-  def _mll_loss(params, x, y):
+  def _mll_loss(params : hk.Params, x : jnp.ndarray, y : jnp.ndarray) -> jnp.ndarray:
     K = gaussian_process.apply(params, method='covariance')
     data_fit = y.T.dot(inv(K)).dot(y)
     complexity_penalty = jnp.log(det(K))
@@ -65,7 +66,7 @@ def main():
   objective = _mll_loss
 
   @jax.jit
-  def update(params, state, x, y):
+  def update(params : hk.Params, state : chex.ArrayTree, x: jnp.ndarray, y: jnp.ndarray) -> Tuple[hk.Params, chex.ArrayTree]:
     objective_grad = jax.grad(objective)
     grads = objective_grad(params, x, y)
     updates, state = opt.update(grads, state)
@@ -73,15 +74,15 @@ def main():
     return params, state
 
   @jax.jit
-  def evaluate(params, x, y):
+  def evaluate(params: hk.Params, x: jnp.ndarray, y: jnp.ndarray) -> jnp.ndarray:
       return objective(params, x, y)
+
+  opt_loss = 1e3
+  opt_params = {}
 
   for i in range(n_restart):
 
     print('  Training Loop %d ...' % (i))
-
-    opt_loss = 1e3
-    opt_params = {}
 
     params = gaussian_process.init(next(key), x_s = x_s)
 
@@ -93,10 +94,10 @@ def main():
 
         params, state = update(params, state, x, y)
 
-        if (step % 250 == 0):
+        if (step % 500 == 0):
             loss = evaluate(params, x, y)
             #K = gaussian_process.apply(params, method='covariance')
-            # print('  step=%d, loss=%.3f' % (step, loss))
+            print('  step=%d, loss=%.3f' % (step, loss))
             # print('  cond(K)=%.2f' % (jnp.linalg.cond(K)))
             # print(' ' + str(params))
             
@@ -106,6 +107,8 @@ def main():
 
     print('    End Parameter:   ' + str(params))
     
+  params = opt_params
+
   end = time.time()
 
   print('\n')

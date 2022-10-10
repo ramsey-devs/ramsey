@@ -18,20 +18,6 @@ class Kernel(abc.ABC):
     def __call__(self, x1: jnp.ndarray, x2: jnp.ndarray):
         pass
 
-
-class KernelModule(hk.Module):
-
-    def __init__(self, kernel : Kernel, name = None):
-
-        super().__init__(name=name)
-        self._kernel = kernel
-
-    def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
-
-        return self._kernel(x1, x2)
-
-
-
 class KernelUtils():
 
 
@@ -61,9 +47,9 @@ class KernelUtils():
 
 
 
-class LinearKernel(Kernel):
+class LinearKernel(hk.Module, Kernel):
 
-  def __init__(self, name = None):
+  def __init__(self):
     super().__init__()
 
   def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
@@ -82,7 +68,7 @@ class LinearKernel(Kernel):
 
     return cov
 
-class RBFKernel(Kernel):
+class RBFKernel(hk.Module, Kernel):
 
   def __init__(self):
     super().__init__()
@@ -95,7 +81,7 @@ class RBFKernel(Kernel):
         KernelUtils.check_input_dim(x1, x2)
 
         rho = hk.get_parameter("rho", [], init=hk.initializers.RandomUniform(minval=0, maxval=10))
-        # sigma = hk.get_parameter("sigma", [], init=jnp.ones)
+        # sigma = hk.get_parameter("sigma", [], init=hk.initializers.RandomUniform(minval=1, maxval=5))
         sigma = 1
 
         cov = rbf(x1,x2, sigma = sigma, rho = rho)

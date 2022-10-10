@@ -1,13 +1,10 @@
+from typing import Tuple
 import haiku as hk
-import jax
 from jax import numpy as jnp
-from jax.numpy.linalg import inv, det
-
-import optax
 
 class GP(hk.Module):
 
-    def __init__(self, kernel : hk.Module, x_train : jnp.ndarray, y_train : jnp.ndarray, sigma_noise) -> None:
+    def __init__(self, kernel : hk.Module, x_train : jnp.ndarray, y_train : jnp.ndarray, sigma_noise : jnp.float_):
 
         super().__init__()
 
@@ -19,7 +16,7 @@ class GP(hk.Module):
     def __call__(self, method="predict", **kwargs):
         return getattr(self, method)(**kwargs)
 
-    def predict(self, x_s):
+    def predict(self, x_s: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
         K_tt = self._kernel(self._x, self._x) + self._stddev_noise* jnp.eye(len(self._x))
         K_ts = self._kernel(self._x, x_s)
         K_ss = self._kernel(x_s, x_s)
@@ -32,7 +29,7 @@ class GP(hk.Module):
     
         return mu_s, cov_s
 
-    def covariance(self):
+    def covariance(self) -> jnp.ndarray:
 
         K = self._kernel(self._x, self._x) + self._stddev_noise * jnp.eye(len(self._x))
         return K
