@@ -16,14 +16,14 @@ from ramsey.models.low_level import GP
 
 def main():
 
-  key = hk.PRNGSequence(6)
+  key = hk.PRNGSequence(78)
 
   print('\n--------------------------------------------------')
   print('Load Dataset')
   n_samples = 20
   sigma_noise = 0.1
   #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
-  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma=1, rho=9.56)
+  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma=1, rho=2.56)
   n_predict = 200
   x_s = jnp.linspace(jnp.min(x), jnp.max(x), num = n_predict)
 
