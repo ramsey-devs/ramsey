@@ -36,7 +36,7 @@ def sample_from_gp_with_rbf_kernel(key, n_samples, sigma_noise, sigma = 1, rho =
 
     x = random.uniform(key, (n_samples,1)) * (x_max - x_min) + x_min
 
-    K = exponentiated_quadratic(x, x, sigma = sigma, rho = rho)
+    K = exponentiated_quadratic(x, x, sigma = sigma, rho = rho) + jnp.diag(jnp.ones(n_samples)) * 1e-5
 
     f = random.multivariate_normal(key, mean=jnp.zeros(n_samples), cov=K)
 
