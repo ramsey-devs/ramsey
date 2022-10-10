@@ -1,45 +1,49 @@
-import jax
 import haiku as hk
-import matplotlib.pyplot as plt
-import jax.numpy as jnp
 import time
-from ramsey._src.gaussian_process.data import sample_from_sine, sample_from_gp_with_rbf_kernel
+from jax import numpy as jnp
+import matplotlib.pyplot as plt
+
 from ramsey._src.gaussian_process.kernel import RBFKernel
 
-from ramsey.models.high_level import GP
+from ramsey._src.gaussian_process.data import sample_from_sine, sample_from_gp_with_rbf_kernel
 
+from ramsey.models.high_level import GP
 
 def main():
 
   key = hk.PRNGSequence(6)
 
+  print('\n--------------------------------------------------')
   print('Load Dataset')
   n_samples = 10
   sigma_noise = 0.1
   #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
   x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma=1, rho=2.5)
 
+  print('\n--------------------------------------------------')
   print('Create GP')
-
   kernel = RBFKernel()
-  gp = GP(key, kernel, sigma_noise)
-  
-  print('Start Training')
+  gp = GP(key, kernel, x, y, sigma_noise)
+
+  print('\n--------------------------------------------------')
+  print('Train GP')
   start = time.time()
-  gp.train(x, y, n_iter = 1000, n_restart = 20)
+  gp.train(n_iter = 10000, n_restart = 5, init_lr = 1e-3)
   end = time.time()
   print('  Training Duration: %.3fs' % (end - start))
 
-  print('Start Prediction')
+  print('\n--------------------------------------------------')
+  print('Predict')
   N = 200
   start = time.time()
   x_s = jnp.linspace(jnp.min(x), jnp.max(x), num = N)
-  mu, cov = gp.predict(x_s)
+  mu, cov = gp.predict(x_s=x_s)
   std = jnp.reshape(jnp.diagonal(cov), (N, 1))
   end = time.time()
   print('  Prediction Duration: %.3fs' % (end - start))
-  
 
+  print('\n--------------------------------------------------')
+  print('Plot Results')
   plt.scatter(x, y, color='blue', marker='+', label='y')
   plt.scatter(x, f, color='green', marker='+', label='f')
   plt.plot(x_s, mu, color='orange', label='fit')
@@ -58,7 +62,6 @@ def main():
   plt.legend()
   plt.grid()
   plt.show(block = True)
-
 
 
 if __name__ == "__main__":

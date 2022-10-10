@@ -1,8 +1,6 @@
-from cmath import nan
 import haiku as hk
 import jax
 from jax import numpy as jnp
-from jax.numpy import dot
 from jax.numpy.linalg import inv, det
 from .kernel import Kernel, KernelModule
 
