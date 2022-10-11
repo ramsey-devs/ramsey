@@ -17,4 +17,4 @@ def covariance(
     x: np.ndarray,  # pylint: disable=invalid-name
     y: np.ndarray,  # pylint: disable=invalid-name
 ) -> np.ndarray:
-    return vmap(lambda x1: vmap(lambda y1: kernel(x1, y1, **params))(x))(y)
+    return vmap(lambda x1: vmap(lambda y1: kernel(x1, y1, **params))(y))(x)

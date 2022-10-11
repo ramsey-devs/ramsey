@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from ramsey.train import train_neural_process
 from ramsey.attention import MultiHeadAttention
 from ramsey.data import sample_from_gaussian_process
-from ramsey.models import ANP
+from ramsey.models.low_level import ANP
 
 
 def data(key):

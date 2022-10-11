@@ -6,7 +6,7 @@ from numpyro import distributions as dist
 
 from ramsey.attention import MultiHeadAttention
 from ramsey.covariance_functions import exponentiated_quadratic
-from ramsey.models import ANP, DANP, NP
+from ramsey.models.low_level import ANP, DANP, NP
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
