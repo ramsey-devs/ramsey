@@ -30,7 +30,7 @@ class GP(hk.Module):
 
     def covariance(self) -> jnp.ndarray:
 
-        sigma_noise = hk.get_parameter("sigma_noise", [], init=hk.initializers.RandomUniform(minval=0, maxval=5))
+        sigma_noise = hk.get_parameter("sigma_noise", [], init=hk.initializers.RandomUniform(minval=2, maxval=5))
 
         K = self._kernel(self._x, self._x) + sigma_noise**2  * jnp.eye(len(self._x))
         
