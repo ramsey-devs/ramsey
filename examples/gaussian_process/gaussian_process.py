@@ -108,7 +108,8 @@ def main():
             # print('  cond(K)=%.2f' % (jnp.linalg.cond(K)))
             # print(' ' + str(params))
             
-    if loss < opt_loss:
+    print('-------------------------------' + str(params['gp']['sigma_noise']) + '--------------------------------------')
+    if (loss < opt_loss) & (params['gp']['sigma_noise']>0) & (params['rbf_kernel']['sigma']>0):
         opt_loss = loss
         opt_params = params
 

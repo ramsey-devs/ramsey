@@ -64,8 +64,6 @@ def sample_from_gp_with_rbf_kernel(
     f = random.multivariate_normal(key, mean=jnp.zeros(n_samples), cov=K_f, method='svd')
     f = jnp.reshape(f, (n_samples, 1))
 
-    noise = random.normal(key, (n_samples,1))*sigma_noise
-    y = f + noise
-
-
+    y = random.normal(key, (n_samples,1))*sigma_noise + f
+    
     return x,y,f
