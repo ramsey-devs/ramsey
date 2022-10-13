@@ -12,7 +12,7 @@ from ramsey._src.gaussian_process.kernel import RBFKernel
 
 from data import sample_from_sine, sample_from_gp_with_rbf_kernel
 
-from ramsey.models.low_level import GP
+from ramsey.models import GP
 
 def main():
 
@@ -21,12 +21,12 @@ def main():
   print('\n--------------------------------------------------')
   print('Load Dataset')
   n_samples = 200
-  n_train = 20
+  n_train = 30
   rho_rbf = 2
   sigma_rbf = 1
   sigma_noise = 0.1
-  x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
-  #x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
+  #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
+  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
   
   idx = jax.random.randint(next(key), shape=(n_train,), minval=0, maxval=n_samples)
 
@@ -113,6 +113,11 @@ def main():
     print('    Final Parameter: ' + str(params))
     print('    Loss:            ' + str(loss))
     
+  if opt_params == {}:
+    print('\n')
+    print('ERROR: Hyperparameter fitting failed!')
+    exit(1)
+
   params = opt_params
 
   end = time.time()

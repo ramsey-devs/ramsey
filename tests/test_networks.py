@@ -3,7 +3,7 @@ import haiku as hk
 import pytest
 from jax import random
 
-from ramsey.models.low_level import NP
+from ramsey.models import NP
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name

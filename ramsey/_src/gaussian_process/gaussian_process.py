@@ -34,7 +34,7 @@ class GP(hk.Module):
 
         K = self._kernel(self._x, self._x) + jnp.exp(sigma_noise)**2  * jnp.eye(len(self._x))
         
-        jitter = 1e-8
+        jitter = 1e-6
         K += jitter * jnp.eye(K.shape[0])
         return K
 
