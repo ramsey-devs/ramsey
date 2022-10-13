@@ -57,16 +57,17 @@ def sample_from_gp_with_rbf_kernel(
     print('    rho_rbf = %.3f' % (rho_rbf))
     print('    sigma_noise = %.3f' % (sigma_noise))
 
-
-    x = random.uniform(key, (n_samples,1)) * (x_max - x_min) + x_min
+    x = random.uniform(key, (n_samples,)) * (x_max - x_min) + x_min
+    x = x.sort()
+    x = x.reshape((n_samples,1))
 
     K_f = exponentiated_quadratic(x, x, sigma = sigma_rbf, rho = rho_rbf)
 
-    f = random.multivariate_normal(key, mean=jnp.zeros(n_samples), cov=K_f)
+    f = random.multivariate_normal(key, mean=jnp.zeros(n_samples), cov=K_f, method='svd')
     f = jnp.reshape(f, (n_samples, 1))
-
 
     noise = random.normal(key, (n_samples,1))*sigma_noise
     y = f + noise
+
 
     return x,y,f

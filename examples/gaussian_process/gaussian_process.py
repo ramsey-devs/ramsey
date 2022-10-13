@@ -16,18 +16,24 @@ from ramsey.models.low_level import GP
 
 def main():
 
-  key = hk.PRNGSequence(2)
+  key = hk.PRNGSequence(78)
 
   print('\n--------------------------------------------------')
   print('Load Dataset')
-  n_samples = 20
-  rho_rbf = 1
-  sigma_rbf = 1
+  n_samples = 200
+  n_train = 15
+  rho_rbf = 2
+  sigma_rbf = 0.5
   sigma_noise = 0.1
   #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
-  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma_rbf, rho_rbf)
-  n_predict = 200
-  x_s = jnp.linspace(jnp.min(x), jnp.max(x), num = n_predict)
+  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
+  
+  idx = jax.random.randint(next(key), shape=(n_train,), minval=0, maxval=n_samples)
+
+  idx = idx.sort()
+
+  x_train = x[idx]
+  y_train=  y[idx]
 
   print('\n--------------------------------------------------')
   print('Create GP')
@@ -36,8 +42,8 @@ def main():
 
     gp = GP(
       kernel=RBFKernel(),
-      x_train=x,
-      y_train=y
+      x_train=x_train,
+      y_train=y_train
     )
   
     return gp(**kwargs)
@@ -85,7 +91,7 @@ def main():
 
     print('  Training Loop %d ...' % (i))
 
-    params = gaussian_process.init(next(key), x_s = x_s)
+    params = gaussian_process.init(next(key), x_s = x)
 
     print('    Start Parameter: ' + str(params))
 
@@ -93,10 +99,10 @@ def main():
 
     for step in range(n_iter):
 
-        params, state = update(params, state, x, y)
+        params, state = update(params, state, x_train, y_train)
 
         if (step % 500 == 0):
-            loss = evaluate(params, x, y)
+            loss = evaluate(params, x_train, y_train)
             #K = gaussian_process.apply(params, method='covariance')
             print('  step=%d, loss=%.3f' % (step, loss))
             # print('  cond(K)=%.2f' % (jnp.linalg.cond(K)))
@@ -122,22 +128,33 @@ def main():
   print('\n--------------------------------------------------')
   print('Predict')
   start = time.time()
-  mu, cov = gaussian_process.apply(params, x_s=x_s)
-  std = jnp.sqrt(jnp.reshape(jnp.diagonal(cov), (n_predict, 1)))
+
+  # params = gaussian_process.init(next(key), x_s = x)
+
+  # print(str(params))
+
+  # params['gp']['sigma_noise'] = jnp.array(sigma_noise, dtype = jnp.float32)
+  # params['rbf_kernel']['rho'] = jnp.array(rho_rbf, dtype = jnp.float32)
+  # params['rbf_kernel']['sigma'] = jnp.array(sigma_rbf, dtype = jnp.float32)
+
+  # print(str(params))
+
+  mu, cov = gaussian_process.apply(params, x_s=x)
+  std = jnp.sqrt(jnp.reshape(jnp.diagonal(cov), (len(x), 1)))
   end = time.time()
   print('  Prediction Duration: %.3fs' % (end - start))
 
   print('\n--------------------------------------------------')
   print('Plot Results')
-  plt.scatter(x, y, color='blue', marker='+', label='y')
-  plt.scatter(x, f, color='green', marker='+', label='f')
-  plt.plot(x_s, mu, color='orange', label='fit')
+  plt.scatter(x_train, y_train, color='blue', marker='+', label='y')
+  plt.plot(x, f, color='blue', label='f')
+  plt.plot(x, mu, color='orange', label='fs')
 
   lower_conf_bound = jnp.subtract(mu, 1.96*std)
   upper_conf_bound = jnp.add(mu, 1.96*std)
 
   plt.fill_between(
-    x_s,
+    x.ravel(),
     lower_conf_bound.ravel(),
     upper_conf_bound.ravel(),
     alpha=0.5,
