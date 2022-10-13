@@ -123,7 +123,7 @@ def main():
   print('Predict')
   start = time.time()
   mu, cov = gaussian_process.apply(params, x_s=x_s)
-  std = jnp.reshape(jnp.diagonal(cov), (n_predict, 1))
+  std = jnp.sqrt(jnp.reshape(jnp.diagonal(cov), (n_predict, 1)))
   end = time.time()
   print('  Prediction Duration: %.3fs' % (end - start))
 
