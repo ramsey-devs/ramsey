@@ -79,8 +79,7 @@ class RBFKernel(hk.Module, Kernel):
         KernelUtils.check_input_dim(x1, x2)
 
         rho = hk.get_parameter("rho", [], init=hk.initializers.RandomUniform(minval=0, maxval=10))
-        # sigma = hk.get_parameter("sigma", [], init=hk.initializers.RandomUniform(minval=1, maxval=5))
-        sigma = 1
+        sigma = hk.get_parameter("sigma", [], init=hk.initializers.RandomUniform(minval=0, maxval=5))
 
         cov = rbf(x1,x2, sigma = sigma, rho = rho)
 

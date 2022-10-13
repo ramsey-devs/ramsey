@@ -25,25 +25,48 @@ def sample_from_sine(key, n_samples, sigma_noise, frequency = 1, amplitude=1, of
     return x,y,f
 
 
-def sample_from_gp_with_rbf_kernel(key, n_samples, sigma_noise, sigma = 1, rho = 1, x_min = -10, x_max = 10):
+def sample_from_gp_with_rbf_kernel( 
+    key, 
+    n_samples : jnp.int_, 
+    sigma_noise : jnp.float_, 
+    sigma_rbf : jnp.float_ = 1.0, 
+    rho_rbf : jnp.float_ = 1.0, 
+    x_min : jnp.float_ = -10.0, 
+    x_max : jnp.float_ = 10.0):
+
+    """Samples from a GP with RBF Kernel
+
+    Args:
+        key: random key for sampling
+        n_samples (int): number of samples to draw from the distribution
+        sigma_noise (float): std. deviation of the noise added to the samples
+        sigma_rbf (float): RBF kernel std. deviation parameter
+        rho_rbf (float): RBF kernel length scale parameter.
+        x_min (float): lower bound of the sampling interval
+        x_max (float): upper bound of the sampling interval
+
+    Returns:
+        jnp.ndarray: x (n_samples,1) array with sample locations
+        jnp.ndarray: y (n_samples,1) array with noisy samples drawn from GP
+        jnp.ndarray: f (n_samples,1) array with sample drawn form GP
+    """
 
     print('  Sample from GP with RBF Kernel')
     print('    n_samples = %d' % (n_samples))
-    print('    sigma = %.3f' % (sigma))
-    print('    rho = %.3f' % (rho))
-    print('    noise stddev = %.3f' % (sigma_noise**2))
+    print('    sigma_rbf = %.3f' % (sigma_rbf))
+    print('    rho_rbf = %.3f' % (rho_rbf))
+    print('    sigma_noise = %.3f' % (sigma_noise))
 
 
     x = random.uniform(key, (n_samples,1)) * (x_max - x_min) + x_min
 
-    K = exponentiated_quadratic(x, x, sigma = sigma, rho = rho) + jnp.diag(jnp.ones(n_samples)) * 1e-5
+    K_f = exponentiated_quadratic(x, x, sigma = sigma_rbf, rho = rho_rbf)
 
-    f = random.multivariate_normal(key, mean=jnp.zeros(n_samples), cov=K)
-
+    f = random.multivariate_normal(key, mean=jnp.zeros(n_samples), cov=K_f)
     f = jnp.reshape(f, (n_samples, 1))
 
-    noise = random.normal(key, (n_samples,1))*sigma_noise
 
+    noise = random.normal(key, (n_samples,1))*sigma_noise
     y = f + noise
 
     return x,y,f

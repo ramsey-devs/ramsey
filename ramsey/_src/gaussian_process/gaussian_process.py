@@ -4,20 +4,19 @@ from jax import numpy as jnp
 
 class GP(hk.Module):
 
-    def __init__(self, kernel : hk.Module, x_train : jnp.ndarray, y_train : jnp.ndarray, sigma_noise : jnp.float_):
+    def __init__(self, kernel : hk.Module, x_train : jnp.ndarray, y_train : jnp.ndarray):
 
         super().__init__()
 
         self._kernel = kernel
         self._x = x_train
         self._y = y_train
-        self._stddev_noise = sigma_noise**2
 
     def __call__(self, method="predict", **kwargs):
         return getattr(self, method)(**kwargs)
 
     def predict(self, x_s: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
-        K_tt = self._kernel(self._x, self._x) + self._stddev_noise* jnp.eye(len(self._x))
+        K_tt = self.covariance()
         K_ts = self._kernel(self._x, x_s)
         K_ss = self._kernel(x_s, x_s)
 
@@ -31,6 +30,11 @@ class GP(hk.Module):
 
     def covariance(self) -> jnp.ndarray:
 
-        K = self._kernel(self._x, self._x) + self._stddev_noise * jnp.eye(len(self._x))
+        sigma_noise = hk.get_parameter("sigma_noise", [], init=hk.initializers.RandomUniform(minval=0, maxval=5))
+
+        K = self._kernel(self._x, self._x) + sigma_noise**2  * jnp.eye(len(self._x))
+        
+        jitter = 1e-8
+        K += jitter * jnp.eye(K.shape[0])
         return K
 
