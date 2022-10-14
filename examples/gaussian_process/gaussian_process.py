@@ -14,23 +14,28 @@ from data import sample_from_sine, sample_from_gp_with_rbf_kernel
 
 from ramsey.models import GP
 
+from jax.config import config
+config.update("jax_enable_x64", True)
+
 def main():
 
-  key = hk.PRNGSequence(43)
+  rng_seq = hk.PRNGSequence(23)
 
   print('\n--------------------------------------------------')
   print('Load Data')
   n_samples = 200
-  n_train = 20
+  n_train = 30
   rho_rbf = 2
   sigma_rbf = 1
-  sigma_noise = 0.1
+  sigma_noise = 0.05
   #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
-  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
+  x, y, f = sample_from_gp_with_rbf_kernel(next(rng_seq), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
   
   print('Select training points')
-  idx = jax.random.randint(next(key), shape=(n_train,), minval=0, maxval=n_samples)
-  idx = idx.sort()
+  # idx = jax.random.randint(next(key), shape=(n_train,), minval=0, maxval=n_samples)
+  # idx = idx.sort()
+
+  idx = jnp.linspace(start=0, stop=n_samples, num = n_train).astype(int)
   x_train = x[idx]
   y_train=  y[idx]
 
@@ -56,7 +61,7 @@ def main():
   start = time.time()
 
   n_iter = 10000
-  n_restart = 10
+  n_restart = 5
   init_lr = 1e-3
 
   def _mll_loss(params : hk.Params, x : jnp.ndarray, y : jnp.ndarray) -> jnp.ndarray:
@@ -73,6 +78,9 @@ def main():
 
   @jax.jit
   def update(params : hk.Params, state : chex.ArrayTree, x: jnp.ndarray, y: jnp.ndarray) -> Tuple[hk.Params, chex.ArrayTree]:
+
+    # print(jax.make_jaxpr(jax.grad(objective))(params, x, y))
+
     objective_grad = jax.grad(objective)
     grads = objective_grad(params, x, y)
     updates, state = opt.update(grads, state)
@@ -92,7 +100,7 @@ def main():
 
     # params = gaussian_process.init(next(key), x_s = x)
 
-    params = gaussian_process.init(next(key), method='covariance')
+    params = gaussian_process.init(next(rng_seq), method='covariance')
 
     print(' Init Params:  ' + str(params))
 
