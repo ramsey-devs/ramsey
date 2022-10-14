@@ -2,7 +2,6 @@ import haiku as hk
 import time
 import jax
 from jax import numpy as jnp
-from jax.numpy.linalg import inv, det
 import matplotlib.pyplot as plt
 import optax
 import chex
@@ -14,9 +13,12 @@ from data import sample_from_sine, sample_from_gp_with_rbf_kernel
 
 from ramsey.models import GP
 
+from jax.config import config
+config.update("jax_enable_x64", True)
+
 def main():
 
-  key = hk.PRNGSequence(43)
+  rng_seq = hk.PRNGSequence(23)
 
   print('\n--------------------------------------------------')
   print('Load Data')
@@ -24,13 +26,14 @@ def main():
   n_train = 20
   rho_rbf = 2
   sigma_rbf = 1
-  sigma_noise = 0.1
-  #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
-  x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
+  sigma_noise = 0.05
+  #x, y, f = sample_from_sine(next(rng_seq), n_samples, sigma_noise, frequency=0.25)
+  x, y, f = sample_from_gp_with_rbf_kernel(next(rng_seq), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
   
   print('Select training points')
-  idx = jax.random.randint(next(key), shape=(n_train,), minval=0, maxval=n_samples)
+  idx = jax.random.randint(next(rng_seq), shape=(n_train,), minval=0, maxval=n_samples)
   idx = idx.sort()
+
   x_train = x[idx]
   y_train=  y[idx]
 
@@ -56,15 +59,20 @@ def main():
   start = time.time()
 
   n_iter = 10000
-  n_restart = 10
+  n_restart = 5
   init_lr = 1e-3
 
   def _mll_loss(params : hk.Params, x : jnp.ndarray, y : jnp.ndarray) -> jnp.ndarray:
+
     K = gaussian_process.apply(params, method='covariance')
-    data_fit = y.T.dot(inv(K)).dot(y)
-    complexity_penalty = jnp.log(det(K))
-    loss = data_fit + complexity_penalty
+
+    K_inv = jnp.linalg.inv(K) 
+    K_det = jnp.linalg.det(K)
+
+    loss = y.T.dot(K_inv).dot(y) + jnp.log(K_det)
+    
     loss = jnp.reshape(loss, ())
+
     return loss
 
   opt = optax.adam(init_lr)
@@ -73,6 +81,7 @@ def main():
 
   @jax.jit
   def update(params : hk.Params, state : chex.ArrayTree, x: jnp.ndarray, y: jnp.ndarray) -> Tuple[hk.Params, chex.ArrayTree]:
+
     objective_grad = jax.grad(objective)
     grads = objective_grad(params, x, y)
     updates, state = opt.update(grads, state)
@@ -90,23 +99,18 @@ def main():
 
     print('Training Loop %d/%d:' % (i+1,n_restart))
 
-    # params = gaussian_process.init(next(key), x_s = x)
-
-    params = gaussian_process.init(next(key), method='covariance')
+    params = gaussian_process.init(next(rng_seq), method='covariance')
 
     print(' Init Params:  ' + str(params))
 
     state = opt.init(params)
 
-    for step in range(n_iter):
+    for _ in range(n_iter):
 
         params, state = update(params, state, x_train, y_train)
 
-        if (step % 500 == 0):
-            loss = evaluate(params, x_train, y_train)
-            # print('  step=%d, loss=%.3f' % (step, loss))
+    loss = evaluate(params, x_train, y_train)        
 
-            
     if (loss < opt_loss):
         opt_loss = loss
         opt_params = params
