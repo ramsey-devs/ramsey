@@ -4,15 +4,7 @@ from jax import random
 
 from ramsey.covariance_functions import exponentiated_quadratic
 
-
 def sample_from_sine(key, n_samples, sigma_noise, frequency = 1, amplitude=1, offset=0, x_min = -2*jnp.pi, x_max = +2*jnp.pi):
-
-    print('Sample from sine wave')
-    print('  n_samples = %d' % (n_samples))
-    print('  amplitude = %.3f' % (amplitude))
-    print('  frequency = %.3f' % (frequency))
-    print('  offset = %.3f' % (offset))
-    print('  noise stddev = %.3f' % (sigma_noise**2))
 
     x = jnp.linspace(x_min, x_max, n_samples)
     x = jnp.reshape(x, (n_samples, 1))
@@ -24,7 +16,6 @@ def sample_from_sine(key, n_samples, sigma_noise, frequency = 1, amplitude=1, of
     y = jnp.reshape(y, (n_samples, 1))
 
     return x,y,f
-
 
 def sample_from_gp_with_rbf_kernel( 
     key, 
@@ -51,12 +42,6 @@ def sample_from_gp_with_rbf_kernel(
         jnp.ndarray: y (n_samples,1) array with noisy samples drawn from GP
         jnp.ndarray: f (n_samples,1) array with sample drawn form GP
     """
-
-    print('  Sample from GP with RBF Kernel')
-    print('    n_samples = %d' % (n_samples))
-    print('    sigma_rbf = %.3f' % (sigma_rbf))
-    print('    rho_rbf = %.3f' % (rho_rbf))
-    print('    sigma_noise = %.3f' % (sigma_noise))
 
     x = jnp.linspace(x_min, x_max, n_samples)
     x = jnp.reshape(x, (n_samples, 1))
