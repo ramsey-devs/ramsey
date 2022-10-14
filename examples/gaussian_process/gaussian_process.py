@@ -22,18 +22,19 @@ def main():
 
   print('\n--------------------------------------------------')
   print('Load Data')
+
   n_samples = 200
   n_train = 20
   rho_rbf = 2
   sigma_rbf = 1
   sigma_noise = 0.05
+
   #x, y, f = sample_from_sine(next(rng_seq), n_samples, sigma_noise, frequency=0.25)
   x, y, f = sample_from_gp_with_rbf_kernel(next(rng_seq), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
   
-  print('Select training points')
+  # select trainig points
   idx = jax.random.randint(next(rng_seq), shape=(n_train,), minval=0, maxval=n_samples)
   idx = idx.sort()
-
   x_train = x[idx]
   y_train=  y[idx]
 
@@ -56,11 +57,11 @@ def main():
   print('\n--------------------------------------------------')
   print('Train GP')
 
-  start = time.time()
-
   n_iter = 10000
   n_restart = 5
   init_lr = 1e-3
+
+  start = time.time()
 
   def _mll_loss(params : hk.Params, x : jnp.ndarray, y : jnp.ndarray) -> jnp.ndarray:
 
@@ -118,6 +119,11 @@ def main():
     print(' Final Params: ' + str(params))
     print(' Loss:         ' + str(loss))
     
+  end = time.time() 
+
+  print('\n')
+  print('Training Duration: %.3fs' % (end - start))
+  
   if opt_params == {}:
     print('\n')
     print(' ERROR: Hyperparameter fitting failed!')
@@ -125,14 +131,9 @@ def main():
 
   params = opt_params
 
-  end = time.time()
-
   print('\n')
   print(' Best Params: ' + str(opt_params))
   print(' Loss:        ' + str(opt_loss))
-
-  print('\n')
-  print('Training Duration: %.3fs' % (end - start))
 
   sigma_noise_fit = jnp.exp(params['gp']['sigma_noise'])
   rho_rbf_fit = jnp.exp(params['rbf_kernel']['rho'])

@@ -49,12 +49,6 @@ def exponentiated_quadratic(
         _exponentiated_quadratic, {"sigma": sigma, "rho": rho}, x, y
     )
 
-    # x_e = np.expand_dims(x, 1) / rho
-    # y_e = np.expand_dims(y, 0) / rho
-    # d = np.sum((x_e - y_e) ** 2, axis=2)
-    # K = sigma * np.exp(-0.5 * d)
-    # return K
-
 
 rbf = exponentiated_quadratic
 squared_exponential = exponentiated_quadratic
