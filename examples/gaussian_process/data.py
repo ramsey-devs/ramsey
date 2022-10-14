@@ -14,13 +14,14 @@ def sample_from_sine(key, n_samples, sigma_noise, frequency = 1, amplitude=1, of
     print('  offset = %.3f' % (offset))
     print('  noise stddev = %.3f' % (sigma_noise**2))
 
-    x = random.uniform(key, (n_samples,1)) * (x_max - x_min) + x_min
+    x = jnp.linspace(x_min, x_max, n_samples)
+    x = jnp.reshape(x, (n_samples, 1))
 
     f = amplitude*jnp.sin(2*jnp.pi*frequency*x)+offset
+    f = jnp.reshape(f, (n_samples, 1))
 
-    noise = random.normal(key, (n_samples,1))*sigma_noise
-
-    y = f + noise
+    y = f + random.normal(key, (n_samples,1))*sigma_noise
+    y = jnp.reshape(y, (n_samples, 1))
 
     return x,y,f
 
@@ -58,12 +59,13 @@ def sample_from_gp_with_rbf_kernel(
     print('    sigma_noise = %.3f' % (sigma_noise))
 
     x = jnp.linspace(x_min, x_max, n_samples)
+    x = jnp.reshape(x, (n_samples, 1))
 
     K_f = exponentiated_quadratic(x, x, sigma = sigma_rbf, rho = rho_rbf)
-
     f = random.multivariate_normal(key, mean=jnp.zeros(n_samples), cov=K_f, method='svd')
     f = jnp.reshape(f, (n_samples, 1))
 
     y = random.normal(key, (n_samples,1))*sigma_noise + f
+    y = jnp.reshape(y, (n_samples, 1))
     
     return x,y,f

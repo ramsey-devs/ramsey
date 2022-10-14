@@ -1,7 +1,6 @@
 import haiku as hk
 from jax import numpy as jnp
 from ramsey.covariance_functions import exponentiated_quadratic as rbf
-import chex
 import abc
 
 class Kernel(abc.ABC):
@@ -16,56 +15,6 @@ class Kernel(abc.ABC):
     def __call__(self, x1: jnp.ndarray, x2: jnp.ndarray):
         pass
 
-class KernelUtils():
-
-
-    def shape_input(x : jnp.ndarray):
-        
-        shape = jnp.shape(x)
-        
-        if shape == (len(x),):
-
-            x = x.reshape((len(x),1))
-            
-        return x
-
-    def check_input_dim(x1 : jnp.ndarray, x2 : jnp.ndarray):
-
-        shape_x1 = jnp.shape(x1)
-        shape_x2 = jnp.shape(x2)
-
-        chex.assert_equal(shape_x1[1], shape_x2[1])
-
-    def check_cov_dim(x1 : jnp.ndarray, x2 : jnp.ndarray, cov : jnp.ndarray):
-
-        n = jnp.shape(x1)[0]
-        m = jnp.shape(x2)[0]
-
-        chex.assert_shape(cov, (n,m))
-
-
-
-class LinearKernel(hk.Module, Kernel):
-
-  def __init__(self):
-    super().__init__()
-
-  def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
-        
-    x1 = KernelUtils.shape_input(x1)
-    x2 = KernelUtils.shape_input(x2)
-
-    KernelUtils.check_input_dim(x1, x2)
-
-    a = hk.get_parameter("a", [], init=jnp.ones)
-    b = hk.get_parameter("b", [], init=jnp.ones)
-
-    cov = a * jnp.dot(x1,x2.T) + b
-
-    KernelUtils.check_cov_dim(x1, x2, cov)
-
-    return cov
-
 class RBFKernel(hk.Module, Kernel):
 
   def __init__(self):
@@ -73,16 +22,9 @@ class RBFKernel(hk.Module, Kernel):
 
   def __call__(self, x1 : jnp.ndarray, x2 : jnp.ndarray):
         
-        x1 = KernelUtils.shape_input(x1)
-        x2 = KernelUtils.shape_input(x2)
+        rho = hk.get_parameter("rho", [],dtype=jnp.float_, init=hk.initializers.RandomUniform(minval=jnp.log(1), maxval=jnp.log(5)))
+        sigma = hk.get_parameter("sigma", [], init=hk.initializers.RandomUniform(minval=jnp.log(0.1), maxval=jnp.log(3)))
 
-        KernelUtils.check_input_dim(x1, x2)
-
-        rho = hk.get_parameter("rho", [],dtype=jnp.float_, init=hk.initializers.RandomUniform(minval=5, maxval=10))
-        sigma = hk.get_parameter("sigma", [], init=hk.initializers.RandomUniform(minval=2.5, maxval=5))
-
-        cov = rbf(x1,x2, sigma = sigma, rho = rho)
-
-        KernelUtils.check_cov_dim(x1, x2, cov)
+        cov = rbf(x1,x2, sigma = jnp.exp(sigma), rho = jnp.exp(rho))
 
         return cov
