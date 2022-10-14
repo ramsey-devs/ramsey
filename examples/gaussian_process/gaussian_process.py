@@ -19,19 +19,18 @@ def main():
   key = hk.PRNGSequence(43)
 
   print('\n--------------------------------------------------')
-  print('Load Dataset')
+  print('Load Data')
   n_samples = 200
-  n_train = 30
+  n_train = 20
   rho_rbf = 2
   sigma_rbf = 1
   sigma_noise = 0.1
   #x, y, f = sample_from_sine(next(key), n_samples, sigma_noise, frequency=0.25)
   x, y, f = sample_from_gp_with_rbf_kernel(next(key), n_samples, sigma_noise, sigma_rbf, rho_rbf, x_min = -5, x_max = 5)
   
+  print('Select training points')
   idx = jax.random.randint(next(key), shape=(n_train,), minval=0, maxval=n_samples)
-
   idx = idx.sort()
-
   x_train = x[idx]
   y_train=  y[idx]
 
@@ -89,11 +88,13 @@ def main():
 
   for i in range(n_restart):
 
-    print('  Training Loop %d ...' % (i))
+    print('Training Loop %d/%d:' % (i+1,n_restart))
 
-    params = gaussian_process.init(next(key), x_s = x)
+    # params = gaussian_process.init(next(key), x_s = x)
 
-    print('    Init Parameter:  ' + str(params))
+    params = gaussian_process.init(next(key), method='covariance')
+
+    print(' Init Params:  ' + str(params))
 
     state = opt.init(params)
 
@@ -110,12 +111,12 @@ def main():
         opt_loss = loss
         opt_params = params
 
-    print('    Final Parameter: ' + str(params))
-    print('    Loss:            ' + str(loss))
+    print(' Final Params: ' + str(params))
+    print(' Loss:         ' + str(loss))
     
   if opt_params == {}:
     print('\n')
-    print('ERROR: Hyperparameter fitting failed!')
+    print(' ERROR: Hyperparameter fitting failed!')
     exit(1)
 
   params = opt_params
@@ -123,11 +124,11 @@ def main():
   end = time.time()
 
   print('\n')
-  print('  Best Parameter: ' + str(opt_params))
-  print('  Loss:           ' + str(opt_loss))
+  print(' Best Params: ' + str(opt_params))
+  print(' Loss:        ' + str(opt_loss))
 
   print('\n')
-  print('  Training Duration: %.3fs' % (end - start))
+  print('Training Duration: %.3fs' % (end - start))
 
   sigma_noise_fit = jnp.exp(params['gp']['sigma_noise'])
   rho_rbf_fit = jnp.exp(params['rbf_kernel']['rho'])
