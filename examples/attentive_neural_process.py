@@ -13,8 +13,7 @@ References
 """
 
 import haiku as hk
-import jax.numpy as np
-import jax.random as random
+from jax import numpy as jnp, random
 import matplotlib.pyplot as plt
 
 from ramsey.train import train_neural_process
@@ -81,11 +80,11 @@ def plot(key, neural_process, params, x_target, y_target, f_target, n_context, n
     idxs = [0, 2, 5, 7]
     _, axes = plt.subplots(figsize=(10, 6), nrows=2, ncols=2)
     for _, (idx, ax) in enumerate(zip(idxs, axes.flatten())):
-        x = np.squeeze(x_target[idx, :, :])
-        f = np.squeeze(f_target[idx, :, :])
-        y = np.squeeze(y_target[idx, :, :])
+        x = jnp.squeeze(x_target[idx, :, :])
+        f = jnp.squeeze(f_target[idx, :, :])
+        y = jnp.squeeze(y_target[idx, :, :])
 
-        srt_idxs = np.argsort(x)
+        srt_idxs = jnp.argsort(x)
         ax.plot(x[srt_idxs], f[srt_idxs], color="blue", alpha=0.75)
         ax.scatter(
             x[sample_idxs[:n_context]],
@@ -100,26 +99,26 @@ def plot(key, neural_process, params, x_target, y_target, f_target, n_context, n
             y_star = neural_process.apply(
                 params=params,
                 rng=apply_key,
-                x_context=x[np.newaxis, sample_idxs, np.newaxis],
-                y_context=y[np.newaxis, sample_idxs, np.newaxis],
+                x_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
+                y_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
                 x_target=x_target[[idx], :, :],
             ).mean
-            x_star = np.squeeze(x_target[[idx], :, :])
-            y_star = np.squeeze(y_star)
+            x_star = jnp.squeeze(x_target[[idx], :, :])
+            y_star = jnp.squeeze(y_star)
             ax.plot(x_star[srt_idxs], y_star[srt_idxs], color="black", alpha=0.1)
     plt.show()
 
 
 def run():
-    seq = hk.PRNGSequence(12)
+    rng_seq = hk.PRNGSequence(12)
     n_context, n_target = 10, 20
 
-    (x_target, y_target), f_target = data(next(seq))
+    (x_target, y_target), f_target = data(next(rng_seq))
     neural_process, params = train_np(
-        next(seq), n_context, n_target, x_target, y_target
+        next(rng_seq), n_context, n_target, x_target, y_target
     )
     plot(
-        next(seq), neural_process, params,
+        next(rng_seq), neural_process, params,
         x_target, y_target, f_target, n_context, n_target
     )
 

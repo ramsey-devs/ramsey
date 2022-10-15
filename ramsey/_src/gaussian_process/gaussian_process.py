@@ -1,40 +1,79 @@
-from typing import Tuple
+from typing import Tuple, Optional
+
+import distrax
 import haiku as hk
+from numpyro import distributions as dist
 from jax import numpy as jnp
 
+from ramsey._src.family import Gaussian, Family
+
+__all__ = ["GP"]
+
+
+# pylint: disable=too-many-instance-attributes,duplicate-code
 class GP(hk.Module):
+    """
+    A Gaussian process
 
-    def __init__(self, kernel : hk.Module, x_train : jnp.ndarray, y_train : jnp.ndarray):
+    Implements the core structure of a Gaussian process.
 
-        super().__init__()
+    """
+    def __init__(
+            self,
+            kernel: hk.Module,
+            sigma_init: Optional[hk.initializers.Initializer] = None,
+            family: Family = Gaussian(),
+            name: Optional[str] = None,
+    ):
+        """
+        Instantiates a Gaussian process
 
+        Parameters
+        ----------
+        kernel: hk.Module
+            a covariance function object
+        """
+
+        super().__init__(name=name)
         self._kernel = kernel
-        self._x = x_train
-        self._y = y_train
+        self._family = family
+        self.sigma_init = sigma_init
 
-    def __call__(self, method="predict", **kwargs):
-        return getattr(self, method)(**kwargs)
+    def __call__(self, x: jnp.ndarray, **kwargs):
+        if "y" in kwargs and "x_star" in kwargs:
+            return self._predictive(x, **kwargs)
+        return self._marginal(x)
 
-    def predict(self, x_s: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
-        K_tt = self.covariance()
-        K_ts = self._kernel(self._x, x_s)
-        K_ss = self._kernel(x_s, x_s)
+    def _get_sigma(self, dtype):
+        log_sigma_init = self.sigma_init
+        if log_sigma_init is None:
+            log_sigma_init = hk.initializers.RandomUniform(jnp.log(0.1), jnp.log(1.0))
+        log_sigma = hk.get_parameter("log_sigma", [], dtype=dtype, init=log_sigma_init)
+        return log_sigma
 
-        K_tt_inv = jnp.linalg.inv(K_tt)
+    def _predictive(self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray, jitter=10e-8):
+        n = x.shape[0]
+        log_sigma = self._get_sigma(x.dtype)
 
-        mu_s = K_ts.T.dot(K_tt_inv).dot(self._y)
+        K_xx = self._kernel(x, x) + (jnp.exp(log_sigma) + jitter) * jnp.eye(n)
+        K_x_xs = self._kernel(x, x_star)
+        K_xs_xs = self._kernel(x_star, x_star)
+        K_xx_inv = jnp.linalg.inv(K_xx)
 
-        cov_s = K_ss - K_ts.T.dot(K_tt_inv).dot(K_ts)
-    
-        return mu_s, cov_s
+        mu_star = K_x_xs.T @ K_xx_inv @ y
+        cov_star = K_xs_xs - K_x_xs.T @ K_xx_inv @ K_x_xs
 
-    def covariance(self) -> jnp.ndarray:
+        return distrax.MultivariateNormalTri(
+            jnp.squeeze(mu_star), jnp.linalg.cholesky(cov_star)
+        )
 
-        sigma_noise = hk.get_parameter("sigma_noise", [], init=hk.initializers.RandomUniform(minval=jnp.log(0.1), maxval=jnp.log(2)))
+    def _marginal(self, x, jitter=10e-8):
+        n = x.shape[0]
 
-        K = self._kernel(self._x, self._x) + jnp.exp(sigma_noise)**2  * jnp.eye(len(self._x))
-        
-        jitter = 1e-6
-        K += jitter * jnp.eye(K.shape[0])
-        return K
+        log_sigma = self._get_sigma(x.dtype)
+        cov = self._kernel(x, x)
+        cov += (jnp.exp(log_sigma) + jitter) * jnp.eye(n)
 
+        return distrax.MultivariateNormalTri(
+            jnp.zeros(n), jnp.linalg.cholesky(cov)
+        )

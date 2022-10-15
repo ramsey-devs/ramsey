@@ -46,6 +46,7 @@ setup(
         "optax",
         "dm-haiku",
         "numpyro",
+        "distrax"
     ],
     extras_require={
         "dev": ["pre-commit", "black", "isort", "pylint", "tox"],
