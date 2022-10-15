@@ -33,18 +33,13 @@ def _neural_process(**kwargs):
     dim = 128
     np = ANP(
         decoder=hk.nets.MLP([dim] * 3 + [2]),
-        latent_encoder=(
-            hk.nets.MLP([dim] * 3),
-            hk.nets.MLP([dim, dim * 2])
-        ),
+        latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])),
         deterministic_encoder=(
             hk.nets.MLP([dim] * 3),
             MultiHeadAttention(
-                num_heads=8,
-                head_size=16,
-                embedding=hk.nets.MLP([dim] * 2)
-            )
-        )
+                num_heads=8, head_size=16, embedding=hk.nets.MLP([dim] * 2)
+            ),
+        ),
     )
     return np(**kwargs)
 
@@ -70,11 +65,22 @@ def train_np(key, n_context, n_target, x_target, y_target):
     return neural_process, params
 
 
-def plot(key, neural_process, params, x_target, y_target, f_target, n_context, n_target):
+def plot(
+    key,
+    neural_process,
+    params,
+    x_target,
+    y_target,
+    f_target,
+    n_context,
+    n_target,
+):
     key, sample_key = random.split(key, 2)
     sample_idxs = random.choice(
-        sample_key, x_target.shape[1], shape=(n_context + n_target,),
-        replace=False
+        sample_key,
+        x_target.shape[1],
+        shape=(n_context + n_target,),
+        replace=False,
     )
 
     idxs = [0, 2, 5, 7]
@@ -105,7 +111,9 @@ def plot(key, neural_process, params, x_target, y_target, f_target, n_context, n
             ).mean
             x_star = jnp.squeeze(x_target[[idx], :, :])
             y_star = jnp.squeeze(y_star)
-            ax.plot(x_star[srt_idxs], y_star[srt_idxs], color="black", alpha=0.1)
+            ax.plot(
+                x_star[srt_idxs], y_star[srt_idxs], color="black", alpha=0.1
+            )
     plt.show()
 
 
@@ -118,8 +126,14 @@ def run():
         next(rng_seq), n_context, n_target, x_target, y_target
     )
     plot(
-        next(rng_seq), neural_process, params,
-        x_target, y_target, f_target, n_context, n_target
+        next(rng_seq),
+        neural_process,
+        params,
+        x_target,
+        y_target,
+        f_target,
+        n_context,
+        n_target,
     )
 
 

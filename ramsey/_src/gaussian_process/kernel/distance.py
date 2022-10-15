@@ -6,4 +6,3 @@ def squared_distance(
     y: jnp.ndarray,  # pylint: disable=invalid-name
 ):
     return jnp.sum((x - y) ** 2)
-

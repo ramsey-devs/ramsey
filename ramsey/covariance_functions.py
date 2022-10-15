@@ -1,6 +1,6 @@
 from ramsey._src.gaussian_process.kernel.stationary import (
     ExponentiatedQuadratic,
-    exponentiated_quadratic
+    exponentiated_quadratic,
 )
 
 SquaredExponential = ExponentiatedQuadratic

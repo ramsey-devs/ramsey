@@ -28,9 +28,7 @@ def train_gaussian_process(
 
     @jax.jit
     def step(params, opt_state, rng, x, y):
-        loss, grads = jax.value_and_grad(_objective)(
-            params, rng, x, y
-        )
+        loss, grads = jax.value_and_grad(_objective)(params, rng, x, y)
         updates, opt_state = optimizer.update(grads, opt_state)
         params = optax.apply_updates(params, updates)
         return params, opt_state, loss

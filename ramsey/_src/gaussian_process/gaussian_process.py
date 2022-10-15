@@ -1,11 +1,10 @@
-from typing import Tuple, Optional
+from typing import Optional
 
 import distrax
 import haiku as hk
-from numpyro import distributions as dist
 from jax import numpy as jnp
 
-from ramsey._src.family import Gaussian, Family
+from ramsey._src.family import Family, Gaussian
 
 __all__ = ["GP"]
 
@@ -16,14 +15,14 @@ class GP(hk.Module):
     A Gaussian process
 
     Implements the core structure of a Gaussian process.
-
     """
+
     def __init__(
-            self,
-            kernel: hk.Module,
-            sigma_init: Optional[hk.initializers.Initializer] = None,
-            family: Family = Gaussian(),
-            name: Optional[str] = None,
+        self,
+        kernel: hk.Module,
+        sigma_init: Optional[hk.initializers.Initializer] = None,
+        family: Family = Gaussian(),
+        name: Optional[str] = None,
     ):
         """
         Instantiates a Gaussian process
@@ -32,6 +31,13 @@ class GP(hk.Module):
         ----------
         kernel: hk.Module
             a covariance function object
+        sigma_init: Optional[Initializer]
+            an initializer object from Haiku or None
+        family: Family
+            an exponential family object specifying the distribution of the data
+            and which likelihood is going to be used
+        name: Optional[str]
+            name of the layer
         """
 
         super().__init__(name=name)
@@ -47,11 +53,17 @@ class GP(hk.Module):
     def _get_sigma(self, dtype):
         log_sigma_init = self.sigma_init
         if log_sigma_init is None:
-            log_sigma_init = hk.initializers.RandomUniform(jnp.log(0.1), jnp.log(1.0))
-        log_sigma = hk.get_parameter("log_sigma", [], dtype=dtype, init=log_sigma_init)
+            log_sigma_init = hk.initializers.RandomUniform(
+                jnp.log(0.1), jnp.log(1.0)
+            )
+        log_sigma = hk.get_parameter(
+            "log_sigma", [], dtype=dtype, init=log_sigma_init
+        )
         return log_sigma
 
-    def _predictive(self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray, jitter=10e-8):
+    def _predictive(
+        self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray, jitter=10e-8
+    ):
         n = x.shape[0]
         log_sigma = self._get_sigma(x.dtype)
 
