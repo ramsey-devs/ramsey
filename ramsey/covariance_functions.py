@@ -1,5 +1,13 @@
-from ramsey._src.gaussian_process.covariance.stationary import (
+from ramsey._src.gaussian_process.kernel.stationary import (
+    ExponentiatedQuadratic,
     exponentiated_quadratic,
 )
 
-__all__ = ["exponentiated_quadratic"]
+SquaredExponential = ExponentiatedQuadratic
+RBF = ExponentiatedQuadratic
+__all__ = [
+    "ExponentiatedQuadratic",
+    "exponentiated_quadratic",
+    "RBF",
+    "SquaredExponential",
+]

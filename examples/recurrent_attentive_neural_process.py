@@ -30,25 +30,22 @@ def data(key):
 def _ranp(**kwargs):
     dim = 128
     np = RANP(
-        decoder=hk.DeepRNN([
-            hk.LSTM(hidden_size=40),
-            jax.nn.relu,
-            hk.LSTM(hidden_size=40),
-            jax.nn.relu,
-            hk.Linear(2),
-        ]),
-        latent_encoder=(
-            hk.nets.MLP([dim] * 3),
-            hk.nets.MLP([dim, dim * 2])
+        decoder=hk.DeepRNN(
+            [
+                hk.LSTM(hidden_size=40),
+                jax.nn.relu,
+                hk.LSTM(hidden_size=40),
+                jax.nn.relu,
+                hk.Linear(2),
+            ]
         ),
+        latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])),
         deterministic_encoder=(
             hk.nets.MLP([dim] * 3),
             MultiHeadAttention(
-                num_heads=8,
-                head_size=16,
-                embedding=hk.nets.MLP([dim] * 2)
-            )
-        )
+                num_heads=8, head_size=16, embedding=hk.nets.MLP([dim] * 2)
+            ),
+        ),
     )
     return np(**kwargs)
 
@@ -74,11 +71,22 @@ def _train_np(key, n_context, n_target, x_target, y_target):
     return neural_process, params
 
 
-def _plot(key, neural_process, params, x_target, y_target, f_target, n_context, n_target):
+def _plot(
+    key,
+    neural_process,
+    params,
+    x_target,
+    y_target,
+    f_target,
+    n_context,
+    n_target,
+):
     key, sample_key = random.split(key, 2)
     sample_idxs = random.choice(
-        sample_key, x_target.shape[1], shape=(n_context + n_target,),
-        replace=False
+        sample_key,
+        x_target.shape[1],
+        shape=(n_context + n_target,),
+        replace=False,
     )
 
     idxs = [0, 2, 5, 7]
@@ -109,7 +117,9 @@ def _plot(key, neural_process, params, x_target, y_target, f_target, n_context, 
             ).mean
             x_star = np.squeeze(x_target[[idx], :, :])
             y_star = np.squeeze(y_star)
-            ax.plot(x_star[srt_idxs], y_star[srt_idxs], color="black", alpha=0.1)
+            ax.plot(
+                x_star[srt_idxs], y_star[srt_idxs], color="black", alpha=0.1
+            )
     plt.show()
 
 
@@ -122,8 +132,14 @@ def run():
         next(seq), n_context, n_target, x_target, y_target
     )
     _plot(
-        next(seq), neural_process, params,
-        x_target, y_target, f_target, n_context, n_target
+        next(seq),
+        neural_process,
+        params,
+        x_target,
+        y_target,
+        f_target,
+        n_context,
+        n_target,
     )
 
 

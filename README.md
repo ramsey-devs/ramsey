@@ -25,7 +25,7 @@ and define parameters. For instance, a simple neural process can be constructed 
 import haiku as hk
 import jax.random as random
 
-from ramsey.data import sample_from_sinus_function
+from ramsey.data import sample_from_sine_function
 from ramsey.models import NP
 
 def neural_process(**kwargs):
@@ -39,7 +39,7 @@ def neural_process(**kwargs):
     return np(**kwargs)
 
 key = random.PRNGKey(23)
-(x, y), _ = sample_from_sinus_function(key)
+(x, y), _ = sample_from_sine_function(key)
 
 neural_process = hk.transform(neural_process)
 params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
