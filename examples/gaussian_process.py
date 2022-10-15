@@ -84,7 +84,7 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
     ax.plot(
         jnp.squeeze(x)[srt_idxs], jnp.squeeze(y_star)[srt_idxs], color="blue"
     )
-    lgd = ax.legend(
+    ax.legend(
         handles=[
             mpatches.Patch(
                 color="black",
