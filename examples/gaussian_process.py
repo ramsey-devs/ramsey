@@ -23,6 +23,8 @@ from ramsey.data import sample_from_gaussian_process
 from ramsey.covariance_functions import ExponentiatedQuadratic
 from ramsey.models import GP
 
+from jax.config import config
+config.update("jax_enable_x64", True)
 
 def data(key, rho, sigma, n=1000):
     (x_target, y_target), f_target = sample_from_gaussian_process(
@@ -74,16 +76,28 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
     )
 
     key, apply_key = random.split(key, 2)
-    y_star = gaussian_process.apply(
+    posterior_dist = gaussian_process.apply(
         params=params,
         rng=apply_key,
         x=x[train_idxs, :],
         y=y[train_idxs, :],
         x_star=x,
-    ).mean()
+    )
+
+    y_star = posterior_dist.mean()
     ax.plot(
         jnp.squeeze(x)[srt_idxs], jnp.squeeze(y_star)[srt_idxs], color="blue"
     )
+
+    sigma = posterior_dist.stddev()
+    ucb = y_star + 2 * sigma
+    lcb = y_star - 2 * sigma
+    ax.fill_between(
+        jnp.squeeze(x)[srt_idxs],
+        lcb[srt_idxs], ucb[srt_idxs],
+        color="grey", alpha=0.2
+    )
+
     ax.legend(
         handles=[
             mpatches.Patch(
@@ -91,12 +105,14 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
                 alpha=0.5,
                 label="Latent function " + r"$f \sim GP$",
             ),
-            mpatches.Patch(color="red", alpha=0.45, label="Training data"),
-            mpatches.Patch(color="blue", alpha=0.45, label="Posterior mean"),
+            mpatches.Patch(color="red", alpha=0.45, label="Training Data"),
+            mpatches.Patch(color="blue", alpha=0.45, label="Posterior Mean"),
+            mpatches.Patch(color="grey", alpha=0.1, label=r'$2 \sigma$ Confidence Intervall'),
         ],
         loc="best",
         frameon=False,
     )
+    ax.grid()
     plt.show()
 
 

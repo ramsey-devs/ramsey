@@ -43,7 +43,8 @@ repos:
     types: [python]
     files: "(ramsey|tests)"
 
-- repo: local
+- repo: https://github.com/pycqa/pylint
+  rev: v2.15.5
   hooks:
   - id: pylint
     name: pylint
