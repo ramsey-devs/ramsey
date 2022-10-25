@@ -64,6 +64,9 @@ jobs:
         fail_ci_if_error: false
         verbose: true
         files: coverage.xml
+    - name: Copy file
+      run:
+        cp coverage.xml cobertura.xml
     - name: Run codacy-coverage-reporter
       uses: codacy/codacy-coverage-reporter-action@v1
       with:
