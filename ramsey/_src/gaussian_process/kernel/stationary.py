@@ -63,7 +63,7 @@ class ExponentiatedQuadratic(hk.Module, Kernel):
         cov = exponentiated_quadratic(
             x1[..., self.active_dims],
             x2[..., self.active_dims],
-            jnp.exp(log_sigma),
+            jnp.square(jnp.exp(log_sigma)),
             jnp.exp(log_rho),
         )
         return cov
@@ -102,7 +102,7 @@ def exponentiated_quadratic(
     def _exponentiated_quadratic(x, y, sigma, rho):
         x_e = jnp.expand_dims(x, 1) / rho
         y_e = jnp.expand_dims(y, 0) / rho
-        d = jnp.sum((x_e - y_e) ** 2, axis=2)
+        d = jnp.sum(jnp.square(x_e - y_e), axis=2)
         K = sigma * jnp.exp(-0.5 * d)
         return K
 

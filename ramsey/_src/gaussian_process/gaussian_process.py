@@ -3,12 +3,14 @@ from typing import Optional
 import distrax
 import haiku as hk
 from jax import numpy as jnp
+from jax import scipy as jsp
 
 from ramsey._src.family import Family, Gaussian
 
 __all__ = ["GP"]
 
-# pylint: disable=too-many-instance-attributes,duplicate-code,too-few-public-methods
+
+# pylint: disable=too-many-instance-attributes,duplicate-code
 class GP(hk.Module):
     """
     A Gaussian process
@@ -62,16 +64,13 @@ class GP(hk.Module):
 
     # pylint: disable=too-many-locals
     def _predictive(
-        self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray, jitter=10e-8
+        self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray, jitter=1e-8
     ):
         """
-        Returns Predictive Posterior Distribution
+        Returns the Predictive Posterior Distribution
 
-        For details on the implemented algrothim see
-
-            - C. E. Rasmussen & C. K. I. Williams
-              Gaussian Processes for Machine Learning, 2006
-              Chapter 2.2 Function-space View, Alogrithm 2.1
+        For details on the implemented algorithm see [1],
+        Chapter 2.2 Function-space View, Algorithm, 2.1
 
         Parameters
         ----------
@@ -88,30 +87,30 @@ class GP(hk.Module):
         -------
         distrax.MultivariateNormalTri
             returns a multivariate normal distribution object
+
+        References
+        ----------
+        .. [1] Rasmussen, Carl E and Williams, Chris KI .
+           "Gaussian Processes for Machine Learning". MIT press, 2006.
         """
 
         log_sigma = self._get_sigma(x.dtype)
 
         n = x.shape[0]
         K_xx = self._kernel(x, x) + (
-            jnp.exp(log_sigma) ** 2 + jitter
+            jnp.square(jnp.exp(log_sigma)) + jitter
         ) * jnp.eye(n)
         K_xs_xs = self._kernel(x_star, x_star)
         K_x_xs = self._kernel(x, x_star)
-        K_xs_x = K_x_xs.T
 
         L = jnp.linalg.cholesky(K_xx)
-        L_inv = jnp.linalg.inv(L)
-        alpha = jnp.linalg.inv(L.T) @ (L_inv @ y)
+        w = jsp.linalg.solve_triangular(L, y, lower=True)
+        L_inv_K_x_xs = jsp.linalg.solve_triangular(L, K_x_xs, lower=True)
 
-        v = L_inv @ K_x_xs
-
-        mu_star = K_xs_x @ alpha
-
-        cov_star = K_xs_xs - v.T @ v
-
-        m = x_star.shape[0]
-        cov_star += jitter * jnp.eye(m)
+        n_star = x_star.shape[0]
+        mu_star = jnp.matmul(L_inv_K_x_xs.T, w)
+        cov_star = K_xs_xs - jnp.matmul(L_inv_K_x_xs.T, L_inv_K_x_xs)
+        cov_star += jitter * jnp.eye(n_star)
 
         return distrax.MultivariateNormalTri(
             jnp.squeeze(mu_star), jnp.linalg.cholesky(cov_star)
@@ -122,7 +121,7 @@ class GP(hk.Module):
 
         log_sigma = self._get_sigma(x.dtype)
         cov = self._kernel(x, x)
-        cov += (jnp.exp(log_sigma) ** 2 + jitter) * jnp.eye(n)
+        cov += (jnp.square(jnp.exp(log_sigma)) + jitter) * jnp.eye(n)
 
         return distrax.MultivariateNormalTri(
             jnp.zeros(n), jnp.linalg.cholesky(cov)

@@ -114,6 +114,8 @@ def plot(
             ax.plot(
                 x_star[srt_idxs], y_star[srt_idxs], color="black", alpha=0.1
             )
+        ax.grid()
+        ax.set_frame_on(False)
     plt.show()
 
 

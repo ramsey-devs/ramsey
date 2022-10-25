@@ -8,7 +8,7 @@ regression model.
 References
 ----------
 
-[1] Williams, Christopher KI, and Carl Edward Rasmussen. "Gaussian Processes for
+[1] Carl E Rasmussen and Christopher KI Williams. "Gaussian Processes for
     Machine Learning." MIT press, 2006.
 """
 
@@ -25,6 +25,7 @@ from ramsey.models import GP
 
 from jax.config import config
 config.update("jax_enable_x64", True)
+
 
 def data(key, rho, sigma, n=1000):
     (x_target, y_target), f_target = sample_from_gaussian_process(
@@ -90,8 +91,8 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
     )
 
     sigma = posterior_dist.stddev()
-    ucb = y_star + 2 * sigma
-    lcb = y_star - 2 * sigma
+    ucb = y_star + 1.644854 * sigma
+    lcb = y_star - 1.644854 * sigma
     ax.fill_between(
         jnp.squeeze(x)[srt_idxs],
         lcb[srt_idxs], ucb[srt_idxs],
@@ -105,14 +106,15 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
                 alpha=0.5,
                 label="Latent function " + r"$f \sim GP$",
             ),
-            mpatches.Patch(color="red", alpha=0.45, label="Training Data"),
-            mpatches.Patch(color="blue", alpha=0.45, label="Posterior Mean"),
-            mpatches.Patch(color="grey", alpha=0.1, label=r'$2 \sigma$ Confidence Intervall'),
+            mpatches.Patch(color="red", alpha=0.45, label="Training data"),
+            mpatches.Patch(color="blue", alpha=0.45, label="Posterior mean"),
+            mpatches.Patch(color="grey", alpha=0.1, label=r'90% posterior interval'),
         ],
         loc="best",
         frameon=False,
     )
     ax.grid()
+    ax.set_frame_on(False)
     plt.show()
 
 

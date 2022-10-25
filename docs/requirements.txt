@@ -1,6 +1,7 @@
 jupyter
 matplotlib
 nbsphinx
+git+https://github.com/dirmeier/palettes@v0.1.1#egg=palettes
 seaborn
 sphinx
 sphinx-autobuild
