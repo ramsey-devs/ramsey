@@ -16,5 +16,5 @@ jobs:
       - name: build docu
         run: |
           cd docs
-          pip install -r docs/requirements.txt
+          pip install -r requirements.txt
           make html
