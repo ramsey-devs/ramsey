@@ -69,6 +69,7 @@ jobs:
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: cobertura.xml
+        language: Python
 
   notebooks:
       name: notebooks and examples
