@@ -76,4 +76,4 @@ In order to contribute:
 ## Why Ramsey
 
 Just as the names of other probabilistic languages are inspired by researchers in the field
-(e.g., Stan, Edward, Turing), Ramsey takes its name from one of my favourite philosophers/mathematicians, [Frank Ramsey](https://plato.stanford.edu/entries/ramsey/).
+(e.g., Stan, Edward, asdasdTuring), Ramsey takes its name from one of my favourite philosophers/mathematicians, [Frank Ramsey](https://plato.stanford.edu/entries/ramsey/).
