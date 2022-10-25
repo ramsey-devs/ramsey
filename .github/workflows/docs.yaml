@@ -15,7 +15,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install markupsafe==2.0.1
+          pip install markupsafe==2.0.1 jinja2==3.1.2
       - name: build docu
         run: |
           cd docs
