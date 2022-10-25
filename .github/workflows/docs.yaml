@@ -1,0 +1,19 @@
+name: docs
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: build docu
+        run: |
+          pip install -r requirements.txt
+          sphinx-build -b html docs docs/build/html
