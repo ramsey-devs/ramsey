@@ -8,7 +8,7 @@ regression model.
 References
 ----------
 
-[1] Williams, Christopher KI, and Carl Edward Rasmussen. "Gaussian Processes for
+[1] Carl E Rasmussen and Christopher KI Williams. "Gaussian Processes for
     Machine Learning." MIT press, 2006.
 """
 
@@ -22,6 +22,9 @@ from ramsey.train import train_gaussian_process
 from ramsey.data import sample_from_gaussian_process
 from ramsey.covariance_functions import ExponentiatedQuadratic
 from ramsey.models import GP
+
+from jax.config import config
+config.update("jax_enable_x64", True)
 
 
 def data(key, rho, sigma, n=1000):
@@ -74,16 +77,28 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
     )
 
     key, apply_key = random.split(key, 2)
-    y_star = gaussian_process.apply(
+    posterior_dist = gaussian_process.apply(
         params=params,
         rng=apply_key,
         x=x[train_idxs, :],
         y=y[train_idxs, :],
         x_star=x,
-    ).mean()
+    )
+
+    y_star = posterior_dist.mean()
     ax.plot(
         jnp.squeeze(x)[srt_idxs], jnp.squeeze(y_star)[srt_idxs], color="blue"
     )
+
+    sigma = posterior_dist.stddev()
+    ucb = y_star + 1.644854 * sigma
+    lcb = y_star - 1.644854 * sigma
+    ax.fill_between(
+        jnp.squeeze(x)[srt_idxs],
+        lcb[srt_idxs], ucb[srt_idxs],
+        color="grey", alpha=0.2
+    )
+
     ax.legend(
         handles=[
             mpatches.Patch(
@@ -93,10 +108,13 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
             ),
             mpatches.Patch(color="red", alpha=0.45, label="Training data"),
             mpatches.Patch(color="blue", alpha=0.45, label="Posterior mean"),
+            mpatches.Patch(color="grey", alpha=0.1, label=r'90% posterior interval'),
         ],
         loc="best",
         frameon=False,
     )
+    ax.grid()
+    ax.set_frame_on(False)
     plt.show()
 
 
