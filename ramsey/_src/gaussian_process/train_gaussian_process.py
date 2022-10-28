@@ -45,7 +45,7 @@ def train_gaussian_process(
         objectives[_] = loss_value
         if _ % 100 == 0 or _ == n_iter - 1:
             mll = -float(loss_value)
-            print(f"MLL at {_}: {mll}")
+            print(f"MLL at {_}: {mll:.2f}")
 
     return params, objectives
 

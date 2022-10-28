@@ -42,6 +42,9 @@ repos:
     language_version: python3
     types: [python]
     files: "(ramsey|tests)"
+    args:
+    - -s
+    - B310 # ignore https://bandit.readthedocs.io/en/latest/blacklists/blacklist_calls.html?highlight=B310#b310-urllib-urlopen
 
 - repo: local
   hooks:

@@ -1,5 +1,7 @@
+from ramsey._src.gaussian_process.kernel.non_stationary import Linear
 from ramsey._src.gaussian_process.kernel.stationary import (
     ExponentiatedQuadratic,
+    Periodic,
     exponentiated_quadratic,
 )
 
@@ -10,4 +12,6 @@ __all__ = [
     "exponentiated_quadratic",
     "RBF",
     "SquaredExponential",
+    "Periodic",
+    "Linear",
 ]
