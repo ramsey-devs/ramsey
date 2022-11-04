@@ -5,8 +5,6 @@ import haiku as hk
 from jax import numpy as jnp
 from jax import scipy as jsp
 
-from ramsey._src.family import Family, Gaussian
-
 __all__ = ["GP"]
 
 
@@ -22,7 +20,6 @@ class GP(hk.Module):
         self,
         kernel: hk.Module,
         sigma_init: Optional[hk.initializers.Initializer] = None,
-        family: Family = Gaussian(),
         name: Optional[str] = None,
     ):
         """
@@ -34,16 +31,12 @@ class GP(hk.Module):
             a covariance function object
         sigma_init: Optional[Initializer]
             an initializer object from Haiku or None
-        family: Family
-            an exponential family object specifying the distribution of the data
-            and which likelihood is going to be used
         name: Optional[str]
             name of the layer
         """
 
         super().__init__(name=name)
         self._kernel = kernel
-        self._family = family
         self.sigma_init = sigma_init
 
     def __call__(self, x: jnp.ndarray, **kwargs):
@@ -64,7 +57,7 @@ class GP(hk.Module):
 
     # pylint: disable=too-many-locals
     def _predictive(
-        self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray, jitter=1e-8
+        self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray, jitter=10e-8
     ):
         """
         Returns the Predictive Posterior Distribution
