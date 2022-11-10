@@ -1,4 +1,3 @@
-import sys
 from typing import Optional
 
 import distrax
@@ -8,12 +7,19 @@ from jax import scipy as jsp
 
 __all__ = ["SparseGP"]
 
+
 # pylint: disable=too-many-instance-attributes,duplicate-code
 class SparseGP(hk.Module):
     """
     A sparse Gaussian process
 
     Implements the core structure of a sparse Gaussian process.
+
+    References
+    ----------
+    [1] Titsias, Michalis K.
+        "Variational Learning of Inducing Variables in Sparse Gaussian
+        Processes". AISTATS, 2009
     """
 
     def __init__(
@@ -36,7 +42,7 @@ class SparseGP(hk.Module):
             number of inducing points
         jitter: Optional[float]
             additive jitter on covariance matrices diagonals to
-            stabalize them against loosing positive definite property
+            stabilize them against loosing positive definite property
         sigma_init: Optional[Initializer]
             an initializer object from Haiku or None
         name: Optional[str]
@@ -82,9 +88,7 @@ class SparseGP(hk.Module):
         """
 
         d = x_n.shape[1]
-
         shape_x_m = (self._m, d)
-
         if self._x_m_init is None:
             self._x_m_init = hk.initializers.RandomUniform(
                 jnp.min(x_n), jnp.max(x_n)
@@ -115,13 +119,6 @@ class SparseGP(hk.Module):
         -------
         distrax.MultivariateNormalTri
             returns a multivariate normal distribution object
-
-        References
-        ----------
-        [1] Titsias, Michalis
-            "Variational Learning of Inducing Variables in
-            Sparse Gaussian Processes", April 2009
-            http://proceedings.mlr.press/v5/titsias09a/titsias09a.pdf
         """
 
         log_sigma = self._get_sigma(x.dtype)
@@ -130,12 +127,8 @@ class SparseGP(hk.Module):
 
         # add jitter to diagonal to increase chances that K_mm is pos. def.
         K_mm = self._kernel(x_m, x_m) + self._jitter * jnp.eye(self._m)
-        self._abort_if_not_pdm(K_mm, matrix_name="K_mm")
-
         K_mn = self._kernel(x_m, x)
-
         C = K_mm + 1 / sigma_square * (K_mn @ K_mn.T)
-        self._abort_if_not_pdm(C, matrix_name="C")
 
         h0 = self._solve_linear(C, K_mn)  # C_inv @ K_mn
         mu = 1 / sigma_square * K_mm @ h0 @ y
@@ -146,21 +139,13 @@ class SparseGP(hk.Module):
 
         h1 = self._solve_linear(K_mm, mu)  # K_mm_inv @ muc
         mu_star = K_sm @ h1
-
         A = self._calculate_quadratic_form(C, K_mm)  # K_mm.T @ C_inv @ K_mm
-        self._abort_if_not_pdm(A, matrix_name="A")
-
         B_inv = self._calculate_quadratic_form(A, K_mm)  # K_mm * A_inv * K_mm
-        self._abort_if_not_pdm(B_inv, matrix_name="B_inv")
-
-        h2 = self._calculate_quadratic_form(
-            K_mm, K_ms
-        )  # K_sm @ K_mm_inv @ K_ms
-        h3 = self._calculate_quadratic_form(B_inv, K_ms)  # K_sm @ B @ K_ms
-
-        # add jitter to diagonal to increase chances that cov_star is pos. def.
+        # K_sm @ K_mm_inv @ K_ms
+        h2 = self._calculate_quadratic_form(K_mm, K_ms)
+        # K_sm @ B @ K_ms
+        h3 = self._calculate_quadratic_form(B_inv, K_ms)
         cov_star = K_ss - h2 + h3 + self._jitter * jnp.eye(x_star.shape[0])
-        self._abort_if_not_pdm(cov_star, matrix_name="cov_star")
 
         return distrax.MultivariateNormalTri(
             jnp.squeeze(mu_star), jnp.linalg.cholesky(cov_star)
@@ -181,15 +166,10 @@ class SparseGP(hk.Module):
         y: jnp.ndarray
             training point y
 
-        Returns:
-            float: variational lower bound of true log marginal likelihood
-
-        References
-        ----------
-        [1] Titsias, Michalis
-            "Variational Learning of Inducing Variables in
-            Sparse Gaussian Processes", April 2009
-            http://proceedings.mlr.press/v5/titsias09a/titsias09a.pdf
+        Returns
+        -------
+        float
+             variational lower bound of true log marginal likelihood
         """
 
         n = x.shape[0]
@@ -220,7 +200,8 @@ class SparseGP(hk.Module):
 
         return variational_lower_bound
 
-    def _solve_linear(self, A: jnp.ndarray, b: jnp.ndarray):
+    @staticmethod
+    def _solve_linear(A: jnp.ndarray, b: jnp.ndarray):
         """
         If A is symmetric and positive definite then Ax=b can be solved
         by using Cholesky decomposition.
@@ -239,8 +220,10 @@ class SparseGP(hk.Module):
         b: jnp.ndarray
             b in term Ax=b
 
-        Returns:
-            float: x from term Ax=b
+        Returns
+        --------
+        float
+            x from term Ax=b
         """
 
         L = jnp.linalg.cholesky(A)
@@ -250,7 +233,8 @@ class SparseGP(hk.Module):
         return x
 
     # pylint: disable=line-too-long
-    def _calculate_quadratic_form(self, A: jnp.ndarray, x: jnp.ndarray):
+    @staticmethod
+    def _calculate_quadratic_form(A: jnp.ndarray, x: jnp.ndarray):
         """
         Calculates a quadratic form
 
@@ -259,8 +243,6 @@ class SparseGP(hk.Module):
         using the Cholesky decomposition of A without actually computing inv(A)
         Note that A has to be symmetric and positive definite.
 
-        https://stats.stackexchange.com/questions/503058/relationship-between-cholesky-decomposition-and-matrix-inversion
-
         Parameters
         ----------
         A: jnp.ndarray
@@ -268,8 +250,10 @@ class SparseGP(hk.Module):
         x: jnp.ndarray
             x in term y = x.T * inv(A) * x
 
-        Returns:
-            float: y = x.T * inv(A) * x
+        Returns
+        -------
+        float
+            x.T * inv(A) * x
         """
 
         L = jnp.linalg.cholesky(A)
@@ -277,45 +261,3 @@ class SparseGP(hk.Module):
         y = z.T @ z
 
         return y
-
-    # pylint: disable=line-too-long
-    def _abort_if_not_pdm(self, A, matrix_name="A"):
-        """
-        Aborts the program if matrix A is not positiv definite.
-        This function should be used on matrices bevor trying Cholesky decomposition.
-
-        Important:
-        Checks with this function should only be done in the _predictive(..) function
-        as the if..else statments below prevent JIT compiling.
-
-        Details:
-        https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#control-flow
-
-        This is ok for the _predictive(..) function yet would massively slow down the
-        _marginal(..) function as this one is used during training.
-
-        Parameters
-        ----------
-        A: jnp.ndarray
-            matrix to check for positiv definiteness
-        matrix_name : Optional[str]
-            name of the matrix to check
-        """
-
-        error = False
-
-        evals = jnp.linalg.eigvals(A)
-
-        if not jnp.all(evals > 0):
-            error_msg = f"min(eigenvalue) = {jnp.min(evals)} < 0"
-            error = True
-
-        if not jnp.allclose(A, A.T, rtol=1e-6, atol=1e-6):
-            error_msg = f"{matrix_name} is not symmetric"
-            error = True
-
-        if error:
-            print(f"Error: {matrix_name} is not positive definite")
-            print(f"       {error_msg}")
-
-            sys.exit(1)

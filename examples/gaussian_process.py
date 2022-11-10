@@ -8,8 +8,8 @@ regression model.
 References
 ----------
 
-[1] Carl E Rasmussen and Christopher KI Williams. "Gaussian Processes for
-    Machine Learning." MIT press, 2006.
+[1] Rasmussen, Carl E and Williams, Chris KI.
+    "Gaussian Processes for Machine Learning". MIT press, 2006.
 """
 
 import haiku as hk

@@ -83,7 +83,7 @@ class GP(hk.Module):
 
         References
         ----------
-        .. [1] Rasmussen, Carl E and Williams, Chris KI .
+        .. [1] Rasmussen, Carl E and Williams, Chris KI.
            "Gaussian Processes for Machine Learning". MIT press, 2006.
         """
 

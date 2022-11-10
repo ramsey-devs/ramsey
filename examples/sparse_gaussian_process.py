@@ -1,6 +1,6 @@
 """
 Sparse Gaussian process regression
-===========================
+==================================
 
 This example implements the training and prediction of a sparse Gaussian process
 regression model.
@@ -8,9 +8,9 @@ regression model.
 References
 ----------
 
-[1] Titsias, Michalis
-    "Variational Learning of Inducing Variables in Sparse Gaussian Processes", April 2009
-    http://proceedings.mlr.press/v5/titsias09a/titsias09a.pdf
+[1] Titsias, Michalis K.
+    "Variational Learning of Inducing Variables in Sparse Gaussian Processes".
+    AISTATS, 2009.
 """
 
 import haiku as hk
@@ -27,6 +27,7 @@ from ramsey.models import SparseGP
 from jax.config import config
 config.update("jax_enable_x64", True)
 
+
 def data(key, rho, sigma, n=1000):
     (x_target, y_target), f_target = sample_from_gaussian_process(
         key, batch_size=1, num_observations=n, rho=rho, sigma=sigma
@@ -34,6 +35,7 @@ def data(key, rho, sigma, n=1000):
     return (x_target.reshape(n, 1), y_target.reshape(n, 1)), f_target.reshape(
         n, 1
     )
+
 
 def _gaussian_process(**kwargs):
     kernel = ExponentiatedQuadratic()
@@ -60,10 +62,10 @@ def train_gp(key, x, y):
 
     return gaussian_process, params
 
-def plot(key, gaussian_process, params, x, y, f, train_idxs):
 
+def plot(key, gaussian_process, params, x, y, f, train_idxs):
     x_m = params['sparse_gp']['x_m']
-    y_m = jnp.zeros((x_m.shape[0],1))
+    y_m = jnp.zeros((x_m.shape[0], 1))
     m = jnp.shape(x_m)[0]
     n = jnp.shape(train_idxs)[0]
 
