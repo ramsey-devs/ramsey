@@ -1,8 +1,49 @@
+from typing import Tuple
+
 import numpyro.distributions as dist
+import pandas as pd
+from chex import Array
 from jax import numpy as jnp
 from jax import random
 
+from ramsey._src.datasets import M4Dataset
 from ramsey.covariance_functions import exponentiated_quadratic
+
+
+# pylint: disable=too-many-locals,invalid-name
+def load_m4_time_series_data(
+    interval: str = "hourly", drop_na=True
+) -> Tuple[Tuple[Array, Array], Tuple[Array, Array]]:
+    """
+    Load an M4 data set
+
+    Parameters
+    ----------
+    interval: str
+        either of "hourly", "daily", "weekly", "monthly", "yearly"
+    drop_na: bool
+        drop rows that contain NA values
+
+    Returns
+    -------
+    Tuple[Tuple[Array, Array], Tuple[Array, Array]]
+        a tuple of tuples. The first tuple consists of two JAX arrays
+        where the first element are the time series observations (Y)
+        and the second are features (X). The second tuple are arrays of
+        training and testing indexes that can be used to subset Y and X
+    """
+
+    train, test = M4Dataset().load(interval)
+    df = pd.concat([train, test.reindex(train.index)], axis=1)
+    if drop_na:
+        df = df.dropna()
+    y = df.values
+    y = y.reshape((*y.shape, 1))
+    x = jnp.arange(y.shape[1]) / train.shape[1]
+    x = jnp.tile(x, [y.shape[0], 1]).reshape((y.shape[0], y.shape[1], 1))
+    train_idxs = jnp.arange(train.shape[1])
+    test_idxs = jnp.arange(test.shape[1]) + train.shape[1]
+    return (y, x), (train_idxs, test_idxs)
 
 
 # pylint: disable=too-many-locals,invalid-name

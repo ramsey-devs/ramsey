@@ -58,8 +58,6 @@ def train_gp(key, x, y):
 
 
 def plot(key, gaussian_process, params, x, y, f, train_idxs):
-    key, sample_key = random.split(key, 2)
-
     _, ax = plt.subplots(figsize=(8, 3))
     srt_idxs = jnp.argsort(jnp.squeeze(x))
     ax.plot(

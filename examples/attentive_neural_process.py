@@ -100,7 +100,7 @@ def plot(
             alpha=0.75,
         )
 
-        for i in range(20):
+        for _ in range(20):
             key, apply_key = random.split(key, 2)
             y_star = neural_process.apply(
                 params=params,

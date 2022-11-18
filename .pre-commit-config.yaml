@@ -4,6 +4,7 @@ repos:
     hooks:
     - id: check-docstring-first
     - id: check-added-large-files
+      args: ['--maxkb=1000']
     - id: check-merge-conflict
     - id: check-toml
     - id: check-yaml
@@ -42,6 +43,9 @@ repos:
     language_version: python3
     types: [python]
     files: "(ramsey|tests)"
+    args:
+    - -s
+    - B310 # ignore https://bandit.readthedocs.io/en/latest/blacklists/blacklist_calls.html?highlight=B310#b310-urllib-urlopen
 
 - repo: local
   hooks:
