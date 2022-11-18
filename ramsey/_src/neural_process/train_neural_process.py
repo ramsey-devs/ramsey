@@ -18,6 +18,7 @@ def train_neural_process(
     n_target: int,
     n_iter=20000,
     stepsize=3e-4,
+    verbose=False,
 ):
     if n_target < n_context:
         raise ValueError("'n_target' should be larger than 'n_context'")
@@ -62,7 +63,7 @@ def train_neural_process(
             y_target,
         )
         objectives[_] = loss_value
-        if _ % 1000 == 0 or _ == n_iter - 1:
+        if (_ % 1000 == 0 or _ == n_iter) - 1 and verbose:
             elbo = -float(loss_value)
             print(f"ELBO at {_}: {elbo}")
 

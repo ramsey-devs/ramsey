@@ -1,88 +1,49 @@
 from typing import Tuple
 
 import numpyro.distributions as dist
+import pandas as pd
+from chex import Array
 from jax import numpy as jnp
 from jax import random
 
-from ramsey._src.datasets import (
-    M4_DAILY,
-    M4_HOURLY,
-    M4_MONTHLY,
-    M4_QUARTERLY,
-    M4_WEEKLY,
-    M4_YEARLY,
-    M4Dataset,
-)
+from ramsey._src.datasets import M4Dataset
 from ramsey.covariance_functions import exponentiated_quadratic
 
-m4_datasets = {
-    "m4_hourly": {
-        "key": M4_HOURLY,
-        "n_observations": 700,
-        "n_forecasts": 48,
-        "series_prefix": "H",
-    },
-    "m4_daily": {
-        "key": M4_DAILY,
-        "n_observations": 93,
-        "n_forecasts": 14,
-        "series_prefix": "D",
-    },
-    "m4_weekly": {
-        "key": M4_WEEKLY,
-        "n_observations": 80,
-        "n_forecasts": 13,
-        "series_prefix": "W",
-    },
-    "m4_monthly": {
-        "key": M4_MONTHLY,
-        "n_observations": 42,
-        "n_forecasts": 18,
-        "series_prefix": "M",
-    },
-    "m4_quarterly": {
-        "key": M4_QUARTERLY,
-        "n_observations": 16,
-        "n_forecasts": 8,
-        "series_prefix": "Q",
-    },
-    "m4_yearly": {
-        "key": M4_YEARLY,
-        "n_observations": 13,
-        "n_forecasts": 6,
-        "series_prefix": "Y",
-    },
-}
 
+# pylint: disable=too-many-locals,invalid-name
+def load_m4_time_series_data(
+    interval: str = "hourly", drop_na=True
+) -> Tuple[Tuple[Array, Array], Tuple[Array, Array]]:
+    """
+    Load an M4 data set
 
-def load_m4_dataset(dset_name: str) -> Tuple[dict, dict]:
-    dset = m4_datasets[dset_name]["key"]
-    train, test = M4Dataset.load(dset)
-    return train, test
+    Parameters
+    ----------
+    interval: str
+        either of "hourly", "daily", "weekly", "monthly", "yearly"
+    drop_na: bool
+        drop rows that contain NA values
 
+    Returns
+    -------
+    Tuple[Tuple[Array, Array], Tuple[Array, Array]]
+        a tuple of tuples. The first tuple consists of two JAX arrays
+        where the first element are the time series observations (Y)
+        and the second are features (X). The second tuple are arrays of
+        training and testing indexes that can be used to subset Y and X
+    """
 
-def get_m4_time_series(
-    name: str, train: dict, test: dict
-) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-
-    y_train = jnp.array(train[name])
-    t_train = jnp.arange(start=0, stop=len(y_train), step=1.0, dtype=float)
-
-    y_test = jnp.array(test[name])
-    t_test = jnp.arange(
-        start=len(y_train),
-        stop=len(y_train) + len(y_test),
-        step=1.0,
-        dtype=float,
-    )
-
-    t_train = jnp.reshape(t_train, (len(t_train), 1))
-    y_train = jnp.reshape(y_train, (len(y_train), 1))
-
-    t_test = jnp.reshape(t_test, (len(t_test), 1))
-    y_test = jnp.reshape(y_test, (len(y_test), 1))
-
-    return t_train, y_train, t_test, y_test
+    train, test = M4Dataset().load(interval)
+    df = pd.concat([train, test.reindex(train.index)], axis=1)
+    if drop_na:
+        df = df.dropna()
+    y = df.values
+    y = y.reshape((*y.shape, 1))
+    x = jnp.arange(y.shape[1]) / train.shape[1]
+    x = jnp.tile(x, [y.shape[0], 1]).reshape((y.shape[0], y.shape[1], 1))
+    train_idxs = jnp.arange(train.shape[1])
+    test_idxs = jnp.arange(test.shape[1]) + train.shape[1]
+    return (y, x), (train_idxs, test_idxs)
 
 
 # pylint: disable=too-many-locals,invalid-name

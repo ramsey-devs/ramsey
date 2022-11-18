@@ -30,7 +30,7 @@ def data(key):
 
 
 def _neural_process(**kwargs):
-    dim = 128
+    dim = 3
     np = ANP(
         decoder=hk.nets.MLP([dim] * 3 + [2]),
         latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])),

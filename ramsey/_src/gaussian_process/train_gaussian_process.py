@@ -16,6 +16,7 @@ def train_gaussian_process(
     y: jnp.ndarray,  # pylint: disable=invalid-name
     n_iter=1000,
     stepsize=3e-03,
+    verbose=False,
 ):
     def _objective(par, key, x, y):
         mvn = fn.apply(
@@ -43,7 +44,7 @@ def train_gaussian_process(
             params, opt_state, next(rng_seq), x, y
         )
         objectives[_] = loss_value
-        if _ % 100 == 0 or _ == n_iter - 1:
+        if (_ % 100 == 0 or _ == n_iter - 1) and verbose:
             mll = -float(loss_value)
             print(f"MLL at {_}: {mll:.2f}")
 

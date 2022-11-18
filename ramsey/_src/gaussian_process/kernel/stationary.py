@@ -49,8 +49,7 @@ class Periodic(Kernel):
         """
         Calculates Gram matrix with periodic covariance function
 
-        For details on the periodic kernel see [1],
-        Chapeter 18.2.1.4 Periodic Kernels
+        For details on the periodic kernel see [1]  18.2.1.4 Periodic Kernels
 
         References
         ----------
