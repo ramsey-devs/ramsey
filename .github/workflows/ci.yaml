@@ -41,7 +41,7 @@ jobs:
     name: code coverage
     runs-on: ubuntu-latest
     needs:
-      - test
+      - build
     strategy:
       matrix:
         python-version: [3.9]
