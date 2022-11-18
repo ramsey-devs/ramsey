@@ -30,7 +30,7 @@ def data(key):
 
 
 def _neural_process(**kwargs):
-    dim = 3
+    dim = 128
     np = ANP(
         decoder=hk.nets.MLP([dim] * 3 + [2]),
         latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])),
@@ -100,7 +100,7 @@ def plot(
             alpha=0.75,
         )
 
-        for i in range(20):
+        for _ in range(20):
             key, apply_key = random.split(key, 2)
             y_star = neural_process.apply(
                 params=params,
