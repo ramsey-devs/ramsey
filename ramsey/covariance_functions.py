@@ -7,6 +7,7 @@ from ramsey._src.gaussian_process.kernel.stationary import (
 
 SquaredExponential = ExponentiatedQuadratic
 RBF = ExponentiatedQuadratic
+
 __all__ = [
     "ExponentiatedQuadratic",
     "exponentiated_quadratic",
