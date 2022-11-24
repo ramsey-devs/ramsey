@@ -78,7 +78,7 @@ class BayesianNeuralNetwork(hk.Module):
         kl_div = 0
 
         for layer in self._layers:
-            if isinstance(layer, BayesianLinear):
+            if isinstance(layer, BayesianLayer):
                 x, kl_contribution = layer(x, key, is_training=True)
                 kl_div += kl_contribution
             else:
