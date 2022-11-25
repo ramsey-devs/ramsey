@@ -39,38 +39,11 @@ def data(key, rho, sigma, n=1000):
 
 def _bayesian_nn(**kwargs):
 
-    def _inv_softplus(x):
-        return jnp.log(jnp.exp(x)-1)
-
-    w_prior = Normal(loc=0, scale=1.05)
-    b_prior = Normal(loc=0, scale=1.05)
-
-    w_rho_init = hk.initializers.TruncatedNormal(
-        mean=_inv_softplus(6.71e-3),
-        stddev=0.1)
-
-    b_rho_init = hk.initializers.TruncatedNormal(
-        mean=_inv_softplus(6.71e-3),
-        stddev=0.1)
-
-    bayes_1 = BayesianLinear(8, w_prior=w_prior, b_prior=b_prior,
-                                w_rho_init=w_rho_init, b_rho_init=b_rho_init,
-                                activation=jax.nn.leaky_relu)
-
-    bayes_2 = BayesianLinear(8, w_prior=w_prior, b_prior=b_prior,
-                                w_rho_init=w_rho_init, b_rho_init=b_rho_init,
-                                activation=jax.nn.leaky_relu)
-
-    bayes_3 = BayesianLinear(1, w_prior=w_prior, b_prior=b_prior,
-                                w_rho_init=w_rho_init, b_rho_init=b_rho_init,
-                                activation=None)
-
+    bayes_1 = BayesianLinear(8)
+    bayes_2 = BayesianLinear(8)
+    bayes_3 = BayesianLinear(1,activation=None)
     layers = [bayes_1, bayes_2, bayes_3]
-
-    lklh_log_sigma_init = hk.initializers.RandomUniform(jnp.log(0.1), jnp.log(1.0))
-
-    bayesian_nn = BayesianNeuralNetwork(layers, lklh_log_sigma_init)
-
+    bayesian_nn = BayesianNeuralNetwork(layers)
     return bayesian_nn(**kwargs)
 
 def _std_nn(x, **kwargs):

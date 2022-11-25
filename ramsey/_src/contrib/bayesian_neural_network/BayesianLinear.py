@@ -193,7 +193,9 @@ class BayesianLinear(hk.Module, BayesianLayer):
         rho_init = self._w_rho_init
 
         if rho_init is None:
-            rho_init = hk.initializers.TruncatedNormal(mean=-5, stddev=0.1)
+            rho_init = hk.initializers.RandomUniform(
+                self._inv_softplus(1e-2), self._inv_softplus(1e-1)
+            )
 
         rho = hk.get_parameter("w_rho", shape=shape, dtype=dtype, init=rho_init)
         sigma = self._softplus(rho)
@@ -212,7 +214,9 @@ class BayesianLinear(hk.Module, BayesianLayer):
         rho_init = self._b_rho_init
 
         if rho_init is None:
-            rho_init = hk.initializers.TruncatedNormal(mean=-5, stddev=0.1)
+            rho_init = hk.initializers.RandomUniform(
+                self._inv_softplus(1e-2), self._inv_softplus(1e-1)
+            )
 
         rho = hk.get_parameter("b_rho", shape=shape, dtype=dtype, init=rho_init)
         sigma = self._softplus(rho)
@@ -221,3 +225,6 @@ class BayesianLinear(hk.Module, BayesianLayer):
 
     def _softplus(self, x):
         return jnp.log(1 + jnp.exp(x))
+
+    def _inv_softplus(self, x):
+        return jnp.log(jnp.exp(x) - 1)
