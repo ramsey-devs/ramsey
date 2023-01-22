@@ -47,6 +47,34 @@ def load_m4_time_series_data(
 
 
 # pylint: disable=too-many-locals,invalid-name
+def sample_from_polynomial_function(
+    rng, batch_size=10, order=1, num_observations=100, sigma=0.1
+):
+    x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
+        (num_observations, 1)
+    )
+    ys = []
+    fs = []
+    for _ in range(batch_size):
+
+        coeffs = list(random.uniform(next(rng), shape=(order + 1, 1)) - 1)
+        f = 0
+        for i in range(order + 1):
+            f += coeffs[i] * x**i
+
+        y = f + random.normal(next(rng), shape=(num_observations, 1)) * sigma
+
+        fs.append(f.reshape((1, num_observations, 1)))
+        ys.append(y.reshape((1, num_observations, 1)))
+
+    x = jnp.tile(x, [batch_size, 1, 1])
+    y = jnp.vstack(jnp.array(ys))
+    f = jnp.vstack(jnp.array(fs))
+
+    return (x, y), f
+
+
+# pylint: disable=too-many-locals,invalid-name
 def sample_from_sine_function(key, batch_size=10, num_observations=100):
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, 1)
