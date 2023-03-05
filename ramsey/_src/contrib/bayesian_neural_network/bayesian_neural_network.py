@@ -4,7 +4,8 @@ import haiku as hk
 from distrax import Normal
 from jax import numpy as jnp
 
-from ramsey.contrib.models import BayesianLinear
+from ramsey._src.contrib.bayesian_neural_network.bayesian_linear import \
+    BayesianLinear
 
 
 class BayesianNeuralNetwork(hk.Module):
