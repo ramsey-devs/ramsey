@@ -1,6 +1,5 @@
 import re
 from os.path import abspath, dirname, join
-
 from setuptools import find_packages, setup
 
 PROJECT_PATH = dirname(abspath(__file__))
@@ -33,19 +32,17 @@ setup(
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/ramsey-devs/ramsey",
-    author="The ramsey developers",
+    author="The Ramsey developers",
     license="Apache 2.0",
     keywords="bayes jax probabilistic models gaussian process neural process",
     packages=find_packages(),
     include_package_data=True,
     python_requires=">=3.8",
     install_requires=[
-        "jaxlib",
-        "jax",
+        "blackjax",
         "chex",
         "optax",
         "dm-haiku",
-        "numpyro",
         "distrax",
         "pandas"
     ],
