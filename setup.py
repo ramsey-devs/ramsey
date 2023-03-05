@@ -41,9 +41,10 @@ setup(
     install_requires=[
         "blackjax",
         "chex",
-        "optax",
         "dm-haiku",
         "distrax",
+        "numpyro",
+        "optax",
         "pandas"
     ],
     extras_require={

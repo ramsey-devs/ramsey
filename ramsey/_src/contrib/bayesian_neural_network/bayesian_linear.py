@@ -1,13 +1,12 @@
 from typing import Optional
 
 import haiku as hk
-import jax.nn
 from jax import numpy as jnp
 from numpyro import distributions as dist
 
 
 # pylint: disable=too-many-instance-attributes,too-many-locals
-class BayesianLinear(hk.Linear):
+class BayesianLinear(hk.Module):
     """
     Linear Bayesian layer
 
@@ -42,15 +41,15 @@ class BayesianLinear(hk.Linear):
         with_bias: bool
             control usage of bias term
         w_prior: Optional[Distribution]
-            prior distriburtion for weights
+            prior distribution for weights
         b_prior: Optional[Distribution]
             prior distribution for bias
         name: Optional[str]
             name of the layer
         kwargs: keyword arguments
-            you can supply the initializers for the parameters of the priors using the
-            keyword arguments. For instance, if your prior on the weights
-            is a dist.Normal(loc, scale) then you can supply
+            you can supply the initializers for the parameters of the priors
+            using the keyword arguments. For instance, if your prior on the
+            weights is a dist.Normal(loc, scale) then you can supply
             hk.initializers.Initializer objects with names w_loc_init and
             w_scale_init as keyword arguments. Likewise you can supply
             initializers called b_loc_init and b_scale_init for the prior on the
@@ -59,7 +58,6 @@ class BayesianLinear(hk.Linear):
             w_high_init
         """
 
-        dist.Uniform()
         super().__init__(name=name)
         self._output_size = output_size
         self._with_bias = with_bias
@@ -82,101 +80,51 @@ class BayesianLinear(hk.Linear):
         dtype = x.dtype
         n_in = x.shape[-1]
 
-        w_mu, w_sigma = self._get_w_var_dist_params(
-            (n_in, self._output_size), dtype
-        )
-        W = self._reparameterize(w_mu, w_sigma)
-        output = jnp.matmul(x, W)
+        w, w_params = self._get_weights((n_in, self._output_size), dtype)
+        output = jnp.dot(x, w)
 
         if self._with_bias:
-            b_mu, b_sigma = self._get_b_var_dist_params(
-                self._output_size, dtype
-            )
-            b = self._reparameterize(b_mu, b_sigma)
-            b_ = jnp.broadcast_to(b, output.shape)
-            output = output + b_
-
-        output = self._activate(output)
+            b, b_params = self._get_bias(self._output_size, dtype)
+            b = jnp.broadcast_to(b, output.shape)
+            output = output + b
 
         if is_training:
-            kl_div = self._kl_div_w(w_mu, w_sigma, W)
+            kl_div = self._kl(w, w_params)
             if self._with_bias:
-                kl_div += self._kl_div_b(b_mu, b_sigma, b)
+                kl_div += self._kl(b, b_params)
             return output, kl_div
 
         return output
 
-    def _kl_div_b(self, mu, sigma, b):
+    def _get_weights(self, layer_dim, dtype):
+        arg_constraints = self._w_prior.arg_constraints
+        params = {
+            param_name: self._init_param("w", param_name, layer_dim, dtype)
+            for param_name, constraint in arg_constraints.items()
+        }
+        return self._w_prior(**params).sample(hk.next_rng_key()), params
 
-        # variational posterior: q(b|theta)
-        var_posterior = dist.Normal(loc=mu, scale=sigma)
+    def _get_bias(self, layer_dim, dtype):
+        arg_constraints = self._b_prior.arg_constraints
+        params = {
+            param_name: self._init_param("b", param_name, layer_dim, dtype)
+            for param_name, constraint in arg_constraints.items()
+        }
+        return self._b_prior(**params).sample(hk.next_rng_key()), params
 
-        # KL from posterior to prior p(b)
-        kl_div = -jnp.sum(self._b_prior.log_prob(b))
-        kl_div += jnp.sum(var_posterior.log_prob(b))
-
-        return kl_div
-
-    def _kl_div_w(self, mu, sigma, w):
-
-        # variational posterior: q(w|theta)
-        var_posterior = dist.Normal(loc=mu, scale=sigma)
-
-        # KL from posterior to prior p(w)
-        kl_div = -jnp.sum(self._w_prior.log_prob(w))
-        kl_div += jnp.sum(var_posterior.log_prob(w))
-
-        return kl_div
-
-    @staticmethod
-    def _reparameterize(mu, sigma):
-        e = dist.MultivariateNormal(loc=jnp.zeros(mu.shape)).sample(
-            hk.next_rng_key()
+    def _init_param(self, weight_name, param_name, shape, dtype):
+        init_name = f"{weight_name}_{param_name}_init"
+        if init_name in self._kwargs:
+            init = self._kwargs[init_name]
+        else:
+            init = hk.initializers.TruncatedNormal(stddev=0.01)
+        params = hk.get_parameter(
+            f"{weight_name}_{param_name}", shape=shape, dtype=dtype, init=init
         )
-        z = mu + sigma * e
-        return z
+        return params
 
-    def _get_b_var_dist_params(self, n_out, dtype):
-        b_mu_var = self._get_mu_b([n_out], dtype)
-        b_sigma_var = self._get_sigma_b([n_out], dtype)
-        return b_mu_var, b_sigma_var
-
-    def _get_w_var_dist_params(self, layer_dim, dtype):
-        w_mu_var = self._get_mu_w(layer_dim, dtype)
-        w_sigma_var = self._get_sigma_w(layer_dim, dtype)
-        return w_mu_var, w_sigma_var
-
-    def _get_mu_w(self, shape, dtype):
-        n_in, _ = shape
-        mu_init = self._w_mu_init
-        if mu_init is None:
-            stddev = 1.0 / jnp.sqrt(n_in)
-            mu_init = hk.initializers.TruncatedNormal(stddev=stddev)
-        mu = hk.get_parameter("w_mu", shape=shape, dtype=dtype, init=mu_init)
-        return mu
-
-    def _get_sigma_w(self, shape, dtype):
-        rho_init = self._w_rho_init
-        if rho_init is None:
-            rho_init = hk.initializers.RandomUniform(
-                self._inv_softplus(1e-2), self._inv_softplus(1e-1)
-            )
-        rho = hk.get_parameter("w_rho", shape=shape, dtype=dtype, init=rho_init)
-        sigma = jax.nn.softplus(rho)
-        return sigma
-
-    def _get_mu_b(self, shape, dtype):
-        mu = hk.get_parameter(
-            "b_mu", shape=shape, dtype=dtype, init=self._b_mu_init
-        )
-        return mu
-
-    def _get_sigma_b(self, shape, dtype):
-        rho_init = self._b_rho_init
-        if rho_init is None:
-            rho_init = hk.initializers.RandomUniform(
-                self._inv_softplus(1e-2), self._inv_softplus(1e-1)
-            )
-        rho = hk.get_parameter("b_rho", shape=shape, dtype=dtype, init=rho_init)
-        sigma = self._softplus(rho)
-        return sigma
+    def _kl(self, w, params):
+        var_posterior = self._w_prior.__class__(**params)
+        kl_div = jnp.sum(var_posterior.log_prob(w))
+        kl_div -= jnp.sum(self._w_prior.log_prob(w))
+        return kl_div
