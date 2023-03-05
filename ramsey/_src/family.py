@@ -1,7 +1,7 @@
 import abc
 
-import jax.numpy as np
 import numpyro.distributions as dist
+from jax import numpy as jnp
 from jax.nn import softplus
 
 
@@ -15,7 +15,11 @@ class Family(abc.ABC):
         self._distribution = distribution
 
     @abc.abstractmethod
-    def __call__(self, target: np.ndarray):
+    def __call__(self, target: jnp.ndarray):
+        pass
+
+    @abc.abstractmethod
+    def get_canonical_parameters(self):
         pass
 
 
@@ -24,13 +28,21 @@ class Gaussian(Family):
     Family of Gaussian distributions
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(dist.Normal)
+        self._kwargs = kwargs
 
-    def __call__(self, target: np.ndarray):
-        mean, log_sigma = np.split(target, 2, axis=-1)
-        sigma = 0.1 + 0.9 * softplus(log_sigma)
-        return dist.Normal(loc=mean, scale=sigma)
+    def __call__(self, target: jnp.ndarray, **kwargs):
+        log_scale = kwargs.get("scale", None)
+        if log_scale:
+            mean = target
+        else:
+            mean, log_scale = jnp.split(target, 2, axis=-1)
+        scale = 0.1 + 0.9 * softplus(log_scale)
+        return dist.Normal(loc=mean, scale=scale)
+
+    def get_canonical_parameters(self):
+        return "scale", dist.Normal.arg_constraints["scale"]
 
 
 class NegativeBinomial(Family):
@@ -41,9 +53,18 @@ class NegativeBinomial(Family):
     def __init__(self):
         super().__init__(dist.NegativeBinomial2)
 
-    def __call__(self, target: np.ndarray):
-        mean, concentration = np.split(target, 2, axis=-1)
-        mean = np.exp(mean)
-        concentration = np.exp(concentration)
-
+    def __call__(self, target: jnp.ndarray, **kwargs):
+        concentration = kwargs.get("concentration", None)
+        if concentration:
+            mean = target
+        else:
+            mean, concentration = jnp.split(target, 2, axis=-1)
+            mean = jnp.exp(mean)
+        concentration = jnp.exp(concentration)
         return dist.NegativeBinomial2(mean=mean, concentration=concentration)
+
+    def get_canonical_parameters(self):
+        return (
+            "concentration",
+            dist.NegativeBinomial2.arg_constraints["concentration"],
+        )

@@ -4,9 +4,9 @@ import haiku as hk
 import jax.numpy as np
 from chex import assert_axis_dimension, assert_rank
 
+from ramsey import ANP
 from ramsey.attention import Attention
 from ramsey.family import Family, Gaussian
-from ramsey.models import ANP
 
 __all__ = ["RANP"]
 

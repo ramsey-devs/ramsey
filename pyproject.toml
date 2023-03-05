@@ -43,3 +43,6 @@ module = [
     "ramsey._src.neural_process.doubly_attentive_neural_process"
 ]
 no_strict_optional = true
+
+[tool.bandit]
+skips = ["B101"]

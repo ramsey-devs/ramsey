@@ -74,12 +74,12 @@ class NP(hk.Module):
         assert_rank([x_context, y_context, x_target], 3)
         if "y_target" in kwargs:
             assert_rank(kwargs["y_target"], 3)
-            return self._elbo(x_context, y_context, x_target, **kwargs)
+            return self._negative_elbo(x_context, y_context, x_target, **kwargs)
 
         _, num_observations, _ = x_target.shape
-        key = hk.next_rng_key()
-
-        z_latent = self._encode_latent(x_context, y_context).sample(key)
+        z_latent = self._encode_latent(x_context, y_context).sample(
+            hk.next_rng_key()
+        )
         z_deterministic = self._encode_deterministic(
             x_context, y_context, x_target
         )
@@ -90,7 +90,7 @@ class NP(hk.Module):
 
         return mvn
 
-    def _elbo(  # pylint: disable=too-many-locals
+    def _negative_elbo(  # pylint: disable=too-many-locals
         self,
         x_context: np.ndarray,
         y_context: np.ndarray,
