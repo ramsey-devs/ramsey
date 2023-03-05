@@ -1,6 +1,7 @@
 from typing import Optional
 
 import haiku as hk
+import jax.nn
 from jax import numpy as jnp
 from numpyro import distributions as dist
 
@@ -161,7 +162,7 @@ class BayesianLinear(hk.Linear):
                 self._inv_softplus(1e-2), self._inv_softplus(1e-1)
             )
         rho = hk.get_parameter("w_rho", shape=shape, dtype=dtype, init=rho_init)
-        sigma = self._softplus(rho)
+        sigma = jax.nn.softplus(rho)
         return sigma
 
     def _get_mu_b(self, shape, dtype):
