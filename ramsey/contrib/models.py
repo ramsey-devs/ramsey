@@ -1,7 +1,7 @@
-from ramsey._src.contrib.bayesian_neural_network.BayesianLinear import (
+from ramsey._src.contrib.bayesian_neural_network.bayesian_linear import (
     BayesianLinear,
 )
-from ramsey._src.contrib.bayesian_neural_network.BayesianNeuralNetwork import (
+from ramsey._src.contrib.bayesian_neural_network.bayesian_neural_network import (
     BayesianNeuralNetwork,
 )
 from ramsey._src.contrib.timeseries.recurrent_attentive_neural_process import (

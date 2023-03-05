@@ -4,26 +4,19 @@ import haiku as hk
 from distrax import Normal
 from jax import numpy as jnp
 
-from ramsey._src.contrib.bayesian_neural_network.BayesianLayer import (
-    BayesianLayer,
-)
-from ramsey._src.contrib.bayesian_neural_network.BayesianLinear import (
-    BayesianLinear,
-)
+from ramsey.contrib.models import BayesianLinear
 
 
 class BayesianNeuralNetwork(hk.Module):
     """
-    Bayesian Neural Network
+    Bayesian neural network
 
-    Implements a BNN. The BNN layers can a mix of Bayesian (BayesianLayer) and
-    normal (e.g. hk.Linear) layers.
-
-    Training objective is the ELBO and is calculated according [1].
+    Implements a Bayesian neural network. The BNN layers can a mix of Bayesian
+    layers and conventional layers. The training objective is the ELBO and is
+    calculated according to [1].
 
     References
     ----------
-
     [1] Blundell C., Cornebise J., Kavukcuoglu K., Wierstra D.
         "Weight Uncertainty in Neural Networks".
         ICML, 2015.
@@ -36,7 +29,7 @@ class BayesianNeuralNetwork(hk.Module):
         name: Optional[str] = None,
     ):
         """
-        Instantiates a Bayesian Neural Network
+        Instantiates a Bayesian neural network
 
         Parameters
         ----------
@@ -65,7 +58,7 @@ class BayesianNeuralNetwork(hk.Module):
         key = hk.next_rng_key()
 
         for layer in self._layers:
-            if isinstance(layer, BayesianLayer):
+            if isinstance(layer, BayesianLinear):
                 x = layer(x, key)
             else:
                 x = layer(x)
@@ -78,7 +71,7 @@ class BayesianNeuralNetwork(hk.Module):
         kl_div = 0
 
         for layer in self._layers:
-            if isinstance(layer, BayesianLayer):
+            if isinstance(layer, BayesianLinear):
                 x, kl_contribution = layer(x, key, is_training=True)
                 kl_div += kl_contribution
             else:
@@ -94,9 +87,7 @@ class BayesianNeuralNetwork(hk.Module):
         return -elbo
 
     def _get_sigma(self, dtype):
-
         log_sigma_init = self._lklh_log_sigma_init
-
         if log_sigma_init is None:
             log_sigma_init = hk.initializers.RandomUniform(
                 jnp.log(0.1), jnp.log(1.0)
@@ -106,5 +97,4 @@ class BayesianNeuralNetwork(hk.Module):
             "lklh_log_sigma", [], dtype=dtype, init=log_sigma_init
         )
         sigma = jnp.exp(log_sigma)
-
         return sigma

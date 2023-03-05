@@ -1,5 +1,6 @@
 from typing import Tuple
 
+import haiku as hk
 import numpyro.distributions as dist
 import pandas as pd
 from chex import Array
@@ -124,6 +125,31 @@ def sample_from_gaussian_process(
         y = random.multivariate_normal(
             sample_key4, mean=f, cov=jnp.eye(num_observations) * 0.05
         )
+        fs.append(f.reshape((1, num_observations, 1)))
+        ys.append(y.reshape((1, num_observations, 1)))
+
+    x = jnp.tile(x, [batch_size, 1, 1])
+    y = jnp.vstack(jnp.array(ys))
+    f = jnp.vstack(jnp.array(fs))
+
+    return (x, y), f
+
+
+# pylint: disable=too-many-locals,invalid-name
+def sample_from_linear_model(
+    key, batch_size=10, num_observations=100, num_dim=1
+):
+    rng_seq = hk.PRNGSequence(key)
+    x = random.normal(next(rng_seq), (num_observations, num_dim))
+    ys = []
+    fs = []
+    for _ in range(batch_size):
+        alpha = dist.Normal(0.0, 2.0).sample(next(rng_seq))
+        beta = dist.Normal(0.0, 2.0).sample(next(rng_seq), (num_dim,))
+        noise_scale = dist.Gamma(1.0, 10.0).sample(next(rng_seq))
+
+        f = alpha + x @ beta
+        y = f + random.normal(next(rng_seq), f.shape) * noise_scale
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 

@@ -1,92 +1,72 @@
-from typing import Callable, Optional
+from typing import Optional
 
 import haiku as hk
-import jax
-from distrax import Distribution, MultivariateNormalDiag, Normal
 from jax import numpy as jnp
-from jax import random
-
-from ramsey._src.contrib.bayesian_neural_network.BayesianLayer import (
-    BayesianLayer,
-)
+from numpyro import distributions as dist
 
 
 # pylint: disable=too-many-instance-attributes,too-many-locals
-class BayesianLinear(hk.Module, BayesianLayer):
+class BayesianLinear(hk.Linear):
     """
-    Bayesian Linear Layer
+    Linear Bayesian layer
 
-    Bayesian Linear Layer using distributions over weights and bias.
-
+    A linear Bayesian layer using distributions over weights and bias.
     The KL divergences between the variational posteriors and priors
-    for weigths and bias are calculated.
-    The KL divergence terms can be used to obtain the ELBO as an objective
-    to train a Bayesian Neural Network.
-
-    See [1] for details.
+    for weigths and bias are calculated. The KL divergence terms can be
+    used to obtain the ELBO as an objective to train a Bayesian neural network.
 
     References
     ----------
 
     [1] Blundell C., Cornebise J., Kavukcuoglu K., Wierstra D.
-        "Weight Uncertainty in Neural Networks".
-        ICML, 2015.
+        "Weight Uncertainty in Neural Networks". ICML, 2015.
     """
 
     def __init__(
         self,
         output_size: int,
-        w_mu_init: Optional[hk.initializers.Initializer] = None,
-        w_rho_init: Optional[hk.initializers.Initializer] = None,
-        b_mu_init: Optional[hk.initializers.Initializer] = None,
-        b_rho_init: Optional[hk.initializers.Initializer] = None,
         with_bias: bool = True,
-        activation: Callable[[jnp.ndarray], jnp.ndarray] = jax.nn.relu,
-        w_prior: Optional[Distribution] = Normal(loc=0, scale=1),
-        b_prior: Optional[Distribution] = Normal(loc=0, scale=1),
+        w_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0),
+        b_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0),
         name: Optional[str] = None,
+        **kwargs,
     ):
         """
-        Instantiates a Bayesian Linear Layer
+        Instantiates a linear Bayesian layer
 
         Parameters
         ----------
         output_size: int
             number of layer outputs
-        w_mu_init: Optional[hk.initializers.Initializer]
-            init for mean of var. posterior for weigths
-        w_rho_init: Optional[hk.initializers.Initializer]
-            init for sigma = log(1+exp(rho)) of var. posterior for weigths
-        b_mu_init: Optional[hk.initializers.Initializer]
-            init for mean of var. posterior for bias
-        b_rho_init: Optional[hk.initializers.Initializer]
-            init for sigma = log(1+exp(rho)) of var. posterior for bias
         with_bias: bool
             control usage of bias term
-        activation: Callable[[jnp.ndarray], jnp.ndarray]
-            choose the activation function (use None for no activation)
         w_prior: Optional[Distribution]
             prior distriburtion for weights
         b_prior: Optional[Distribution]
             prior distribution for bias
         name: Optional[str]
             name of the layer
+        kwargs: keyword arguments
+            you can supply the initializers for the parameters of the priors using the
+            keyword arguments. For instance, if your prior on the weights
+            is a dist.Normal(loc, scale) then you can supply
+            hk.initializers.Initializer objects with names w_loc_init and
+            w_scale_init as keyword arguments. Likewise you can supply
+            initializers called b_loc_init and b_scale_init for the prior on the
+            bias. If your prior on the weights is a dist.Uniform(low, high)
+            you will need to supply initializers called w_low_init and
+            w_high_init
         """
 
+        dist.Uniform()
         super().__init__(name=name)
         self._output_size = output_size
         self._with_bias = with_bias
-        self._w_mu_init = w_mu_init
-        self._w_rho_init = w_rho_init
-        self._b_mu_init = b_mu_init or jnp.zeros
-        self._b_rho_init = b_rho_init
-        self._activation = activation
         self._w_prior = w_prior
         self._b_prior = b_prior
+        self._kwargs = kwargs
 
-    def __call__(
-        self, x: jnp.ndarray, key: random.PRNGKey, is_training: bool = False
-    ):
+    def __call__(self, x: jnp.ndarray, is_training: bool = False):
         """
         Instantiates a sparse Gaussian process
 
@@ -94,25 +74,24 @@ class BayesianLinear(hk.Module, BayesianLayer):
         ----------
         x: jnp.ndarray
             layer inputs
-        key : random.PRNGKey,
-            number of inducing points
         is_training : bool
             training mode where KL divergence terms are calculated and returned
         """
 
-        x = jnp.atleast_2d(x)
         dtype = x.dtype
-
         n_in = x.shape[-1]
-        n_out = self._output_size
 
-        w_mu, w_sigma = self._get_w_var_dist_params((n_in, n_out), dtype)
-        W = self._reparameterize(w_mu, w_sigma, key)
+        w_mu, w_sigma = self._get_w_var_dist_params(
+            (n_in, self._output_size), dtype
+        )
+        W = self._reparameterize(w_mu, w_sigma)
         output = jnp.matmul(x, W)
 
         if self._with_bias:
-            b_mu, b_sigma = self._get_b_var_dist_params(n_out, dtype)
-            b = self._reparameterize(b_mu, b_sigma, key)
+            b_mu, b_sigma = self._get_b_var_dist_params(
+                self._output_size, dtype
+            )
+            b = self._reparameterize(b_mu, b_sigma)
             b_ = jnp.broadcast_to(b, output.shape)
             output = output + b_
 
@@ -129,7 +108,7 @@ class BayesianLinear(hk.Module, BayesianLayer):
     def _kl_div_b(self, mu, sigma, b):
 
         # variational posterior: q(b|theta)
-        var_posterior = Normal(loc=mu, scale=sigma)
+        var_posterior = dist.Normal(loc=mu, scale=sigma)
 
         # KL from posterior to prior p(b)
         kl_div = -jnp.sum(self._b_prior.log_prob(b))
@@ -140,7 +119,7 @@ class BayesianLinear(hk.Module, BayesianLayer):
     def _kl_div_w(self, mu, sigma, w):
 
         # variational posterior: q(w|theta)
-        var_posterior = Normal(loc=mu, scale=sigma)
+        var_posterior = dist.Normal(loc=mu, scale=sigma)
 
         # KL from posterior to prior p(w)
         kl_div = -jnp.sum(self._w_prior.log_prob(w))
@@ -148,83 +127,55 @@ class BayesianLinear(hk.Module, BayesianLayer):
 
         return kl_div
 
-    def _activate(self, x):
-
-        output = x
-        if self._activation is not None:
-            output = self._activation(x)
-        return output
-
-    def _reparameterize(self, mu, sigma, key):
-
-        e = MultivariateNormalDiag(loc=jnp.zeros(mu.shape)).sample(seed=key)
+    @staticmethod
+    def _reparameterize(mu, sigma):
+        e = dist.MultivariateNormal(loc=jnp.zeros(mu.shape)).sample(
+            hk.next_rng_key()
+        )
         z = mu + sigma * e
         return z
 
     def _get_b_var_dist_params(self, n_out, dtype):
-
         b_mu_var = self._get_mu_b([n_out], dtype)
         b_sigma_var = self._get_sigma_b([n_out], dtype)
-
         return b_mu_var, b_sigma_var
 
     def _get_w_var_dist_params(self, layer_dim, dtype):
-
         w_mu_var = self._get_mu_w(layer_dim, dtype)
         w_sigma_var = self._get_sigma_w(layer_dim, dtype)
-
         return w_mu_var, w_sigma_var
 
     def _get_mu_w(self, shape, dtype):
-
         n_in, _ = shape
         mu_init = self._w_mu_init
-
         if mu_init is None:
             stddev = 1.0 / jnp.sqrt(n_in)
             mu_init = hk.initializers.TruncatedNormal(stddev=stddev)
-
         mu = hk.get_parameter("w_mu", shape=shape, dtype=dtype, init=mu_init)
-
         return mu
 
     def _get_sigma_w(self, shape, dtype):
-
         rho_init = self._w_rho_init
-
         if rho_init is None:
             rho_init = hk.initializers.RandomUniform(
                 self._inv_softplus(1e-2), self._inv_softplus(1e-1)
             )
-
         rho = hk.get_parameter("w_rho", shape=shape, dtype=dtype, init=rho_init)
         sigma = self._softplus(rho)
-
         return sigma
 
     def _get_mu_b(self, shape, dtype):
-
         mu = hk.get_parameter(
             "b_mu", shape=shape, dtype=dtype, init=self._b_mu_init
         )
         return mu
 
     def _get_sigma_b(self, shape, dtype):
-
         rho_init = self._b_rho_init
-
         if rho_init is None:
             rho_init = hk.initializers.RandomUniform(
                 self._inv_softplus(1e-2), self._inv_softplus(1e-1)
             )
-
         rho = hk.get_parameter("b_rho", shape=shape, dtype=dtype, init=rho_init)
         sigma = self._softplus(rho)
-
         return sigma
-
-    def _softplus(self, x):
-        return jnp.log(1 + jnp.exp(x))
-
-    def _inv_softplus(self, x):
-        return jnp.log(jnp.exp(x) - 1)

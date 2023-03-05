@@ -22,7 +22,7 @@ from ramsey.contrib.models import RANP
 
 def data(key):
     (x_target, y_target), f_target = sample_from_gaussian_process(
-        key, batch_size=2, num_observations=5
+        key, batch_size=10, num_observations=200
     )
     return (x_target, y_target), f_target
 

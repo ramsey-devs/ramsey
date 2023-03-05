@@ -113,7 +113,7 @@ class NP(hk.Module):
         mvn = self._decode(representation, x_target, y_target)
 
         lp__ = np.sum(mvn.log_prob(y_target), axis=1)
-        kl__ = np.sum(kl_divergence(prior, posterior), axis=-1)
+        kl__ = np.sum(kl_divergence(posterior, prior), axis=-1)
         elbo = np.mean(lp__ - kl__)
 
         return mvn, -elbo
