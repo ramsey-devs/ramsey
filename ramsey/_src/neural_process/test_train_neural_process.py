@@ -1,13 +1,14 @@
 import haiku as hk
 from jax import random
 
+from ramsey.data import sample_from_gaussian_process
 from ramsey.train import train_neural_process
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
-def test_neural_process_training(simple_data_set, module):
+def test_neural_process_training(module):
     key = random.PRNGKey(1)
-    _, _, x_target, y_target = simple_data_set
+    (x_target, y_target), _ = sample_from_gaussian_process(key)
 
     f = hk.transform(module)
     params = f.init(
@@ -19,7 +20,7 @@ def test_neural_process_training(simple_data_set, module):
         f,
         params,
         train_key,
-        n_iter=100,
+        n_iter=10,
         x=x_target,
         y=y_target,
         n_context=10,

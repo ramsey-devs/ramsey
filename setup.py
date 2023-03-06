@@ -49,7 +49,7 @@ setup(
         "pandas"
     ],
     extras_require={
-        "dev": ["pre-commit", "black", "isort", "pylint", "tox"],
+        "dev": ["pre-commit", "black", "isort", "pylint", "tox", "pytest"],
         "examples": ["matplotlib"],
     },
     classifiers=[
