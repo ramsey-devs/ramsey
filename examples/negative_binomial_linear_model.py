@@ -2,14 +2,15 @@ import haiku as hk
 import matplotlib.pyplot as plt
 from jax import numpy as jnp, random
 
-from ramsey.data import sample_from_linear_model
-from ramsey.models import NP
+from ramsey import NP
+from ramsey.family import NegativeBinomial
+from ramsey.data import sample_from_negative_binomial_linear_model
 from ramsey.train import train_neural_process
 
 
 def data(key):
-    (x_target, y_target), f_target = sample_from_linear_model(
-        key, batch_size=10, num_observations=20, num_dim=2
+    (x_target, y_target), f_target = sample_from_negative_binomial_linear_model(
+        key, batch_size=10, num_observations=100, num_dim=2
     )
     return (x_target, y_target), f_target
 
@@ -20,7 +21,8 @@ def _neural_process(**kwargs):
         decoder=hk.nets.MLP([dim] * 3 + [2]),
         latent_encoder=(
             hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])
-        )
+        ),
+        family=NegativeBinomial()
     )
     return np(**kwargs)
 
@@ -102,7 +104,7 @@ def plot(
 
 def run():
     rng_seq = hk.PRNGSequence(123)
-    n_context, n_target = 3, 10
+    n_context, n_target = 10, 20
 
     (x_target, y_target), f_target = data(next(rng_seq))
     neural_process, params = train_np(
