@@ -35,7 +35,7 @@ jobs:
         tox -e  format,sort,lints,types
     - name: Run tests and coverage
       run: |
-        tox -e test-and-coverage
+        tox -e tests
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:

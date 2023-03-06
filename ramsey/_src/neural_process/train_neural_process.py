@@ -16,28 +16,27 @@ def train_neural_process(
     y: np.ndarray,  # pylint: disable=invalid-name
     n_context: int,
     n_target: int,
+    optimizer=optax.adam(3e-4),
     n_iter=20000,
-    stepsize=3e-4,
     verbose=False,
 ):
     if n_target < n_context:
         raise ValueError("'n_target' should be larger than 'n_context'")
 
     @jax.jit
-    def _objective(par, key, x_context, y_context, x_target, y_target):
-        _, obj = fn.apply(
-            params=par,
-            rng=key,
-            x_context=x_context,
-            y_context=y_context,
-            x_target=x_target,
-            y_target=y_target,
-        )
-        return obj
-
-    @jax.jit
     def step(params, opt_state, rng, x_context, y_context, x_target, y_target):
-        loss, grads = jax.value_and_grad(_objective)(
+        def _loss(par, key, x_context, y_context, x_target, y_target):
+            _, obj = fn.apply(
+                params=par,
+                rng=key,
+                x_context=x_context,
+                y_context=y_context,
+                x_target=x_target,
+                y_target=y_target,
+            )
+            return obj
+
+        loss, grads = jax.value_and_grad(_loss)(
             params, rng, x_context, y_context, x_target, y_target
         )
         updates, opt_state = optimizer.update(grads, opt_state)
@@ -45,7 +44,6 @@ def train_neural_process(
         return params, opt_state, loss
 
     rng_seq = hk.PRNGSequence(rng)
-    optimizer = optax.adam(stepsize)
     opt_state = optimizer.init(params)
 
     objectives = [0.0] * n_iter

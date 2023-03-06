@@ -34,11 +34,12 @@ class Gaussian(Family):
 
     def __call__(self, target: jnp.ndarray, **kwargs):
         log_scale = kwargs.get("scale", None)
-        if log_scale:
+        if log_scale is not None:
             mean = target
+            scale = jnp.exp(log_scale)
         else:
             mean, log_scale = jnp.split(target, 2, axis=-1)
-        scale = 0.1 + 0.9 * softplus(log_scale)
+            scale = 0.1 + 0.9 * softplus(log_scale)
         return dist.Normal(loc=mean, scale=scale)
 
     def get_canonical_parameters(self):
@@ -55,11 +56,9 @@ class NegativeBinomial(Family):
 
     def __call__(self, target: jnp.ndarray, **kwargs):
         concentration = kwargs.get("concentration", None)
-        if concentration:
-            mean = target
-        else:
+        if concentration is None:
             mean, concentration = jnp.split(target, 2, axis=-1)
-            mean = jnp.exp(mean)
+        mean = jnp.exp(target)
         concentration = jnp.exp(concentration)
         return dist.NegativeBinomial2(mean=mean, concentration=concentration)
 

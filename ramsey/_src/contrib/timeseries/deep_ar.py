@@ -69,7 +69,6 @@ class DeepAR(hk.Module):
         x: np.ndarray,  # pylint: disable=invalid-name
         y: np.ndarray,  # pylint: disable=invalid-name
     ):
-
         # put the time-axis in front and the batch-axis as second
         x_swapped = np.swapaxes(x, 0, 1)
         y_swapped = np.swapaxes(y, 0, 1)

@@ -1,5 +1,7 @@
+import warnings
 from typing import Iterable, Optional
 
+import chex
 import haiku as hk
 from jax import numpy as jnp
 
@@ -9,7 +11,7 @@ from ramsey._src.contrib.bayesian_neural_network.bayesian_linear import (
 from ramsey._src.family import Family, Gaussian
 
 
-class BayesianNeuralNetwork(hk.Module):
+class BNN(hk.Module):
     """
     Bayesian neural network
 
@@ -55,27 +57,24 @@ class BayesianNeuralNetwork(hk.Module):
         self._layers = layers
         self._family = family
         self._kwargs = kwargs
+        warnings.warn(
+            "The BNN class has not been tested properly. Use with caution!"
+        )
 
     def __call__(self, x: jnp.ndarray, **kwargs):
         if "y" in kwargs:
             y = kwargs["y"]
-            return self._negative_elbo(x, y)
+            return self._loss(x, y)
 
         for layer in self._layers:
             if isinstance(layer, BayesianLinear):
-                x = layer(x, False)
+                x = layer(x, is_training=False)
             else:
                 x = layer(x)
         return self._as_family(x)
 
-    def _as_family(self, x):
-        param_name, _ = self._family.get_canonical_parameters()
-        return self._family(
-            x, **{param_name: self._get_scale_parameter(x.dtype)}
-        )
-
-    def _negative_elbo(self, x, y):
-        kl_div = 0
+    def _loss(self, x, y):
+        kl_div = 0.0
         for layer in self._layers:
             if isinstance(layer, BayesianLinear):
                 x, kl_contribution = layer(x, is_training=True)
@@ -83,15 +82,26 @@ class BayesianNeuralNetwork(hk.Module):
             else:
                 x = layer(x)
 
+        chex.assert_equal_shape([x, y])
         likelihood_fn = self._as_family(x)
         likelihood = jnp.sum(likelihood_fn.log_prob(y))
+
+        # we are building the ELBO by composing it as
+        # E_q[p(y \mid z)] - KL[q(z \mid y) || p(z)] and hence
+        # see Murphy (2023), chp. 21.17
         elbo = likelihood - kl_div
         return likelihood_fn, -elbo
 
-    def _get_scale_parameter(self, dtype):
+    def _as_family(self, x):
         param_name, _ = self._family.get_canonical_parameters()
-        if self._kwargs[param_name + "_init"] is None:
-            log_scale_init = hk.initializers.RandomUniform(
+        return self._family(
+            x, **{param_name: self._get_log_scale_parameter(x.dtype)}
+        )
+
+    def _get_log_scale_parameter(self, dtype):
+        param_name, _ = self._family.get_canonical_parameters()
+        if param_name + "_init" not in self._kwargs:
+            log_scale_init = hk.initializers.TruncatedNormal(
                 jnp.log(0.1), jnp.log(1.0)
             )
         else:
