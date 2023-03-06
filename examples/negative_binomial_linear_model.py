@@ -1,10 +1,11 @@
 import haiku as hk
 import matplotlib.pyplot as plt
-from jax import numpy as jnp, random
+from jax import numpy as jnp
+from jax import random
 
 from ramsey import NP
-from ramsey.family import NegativeBinomial
 from ramsey.data import sample_from_negative_binomial_linear_model
+from ramsey.family import NegativeBinomial
 from ramsey.train import train_neural_process
 
 
@@ -19,10 +20,8 @@ def _neural_process(**kwargs):
     dim = 128
     np = NP(
         decoder=hk.nets.MLP([dim] * 3 + [2]),
-        latent_encoder=(
-            hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])
-        ),
-        family=NegativeBinomial()
+        latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])),
+        family=NegativeBinomial(),
     )
     return np(**kwargs)
 

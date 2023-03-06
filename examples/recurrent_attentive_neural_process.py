@@ -13,11 +13,10 @@ import jax.numpy as np
 import jax.random as random
 import matplotlib.pyplot as plt
 
-from ramsey.train import train_neural_process
 from ramsey.attention import MultiHeadAttention
+from ramsey.contrib import RANP
 from ramsey.data import sample_from_gaussian_process
-
-from ramsey.contrib.models import RANP
+from ramsey.train import train_neural_process
 
 
 def data(key):

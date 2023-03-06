@@ -4,10 +4,10 @@ from ramsey._src.contrib.bayesian_neural_network.bayesian_linear import (
 
 # pylint: disable=line-too-long
 from ramsey._src.contrib.bayesian_neural_network.bayesian_neural_network import (
-    BayesianNeuralNetwork,
+    BNN,
 )
 from ramsey._src.contrib.timeseries.recurrent_attentive_neural_process import (
     RANP,
 )
 
-__all__ = ["RANP", "BayesianLinear", "BayesianNeuralNetwork"]
+__all__ = ["RANP", "BayesianLinear", "BNN"]

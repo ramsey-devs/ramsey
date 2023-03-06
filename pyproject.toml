@@ -25,6 +25,7 @@ profile = "black"
 line_length = 80
 include_trailing_comma = true
 
+
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length=80
 disable = [

@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import haiku as hk
 from jax import numpy as jnp
 from numpyro import distributions as dist
+from numpyro.distributions import constraints, kl_divergence
 
 
 # pylint: disable=too-many-instance-attributes,too-many-locals
@@ -79,52 +80,58 @@ class BayesianLinear(hk.Module):
 
         dtype = x.dtype
         n_in = x.shape[-1]
-
         w, w_params = self._get_weights((n_in, self._output_size), dtype)
         output = jnp.dot(x, w)
-
         if self._with_bias:
             b, b_params = self._get_bias(self._output_size, dtype)
             b = jnp.broadcast_to(b, output.shape)
             output = output + b
-
         if is_training:
-            kl_div = self._kl(w, w_params)
+            kl_div = self._kl(self._w_prior, w_params)
             if self._with_bias:
-                kl_div += self._kl(b, b_params)
+                kl_div += self._kl(self._b_prior, b_params)
             return output, kl_div
-
         return output
 
     def _get_weights(self, layer_dim, dtype):
         arg_constraints = self._w_prior.arg_constraints
         params = {
-            param_name: self._init_param("w", param_name, layer_dim, dtype)
+            param_name: self._init_param(
+                "w", param_name, constraint, layer_dim, dtype
+            )
             for param_name, constraint in arg_constraints.items()
         }
-        return self._w_prior(**params).sample(hk.next_rng_key()), params
+        samples = self._w_prior.__class__(**params).sample(hk.next_rng_key())
+        return samples, params
 
     def _get_bias(self, layer_dim, dtype):
         arg_constraints = self._b_prior.arg_constraints
         params = {
-            param_name: self._init_param("b", param_name, layer_dim, dtype)
+            param_name: self._init_param(
+                "b", param_name, constraint, layer_dim, dtype
+            )
             for param_name, constraint in arg_constraints.items()
         }
-        return self._b_prior(**params).sample(hk.next_rng_key()), params
+        samples = self._b_prior.__class__(**params).sample(hk.next_rng_key())
+        return samples, params
 
-    def _init_param(self, weight_name, param_name, shape, dtype):
+    def _init_param(self, weight_name, param_name, constraint, shape, dtype):
         init_name = f"{weight_name}_{param_name}_init"
         if init_name in self._kwargs:
             init = self._kwargs[init_name]
         else:
-            init = hk.initializers.TruncatedNormal(stddev=0.01)
+            init = hk.initializers.TruncatedNormal(stddev=1)
+        shape = (shape,) if not isinstance(shape, Tuple) else shape
         params = hk.get_parameter(
             f"{weight_name}_{param_name}", shape=shape, dtype=dtype, init=init
         )
+        params = jnp.where(
+            constraints.positive == constraint, jnp.exp(params), params
+        )
         return params
 
-    def _kl(self, w, params):
-        var_posterior = self._w_prior.__class__(**params)
-        kl_div = jnp.sum(var_posterior.log_prob(w))
-        kl_div -= jnp.sum(self._w_prior.log_prob(w))
-        return kl_div
+    @staticmethod
+    def _kl(prior, params):
+        var_posterior = dist.Normal(**params)
+        kl_divergence(var_posterior, prior)
+        return jnp.sum(kl_divergence(var_posterior, prior))

@@ -39,10 +39,11 @@ setup(
     include_package_data=True,
     python_requires=">=3.8",
     install_requires=[
+        "jax>=0.4.4",
+        "jaxlib>=0.4.4",
         "blackjax",
         "chex",
-        "dm-haiku",
-        "distrax",
+        "dm-haiku>=0.0.9",
         "numpyro",
         "optax",
         "pandas"

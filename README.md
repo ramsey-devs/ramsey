@@ -12,7 +12,7 @@
 ## About
 
 Ramsey is a library for probabilistic modelling using [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax).
-It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's and NumPyro's API.
+It builds upon the same module system that Haiku is using and is hence fully compatible with Haiku's and NumPyro's API.
 
 ## Example usage
 
@@ -23,8 +23,8 @@ and define parameters. For instance, a simple neural process can be constructed 
 import haiku as hk
 import jax.random as random
 
+from ramsey import NP
 from ramsey.data import sample_from_sine_function
-from ramsey.models import NP
 
 def neural_process(**kwargs):
     dim = 128

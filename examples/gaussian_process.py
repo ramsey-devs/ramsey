@@ -13,17 +13,17 @@ References
 """
 
 import haiku as hk
-
-from jax import numpy as jnp, random
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-
-from ramsey.train import train_gaussian_process
-from ramsey.data import sample_from_gaussian_process
-from ramsey.covariance_functions import ExponentiatedQuadratic
-from ramsey.models import GP
-
+import matplotlib.pyplot as plt
+from jax import numpy as jnp
+from jax import random
 from jax.config import config
+
+from ramsey.covariance_functions import ExponentiatedQuadratic
+from ramsey.data import sample_from_gaussian_process
+from ramsey import GP
+from ramsey.train import train_gaussian_process
+
 config.update("jax_enable_x64", True)
 
 
@@ -93,8 +93,10 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
     lcb = y_star - 1.644854 * sigma
     ax.fill_between(
         jnp.squeeze(x)[srt_idxs],
-        lcb[srt_idxs], ucb[srt_idxs],
-        color="grey", alpha=0.2
+        lcb[srt_idxs],
+        ucb[srt_idxs],
+        color="grey",
+        alpha=0.2,
     )
 
     ax.legend(
@@ -106,7 +108,9 @@ def plot(key, gaussian_process, params, x, y, f, train_idxs):
             ),
             mpatches.Patch(color="red", alpha=0.45, label="Training data"),
             mpatches.Patch(color="blue", alpha=0.45, label="Posterior mean"),
-            mpatches.Patch(color="grey", alpha=0.1, label=r'90% posterior interval'),
+            mpatches.Patch(
+                color="grey", alpha=0.1, label=r"90% posterior interval"
+            ),
         ],
         loc="best",
         frameon=False,

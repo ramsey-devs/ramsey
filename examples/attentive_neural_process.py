@@ -13,13 +13,14 @@ References
 """
 
 import haiku as hk
-from jax import numpy as jnp, random
 import matplotlib.pyplot as plt
+from jax import numpy as jnp
+from jax import random
 
-from ramsey.train import train_neural_process
 from ramsey.attention import MultiHeadAttention
 from ramsey.data import sample_from_gaussian_process
-from ramsey.models import ANP
+from ramsey import ANP
+from ramsey.train import train_neural_process
 
 
 def data(key):

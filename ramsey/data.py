@@ -1,10 +1,10 @@
 from typing import Tuple
 
 import haiku as hk
-import jax.nn
 import numpyro.distributions as dist
 import pandas as pd
 from chex import Array
+from jax import nn
 from jax import numpy as jnp
 from jax import random
 
@@ -58,7 +58,6 @@ def sample_from_polynomial_function(
     ys = []
     fs = []
     for _ in range(batch_size):
-
         coeffs = list(random.uniform(next(rng), shape=(order + 1, 1)) - 1)
         f = 0
         for i in range(order + 1):
@@ -147,8 +146,31 @@ def sample_from_negative_binomial_linear_model(
     for _ in range(batch_size):
         alpha = dist.Normal(1.0, 3.0).sample(next(rng_seq))
         beta = dist.Normal(10.0, 3.0).sample(next(rng_seq), (num_dim,))
-        f = jax.nn.softplus(alpha + x @ beta)
+        f = nn.softplus(alpha + x @ beta)
         y = dist.Poisson(f).sample(next(rng_seq))
+        fs.append(f.reshape((1, num_observations, 1)))
+        ys.append(y.reshape((1, num_observations, 1)))
+
+    x = jnp.tile(x, [batch_size, 1, 1])
+    y = jnp.vstack(jnp.array(ys))
+    f = jnp.vstack(jnp.array(fs))
+
+    return (x, y), f
+
+
+# pylint: disable=too-many-locals,invalid-name
+def sample_from_linear_model(
+    key, batch_size=10, num_observations=100, num_dim=1
+):
+    rng_seq = hk.PRNGSequence(key)
+    x = random.normal(next(rng_seq), (num_observations, num_dim))
+    ys = []
+    fs = []
+    for _ in range(batch_size):
+        beta = dist.Normal(0.0, 2.0).sample(next(rng_seq), (num_dim,))
+        noise_scale = dist.Gamma(1.0, 10.0).sample(next(rng_seq))
+        f = x @ beta
+        y = f + random.normal(next(rng_seq), f.shape) * noise_scale
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 
