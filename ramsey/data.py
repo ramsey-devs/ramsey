@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import haiku as hk
+import jax.nn
 import numpyro.distributions as dist
 import pandas as pd
 from chex import Array
@@ -136,7 +137,7 @@ def sample_from_gaussian_process(
 
 
 # pylint: disable=too-many-locals,invalid-name
-def sample_from_linear_model(
+def sample_from_negative_binomial_linear_model(
     key, batch_size=10, num_observations=100, num_dim=1
 ):
     rng_seq = hk.PRNGSequence(key)
@@ -144,12 +145,10 @@ def sample_from_linear_model(
     ys = []
     fs = []
     for _ in range(batch_size):
-        alpha = dist.Normal(0.0, 2.0).sample(next(rng_seq))
-        beta = dist.Normal(0.0, 2.0).sample(next(rng_seq), (num_dim,))
-        noise_scale = dist.Gamma(1.0, 10.0).sample(next(rng_seq))
-
-        f = alpha + x @ beta
-        y = f + random.normal(next(rng_seq), f.shape) * noise_scale
+        alpha = dist.Normal(1.0, 3.0).sample(next(rng_seq))
+        beta = dist.Normal(10.0, 3.0).sample(next(rng_seq), (num_dim,))
+        f = jax.nn.softplus(alpha + x @ beta)
+        y = dist.Poisson(f).sample(next(rng_seq))
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 
