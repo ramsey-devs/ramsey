@@ -1,7 +1,6 @@
 import warnings
 from typing import Iterable, Optional
 
-import chex
 import haiku as hk
 from jax import numpy as jnp
 
@@ -40,9 +39,8 @@ class BNN(hk.Module):
         ----------
         layers: Iterable[hk.Module]
             layers of the BNN
-        log_scale_init: Optional[hk.initializers.Initializer]
-            an initializer object from Haiku or None. Used to initialize
-            the log scale of the likelihood
+        family: Family
+            exponential family of the response
         name: Optional[str]
             name of the layer
         kwargs: keyword arguments
@@ -82,7 +80,6 @@ class BNN(hk.Module):
             else:
                 x = layer(x)
 
-        chex.assert_equal_shape([x, y])
         likelihood_fn = self._as_family(x)
         likelihood = jnp.sum(likelihood_fn.log_prob(y))
 
@@ -93,20 +90,4 @@ class BNN(hk.Module):
         return likelihood_fn, -elbo
 
     def _as_family(self, x):
-        param_name, _ = self._family.get_canonical_parameters()
-        return self._family(
-            x, **{param_name: self._get_log_scale_parameter(x.dtype)}
-        )
-
-    def _get_log_scale_parameter(self, dtype):
-        param_name, _ = self._family.get_canonical_parameters()
-        if param_name + "_init" not in self._kwargs:
-            log_scale_init = hk.initializers.TruncatedNormal(
-                jnp.log(0.1), jnp.log(1.0)
-            )
-        else:
-            log_scale_init = self._kwargs[param_name + "_init"]
-        log_scale = hk.get_parameter(
-            "log_scale", [], dtype=dtype, init=log_scale_init
-        )
-        return log_scale
+        return self._family(x)
