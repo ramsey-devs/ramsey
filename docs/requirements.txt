@@ -1,3 +1,4 @@
+-e .
 git+https://github.com/dirmeier/palettes@v0.1.1
 ipython
 matplotlib
@@ -8,6 +9,7 @@ sphinx-autobuild
 sphinx-book-theme
 sphinx-math-dollar
 sphinx_autodoc_typehints
+sphinx_design
 sphinx_fontawesome
 sphinx_gallery
 sphinxcontrib-fulltoc

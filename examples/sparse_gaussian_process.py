@@ -20,9 +20,9 @@ from jax import numpy as jnp
 from jax import random
 from jax.config import config
 
-from ramsey.covariance_functions import ExponentiatedQuadratic
-from ramsey.data import sample_from_gaussian_process
 from ramsey import SparseGP
+from ramsey.data import sample_from_gaussian_process
+from ramsey.kernels import ExponentiatedQuadratic
 from ramsey.train import train_sparse_gaussian_process
 
 config.update("jax_enable_x64", True)

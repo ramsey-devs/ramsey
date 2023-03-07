@@ -1,10 +1,17 @@
 :github_url: https://github.com/ramsey-devs/ramsey/
 
-Ramsey documentation
-====================
+Ramsey: probabilistic modelling using Haiku
+===========================================
 
 Ramsey is a library for probabilistic modelling using `Haiku <https://github.com/deepmind/dm-haiku>`_ and `JAX <https://github.com/google/jax>`_.
-It builds upon the same module system that Haiku is using  and is hence fully compatible with Haiku's, NumPyro's API.
+It builds upon the same module system that Haiku is using and is hence fully compatible with its API. Ramsey implements **probabilistic** models, such as neural processes, Gaussian processes,
+Bayesian neural networks, Bayesian timeseries models and state-space-models, and more.
+
+Example
+-------
+
+Ramsey uses to Haiku's module system to construct probabilistic models
+and define parameters. For instance, a simple neural process can be constructed like this:
 
 .. code-block:: python
 
@@ -65,14 +72,23 @@ Contributions in the form of pull requests are more than welcome. A good way to 
 
 In order to contribute:
 
-1) Install Ramsey and dev dependencies via :code:`pip install -e '.[dev]'`,
-2) test your contribution/implementation by calling :code:`tox` on the (Unix) command line before submitting a PR.
+1) Clone Ramsey and install it and its dev dependencies via :code:`pip install -e '.[dev]'`,
+2) create a new branch locally :code:`git checkout -b feature/my-new-feature` or :code:`git checkout -b issue/fixes-bug`,
+3) implement your contribution,
+4) test it by calling :code:`tox` on the (Unix) command line,
+5) submit a PR 🙂
 
 License
 -------
 
-Ramsey is licensed under a Apache 2.0 License
+Ramsey is licensed under the Apache 2.0 License.
 
+
+..  toctree::
+    :maxdepth: 1
+    :hidden:
+
+    Home <self>
 
 ..  toctree::
     :caption: Tutorials
@@ -80,12 +96,16 @@ Ramsey is licensed under a Apache 2.0 License
     :hidden:
 
     notebooks/neural_process
-    notebooks/gaussian_process
     notebooks/forecasting
 
 ..  toctree::
-    :caption: API reference
+    :caption: API
     :maxdepth: 1
     :hidden:
 
-    api
+    ramsey
+    ramsey.attention
+    ramsey.contrib
+    ramsey.family
+    ramsey.kernels
+    ramsey.train

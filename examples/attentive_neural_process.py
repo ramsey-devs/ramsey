@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from jax import random
 
+from ramsey import ANP
 from ramsey.attention import MultiHeadAttention
 from ramsey.data import sample_from_gaussian_process
-from ramsey import ANP
 from ramsey.train import train_neural_process
 
 

@@ -1,15 +1,13 @@
-import glob
-import os
 from datetime import date
 
 project = "Ramsey"
 copyright = f"{date.today().year}, the Ramsey developers"
-author = "Ramsey developers"
-release = "0.0.2"
+author = "the Ramsey developers"
 
 extensions = [
     "nbsphinx",
     "sphinx.ext.autodoc",
+    'sphinx_autodoc_typehints',
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
@@ -19,10 +17,13 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_math_dollar",
     "IPython.sphinxext.ipython_console_highlighting",
+    'sphinx_design'
 ]
+
 
 templates_path = ["_templates"]
 html_static_path = ["_static"]
+html_css_files = ['theme.css']
 
 autodoc_default_options = {
     "member-order": "bysource",

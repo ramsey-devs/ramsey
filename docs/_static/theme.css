@@ -1,0 +1,27 @@
+html[data-theme="dark"], html[data-theme="light"] {
+  --pst-color-primary: #0048bc;
+}
+
+h1 > code > span {
+    font-family: var(--pst-font-family-monospace);
+    color: #0048bc;
+    font-weight: 700;
+}
+
+nav > li > a > code.literal {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+    background-color: white;
+    border: 0px;
+}
+
+
+nav.bd-links p.caption {
+    text-transform: uppercase;
+}
+
+code.literal {
+  background-color: white;
+  border: 0px;
+  border-radius: 0px;
+}

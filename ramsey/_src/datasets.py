@@ -1,60 +1,60 @@
 import os
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import ClassVar, List, Tuple
+from typing import Tuple
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 import pandas as pd
 
 dset = namedtuple("dset", ["name", "urls"])
-
+URL__ = "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/"
 
 __M4_HOURLY = dset(
     "hourly",
     [
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Train/Hourly-train.csv",  # pylint: disable=line-too-long
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Test/Hourly-test.csv",  # pylint: disable=line-too-long
+        f"{URL__}/Train/Hourly-train.csv",
+        f"{URL__}/Test/Hourly-test.csv",
     ],
 )
 
 __M4_DAILY = dset(
     "daily",
     [
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Train/Daily-train.csv",  # pylint: disable=line-too-long
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Test/Daily-test.csv",  # pylint: disable=line-too-long
+        "f{URL__}/Train/Daily-train.csv",
+        "f{URL__}/Test/Daily-test.csv",
     ],
 )
 
 __M4_WEEKLY = dset(
     "weekly",
     [
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Train/Weekly-train.csv",  # pylint: disable=line-too-long
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Test/Weekly-test.csv",  # pylint: disable=line-too-long
+        f"{URL__}/Train/Weekly-train.csv",
+        f"{URL__}/Test/Weekly-test.csv",
     ],
 )
 
 __M4_MONTHLY = dset(
     "monthly",
     [
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Train/Monthly-train.csv",  # pylint: disable=line-too-long
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Test/Monthly-test.csv",  # pylint: disable=line-too-long
+        f"{URL__}/Train/Monthly-train.csv",
+        f"{URL__}/Test/Monthly-test.csv",
     ],
 )
 
 __M4_QUARTERLY = dset(
     "quarterly",
     [
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Train/Quarterly-train.csv",  # pylint: disable=line-too-long
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Test/Quarterly-test.csv",  # pylint: disable=line-too-long
+        f"{URL__}/Train/Quarterly-train.csv",
+        f"{URL__}/Test/Quarterly-test.csv",
     ],
 )
 
 __M4_YEARLY = dset(
     "yearly",
     [
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Train/Yearly-train.csv",  # pylint: disable=line-too-long
-        "https://github.com/Mcompetitions/M4-methods/raw/master/Dataset/Test/Yearly-test.csv",  # pylint: disable=line-too-long
+        f"{URL__}/Train/Yearly-train.csv",
+        f"{URL__}/Test/Yearly-test.csv",
     ],
 )
 
@@ -103,7 +103,7 @@ _M4_DATA_SETS = {
 class M4Dataset:
     """A wrapper class to load M4 data"""
 
-    __INTERVALS__: ClassVar[List[str]] = [
+    __INTERVALS__ = [
         "hourly",
         "daily",
         "weekly",
