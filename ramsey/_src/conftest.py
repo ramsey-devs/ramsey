@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 import haiku as hk
 import pytest
 

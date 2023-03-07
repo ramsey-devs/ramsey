@@ -44,6 +44,7 @@ setup(
         "blackjax",
         "chex",
         "dm-haiku>=0.0.9",
+        "distrax",
         "numpyro",
         "optax",
         "pandas"

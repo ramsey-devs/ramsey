@@ -58,7 +58,7 @@ class NegativeBinomial(Family):
         concentration = kwargs.get("concentration", None)
         if concentration is None:
             mean, concentration = jnp.split(target, 2, axis=-1)
-        mean = jnp.exp(target)
+        mean = jnp.exp(mean)
         concentration = jnp.exp(concentration)
         return dist.NegativeBinomial2(mean=mean, concentration=concentration)
 

@@ -9,7 +9,7 @@ from jax import numpy as jnp
 from jax import random
 
 from ramsey._src.datasets import M4Dataset
-from ramsey.covariance_functions import exponentiated_quadratic
+from ramsey.kernels import exponentiated_quadratic
 
 
 # pylint: disable=too-many-locals,invalid-name

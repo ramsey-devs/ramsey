@@ -24,14 +24,14 @@ repos:
   hooks:
   - id: black
     args: ["--config=pyproject.toml"]
-    files: "(ramsey)"
+    files: "(ramsey|examples)"
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.10.1
+  rev: 5.12.0
   hooks:
   - id: isort
     args: ["--settings-path=pyproject.toml"]
-    files: "(ramsey)"
+    files: "(ramsey|examples)"
 
 - repo: https://github.com/pycqa/bandit
   rev: 1.7.1
@@ -42,22 +42,23 @@ repos:
     types: [python]
     args: ["-c", "pyproject.toml"]
     additional_dependencies: ["toml"]
-    files: "(ramsey)"
+    files: "(ramsey|examples)"
 
-- repo: local
+- repo: https://github.com/PyCQA/flake8
+  rev: 5.0.1
   hooks:
-  - id: pylint
-    name: pylint
-    entry: pylint
-    language: python
-    files: "ramsey"
+   - id: flake8
+     additional_dependencies: [
+       flake8-typing-imports==1.14.0,
+       flake8-pyproject==1.1.0.post0
+     ]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.910-1
   hooks:
   - id: mypy
     args: ["--ignore-missing-imports"]
-    files: "(ramsey)"
+    files: "(ramsey|examples)"
 
 - repo: https://github.com/nbQA-dev/nbQA
   rev: 1.3.1

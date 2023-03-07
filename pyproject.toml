@@ -24,6 +24,12 @@ profile = "black"
 line_length = 80
 include_trailing_comma = true
 
+[tool.flake8]
+max-line-length = 80
+extend-ignore = ["E203", "W503", "E731", "E501"]
+per-file-ignores = [
+    '__init__.py:F401',
+]
 
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length=80
@@ -45,4 +51,4 @@ module = [
 no_strict_optional = true
 
 [tool.bandit]
-skips = ["B101"]
+skips = ["B101", "B310"]
