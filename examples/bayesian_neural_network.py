@@ -22,12 +22,12 @@ from jax import numpy as jnp
 from jax import random
 
 from ramsey.contrib import BNN, BayesianLinear
-from ramsey.data import sample_from_sine_function
+from ramsey.data import sample_from_linear_model
 
 
 def data(key):
-    (x_target, y_target), f_target = sample_from_sine_function(
-        key, batch_size=1, num_observations=50
+    (x_target, y_target), f_target = sample_from_linear_model(
+        key, batch_size=1, num_observations=50, noise_scale=1.0
     )
 
     return (x_target.reshape(-1, 1), y_target.reshape(-1, 1)), f_target.reshape(
@@ -37,11 +37,8 @@ def data(key):
 
 def _bayesian_nn(**kwargs):
     layers = [
-        #BayesianLinear(8, with_bias=True),
-        hk.Linear(16, with_bias=True),
-        BayesianLinear(64, with_bias=True),
-        hk.Linear(16, with_bias=True),
-        hk.Linear(1, with_bias=False),
+        BayesianLinear(8, with_bias=True),
+        hk.Linear(2, with_bias=False),
     ]
     bnn = BNN(layers)
     return bnn(**kwargs)
@@ -51,7 +48,7 @@ def train_bnn(
     rng_seq,
     x,  # pylint: disable=invalid-name
     y,  # pylint: disable=invalid-name
-    n_iter=10000,
+    n_iter=20000,
     stepsize=0.001,
 ):
     bnn = hk.transform(_bayesian_nn)

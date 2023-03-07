@@ -1,3 +1,10 @@
+"""
+Negative binomial regression model
+==================================
+
+This example implements a basic generalized linear model
+"""
+
 import haiku as hk
 import matplotlib.pyplot as plt
 from jax import numpy as jnp

@@ -160,7 +160,7 @@ def sample_from_negative_binomial_linear_model(
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_linear_model(
-    key, batch_size=10, num_observations=100, num_dim=1
+    key, batch_size=10, num_observations=100, num_dim=1, noise_scale=None
 ):
     rng_seq = hk.PRNGSequence(key)
     x = random.normal(next(rng_seq), (num_observations, num_dim))
@@ -168,7 +168,8 @@ def sample_from_linear_model(
     fs = []
     for _ in range(batch_size):
         beta = dist.Normal(0.0, 2.0).sample(next(rng_seq), (num_dim,))
-        noise_scale = dist.Gamma(1.0, 10.0).sample(next(rng_seq))
+        if noise_scale is None:
+            noise_scale = dist.Gamma(1.0, 10.0).sample(next(rng_seq))
         f = x @ beta
         y = f + random.normal(next(rng_seq), f.shape) * noise_scale
         fs.append(f.reshape((1, num_observations, 1)))
