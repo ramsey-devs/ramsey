@@ -55,7 +55,7 @@ To install the latest GitHub <RELEASE>, just call the following on the
 command line:
 
 ```bash
-pip install git+https://github.com/dirmeier/ramsey@<RELEASE>
+pip install git+https://github.com/ramsey-devs/ramsey@<RELEASE>
 ```
 
 See also the installation instructions for [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax), if
