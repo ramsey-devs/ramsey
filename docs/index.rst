@@ -59,7 +59,7 @@ command line:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/dirmeier/ramsey@<RELEASE>
+    pip install git+https://github.com/ramsey-devs/ramsey@<RELEASE>
 
 See also the installation instructions for `Haiku <https://github.com/deepmind/dm-haiku>`_ and `JAX <https://github.com/google/jax>`_, if
 you plan to use Ramsey on GPU/TPU.
