@@ -1,10 +1,10 @@
 html[data-theme="dark"], html[data-theme="light"] {
-  --pst-color-primary: #0048bc;
+  --pst-color-primary: rgb(30, 82, 98);
 }
 
 h1 > code > span {
     font-family: var(--pst-font-family-monospace);
-    color: #0048bc;
+    color: rgb(30, 82, 98);
     font-weight: 700;
 }
 

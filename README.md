@@ -68,8 +68,11 @@ Contributions in the form of pull requests are more than welcome. A good way to 
 
 In order to contribute:
 
-1) Install Ramsey and dev dependencies via `pip install -e '.[dev]'`,
-2) test your contribution/implementation by calling `tox` on the (Unix) command line before submitting a PR.
+1) Clone Ramsey and install it and its dev dependencies via `pip install -e '.[dev]'`,
+2) create a new branch locally `git checkout -b feature/my-new-feature` or `git checkout -b issue/fixes-bug`,
+3) implement your contribution,
+4) test it by calling `tox` on the (Unix) command line,
+5) submit a PR 🙂
 
 ## Why Ramsey
 

@@ -33,14 +33,6 @@ per-file-ignores = [
 
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length=80
-disable = [
-    "missing-module-docstring",
-    "missing-function-docstring",
-    "no-name-in-module",
-    "too-many-arguments",
-    "duplicate-code",
-    "invalid-name"
-]
 
 [[tool.mypy.overrides]]
 # silence mypy with incorrect 'Optional' warnings
