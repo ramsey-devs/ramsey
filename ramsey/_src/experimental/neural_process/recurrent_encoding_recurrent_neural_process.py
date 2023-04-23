@@ -4,17 +4,17 @@ import haiku as hk
 import jax.numpy as np
 from chex import assert_axis_dimension, assert_rank
 
-from ramsey import ANP
+from ramsey import ANP, NP
 from ramsey.attention import Attention
 from ramsey.family import Family, Gaussian
 
-__all__ = ["ERNP"]
+__all__ = ["RecurrentEncodingRNP"]
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
-class ERNP(ANP):
+class RecurrentEncodingRNP(NP):
     """
-    An embedding recurrent attentive neural process
+    An embedding recurrent neural process
 
     Implements the core structure of a recurrent attentive neural process
     cross-attention module.
@@ -22,7 +22,6 @@ class ERNP(ANP):
 
     def __init__(
         self,
-        embedding: hk.DeepRNN,
         decoder: hk.DeepRNN,
         latent_encoder: Tuple[hk.DeepRNN, hk.Module],
         deterministic_encoder: hk.DeepRNN,
@@ -51,7 +50,6 @@ class ERNP(ANP):
         """
 
         super().__init__(decoder, latent_encoder, deterministic_encoder, family)
-        self._embedding = embedding
 
     def _encode_deterministic(
         self,
