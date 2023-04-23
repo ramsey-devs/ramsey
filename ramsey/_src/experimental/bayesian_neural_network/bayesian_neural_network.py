@@ -4,7 +4,7 @@ from typing import Iterable, Optional
 import haiku as hk
 from jax import numpy as jnp
 
-from ramsey._src.contrib.bayesian_neural_network.bayesian_linear import (
+from ramsey._src.experimental.bayesian_neural_network.bayesian_linear import (
     BayesianLinear,
 )
 from ramsey._src.family import Family, Gaussian

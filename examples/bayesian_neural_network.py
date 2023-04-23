@@ -21,8 +21,8 @@ import optax
 from jax import numpy as jnp
 from jax import random
 
-from ramsey.contrib import BNN, BayesianLinear
 from ramsey.data import sample_from_linear_model
+from ramsey.experimental import BNN, BayesianLinear
 
 
 def data(key):

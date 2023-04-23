@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from ramsey.attention import MultiHeadAttention
 from ramsey.contrib import RANP
 from ramsey.data import sample_from_gaussian_process
-from ramsey.train import train_neural_process
+from ramsey.experimental.train import train_neural_process
 
 
 def data(key):
@@ -31,10 +31,10 @@ def _ranp(**kwargs):
     np = RANP(
         decoder=hk.DeepRNN(
             [
-                hk.LSTM(hidden_size=40),
-                jax.nn.relu,
-                hk.LSTM(hidden_size=40),
-                jax.nn.relu,
+                hk.LSTM(hidden_size=20),
+                jax.nn.tanh,
+                hk.LSTM(hidden_size=20),
+                jax.nn.tanh,
                 hk.Linear(2),
             ]
         ),
@@ -42,7 +42,7 @@ def _ranp(**kwargs):
         deterministic_encoder=(
             hk.nets.MLP([dim] * 3),
             MultiHeadAttention(
-                num_heads=8, head_size=16, embedding=hk.nets.MLP([dim] * 2)
+                num_heads=4, head_size=32, embedding=hk.nets.MLP([dim] * 2)
             ),
         ),
     )

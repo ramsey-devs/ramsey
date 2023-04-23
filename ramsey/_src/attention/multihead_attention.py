@@ -39,7 +39,7 @@ class MultiHeadAttention(Attention):
             num_heads,
             key_size=head_size,
             value_size=head_size,
-            w_init_scale=2.0,
+            w_init_scale=1.0,
         )
 
     def __call__(self, key: np.ndarray, value: np.ndarray, query: np.ndarray):

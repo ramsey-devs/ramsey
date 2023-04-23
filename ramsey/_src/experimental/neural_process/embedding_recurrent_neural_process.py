@@ -8,13 +8,13 @@ from ramsey import ANP
 from ramsey.attention import Attention
 from ramsey.family import Family, Gaussian
 
-__all__ = ["RANP"]
+__all__ = ["ERNP"]
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
-class RANP(ANP):
+class ERNP(ANP):
     """
-    A recurrent attentive neural process
+    An embedding recurrent attentive neural process
 
     Implements the core structure of a recurrent attentive neural process
     cross-attention module.
@@ -22,9 +22,10 @@ class RANP(ANP):
 
     def __init__(
         self,
+        embedding: hk.DeepRNN,
         decoder: hk.DeepRNN,
-        latent_encoder: Tuple[hk.Module, hk.Module],
-        deterministic_encoder: Tuple[hk.Module, Attention],
+        latent_encoder: Tuple[hk.DeepRNN, hk.Module],
+        deterministic_encoder: hk.DeepRNN,
         family: Family = Gaussian(),
     ):
         """
@@ -50,6 +51,35 @@ class RANP(ANP):
         """
 
         super().__init__(decoder, latent_encoder, deterministic_encoder, family)
+        self._embedding = embedding
+
+    def _encode_deterministic(
+        self,
+        x_context: np.ndarray,
+        y_context: np.ndarray,
+        x_target: np.ndarray,  # pylint: disable=unused-argument
+    ):
+        xy_context = np.concatenate([x_context, y_context], axis=-1)
+        n_batch, _, _ = xy_context.shape
+        z_deterministic, _ = hk.dynamic_unroll(
+            self._deterministic_encoder,
+            xy_context,
+            self._deterministic_encoder.initial_state(n_batch),
+            time_major=False,
+        )
+        z_deterministic = np.mean(z_deterministic, axis=1, keepdims=True)
+        return z_deterministic
+
+    def _encode_latent(self, x_context: np.ndarray, y_context: np.ndarray):
+        xy_context = np.concatenate([x_context, y_context], axis=-1)
+        n_batch, _, _ = xy_context.shape
+        z_latent, _ = hk.dynamic_unroll(
+            self._latent_encoder,
+            xy_context,
+            self._latent_encoder.initial_state(n_batch),
+            time_major=False,
+        )
+        return self._encode_latent_gaussian(z_latent)
 
     def _decode(
         self,

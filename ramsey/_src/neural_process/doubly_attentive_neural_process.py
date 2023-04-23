@@ -16,8 +16,8 @@ class DANP(ANP):
     A doubly-attentive neural process
 
     Implements the core structure of a 'doubly-attentive' neural process [1],
-    i.e., a deterministic encoder, a latent encoder with self-attention module,
-    and a decoder with both self- and cross-attention modules.
+    i.e., a deterministic dedncoder, a latent encoder with self-attention module,
+    and a ecoder with both self- and cross-attention modules.
 
     References
     ----------
