@@ -3,18 +3,17 @@ from collections import namedtuple
 
 import haiku as hk
 import jax
-from flax.training.early_stopping import EarlyStopping
-from jax import numpy as jnp
 import optax
 import rmsyutls
+from flax.training.early_stopping import EarlyStopping
 from haiku import Transformed
 from haiku._src.data_structures import FlatMapping
+from jax import numpy as jnp
 from jax import numpy as np
 from jax import random
 
-
 # pylint: disable=too-many-locals
-from rmsyutls import as_batch_iterators, as_batch_iterator
+from rmsyutls import as_batch_iterator, as_batch_iterators
 
 
 def train_sequential_neural_process(
@@ -37,18 +36,14 @@ def train_sequential_neural_process(
         rng_key=data_key,
         data=namedtuple("regression data", "y x")(y, x),
         batch_size=batch_size,
-        shuffle=False
+        shuffle=False,
     )
     n_samples = y.shape[0]
     n_train = int(n_samples) * (1.0 - percent_data_as_validation)
 
     @jax.jit
     def loss(params, rng, is_train, **batch):
-        _, obj = fn.apply(
-            params=params,
-            rng=rng,
-            **batch
-        )
+        _, obj = fn.apply(params=params, rng=rng, **batch)
         if is_train:
             return jnp.mean(obj[:n_train])
         else:
@@ -86,7 +81,7 @@ def train_sequential_neural_process(
             logging.info("early stopping criterion found")
             break
 
-    losses = jnp.vstack(losses)[:(i + 1), :]
+    losses = jnp.vstack(losses)[: (i + 1), :]
     return params, losses
 
 
@@ -99,14 +94,18 @@ def _split_data(
 ):
     if sequential_split:
         context_idx_start = random.choice(key, x.shape[1] - n_context)
-        context_idxs = jnp.arange(context_idx_start, context_idx_start + n_context)
+        context_idxs = jnp.arange(
+            context_idx_start, context_idx_start + n_context
+        )
     else:
-        context_idxs = random.choice(key, x.shape[1], shape=(n_context,), replace=False)
+        context_idxs = random.choice(
+            key, x.shape[1], shape=(n_context,), replace=False
+        )
     x_context = x[:, context_idxs:]
     y_context = y[:, context_idxs, :]
     return {
         "x_context": x_context,
         "y_context": y_context,
         "x_target": x,
-        "y_target": y
+        "y_target": y,
     }
