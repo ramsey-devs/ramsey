@@ -45,10 +45,10 @@ setup(
         "blackjax",
         "chex",
         "dm-haiku>=0.0.9",
-        "distrax",
         "numpyro",
         "optax",
-        "pandas"
+        "pandas",
+        'rmsyutls @ git+ssh://git@github.com/ramsey-devs/rmsy-utls@v0.0.1',
     ],
     extras_require={
         "dev": ["pre-commit", "black", "isort", "pylint", "tox", "pytest"],
