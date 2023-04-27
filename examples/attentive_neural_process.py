@@ -20,7 +20,7 @@ from jax import random
 from ramsey import ANP
 from ramsey.attention import MultiHeadAttention
 from ramsey.data import sample_from_gaussian_process
-from ramsey.train import train_neural_process
+from ramsey.experimental.train import train_neural_process
 
 
 def data(key):

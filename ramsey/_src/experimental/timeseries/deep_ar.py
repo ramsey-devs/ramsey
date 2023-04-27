@@ -1,3 +1,5 @@
+import warnings
+
 import haiku as hk
 import jax.numpy as np
 import numpyro.distributions as dist
@@ -34,6 +36,8 @@ class DeepAR(hk.Module):
         family: Family
             a family object used as observation model
         """
+
+        warnings.warn("caution! implementation is not tested")
 
         super().__init__()
         self._network = network

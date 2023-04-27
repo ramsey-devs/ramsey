@@ -56,7 +56,10 @@ class RDANP(DANP):
         x_target: np.ndarray,
         y: np.ndarray,  # pylint: disable=invalid-name
     ):
-        target = np.concatenate([representation, x_target], axis=-1)
+        if representation is not None:
+            target = np.concatenate([representation, x_target], axis=-1)
+        else:
+            target = x_target
         assert_rank(target, 3)
         assert_axis_dimension(target, 0, x_target.shape[0])
         assert_axis_dimension(target, 1, x_target.shape[1])

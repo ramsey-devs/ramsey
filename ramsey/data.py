@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import haiku as hk
+import numpy as np
 import numpyro.distributions as dist
 import pandas as pd
 from chex import Array
@@ -102,19 +103,25 @@ def sample_from_sine_function(key, batch_size=10, num_observations=100):
 def sample_from_gaussian_process(
     key, batch_size=10, num_observations=100, num_dim=1, rho=None, sigma=None
 ):
-    x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
+    time = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, num_dim)
     )
     ys = []
     fs = []
     for _ in range(batch_size):
-        key, sample_key1, sample_key2, sample_key3, sample_key4 = random.split(
+        sample_key1, sample_key2, sample_key3, sample_key4, key = random.split(
             key, 5
         )
         if rho is None:
             rho = dist.InverseGamma(1, 1).sample(sample_key1)
         if sigma is None:
             sigma = dist.InverseGamma(5, 5).sample(sample_key2)
+
+        x_key, key = random.split(key)
+        x = np.zeros((num_observations, batch_size))
+        x[:, _]  = 1
+        x = jnp.concatenate([time, x], axis=-1)
+        # = time
         K = exponentiated_quadratic(x, x, sigma, rho)
 
         f = random.multivariate_normal(

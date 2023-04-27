@@ -56,6 +56,7 @@ class NP(hk.Module):
         """
 
         super().__init__()
+        [self._latent_encoder, self._latent_variable_encoder] = None, None
         [self._latent_encoder, self._latent_variable_encoder] = (
             latent_encoder[0],
             latent_encoder[1],
@@ -77,6 +78,7 @@ class NP(hk.Module):
             return self._negative_elbo(x_context, y_context, x_target, **kwargs)
 
         _, num_observations, _ = x_target.shape
+
         z_latent = self._encode_latent(x_context, y_context).sample(
             hk.next_rng_key()
         )
@@ -112,11 +114,11 @@ class NP(hk.Module):
         )
         mvn = self._decode(representation, x_target, y_target)
 
-        lp__ = np.sum(mvn.log_prob(y_target), axis=1)
+        lpp__ = np.sum(mvn.log_prob(y_target), axis=-1, keepdims=True)
         kl__ = np.sum(kl_divergence(posterior, prior), axis=-1)
-        elbo = np.mean(lp__ - kl__)
+        elbo = np.sum(lpp__, axis=1) - kl__
 
-        return mvn, -elbo
+        return mvn, -elbo, lpp__, kl__
 
     @staticmethod
     # pylint: disable=duplicate-code
