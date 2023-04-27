@@ -6,12 +6,15 @@ Here, we show how neural processes that have sequential/recurrent decoders
 can be trained alternatively.
 
 """
+
 import argparse
 
 import haiku as hk
 import jax
-from jax import numpy as jnp
+import matplotlib.patches as mpatches
 import numpy as np
+from absl import logging
+from jax import numpy as jnp
 from jax import random
 from matplotlib import pyplot as plt
 
@@ -19,26 +22,26 @@ from ramsey.attention import MultiHeadAttention
 from ramsey.contrib import RANP
 from ramsey.data import sample_from_gaussian_process
 from ramsey.experimental import RDANP, RecurrentEncodingRNP, \
-    RecurrentEncodingRANP
+    RecurrentEncodingRANP, Recurrent
 from ramsey.experimental.train import train_sequential_neural_process
 
-from absl import logging
-import matplotlib.patches as mpatches
 logging.set_verbosity(logging.INFO)
 
 
 def data(key, use_discrete_data):
     (x_target, y_target), f_target = sample_from_gaussian_process(
-        key, batch_size=10, num_observations=100
+        key, batch_size=4, num_observations=200
     )
     return (x_target, y_target), f_target
 
 
-def _train_np_with_sequential_structure(seed, model, n_context, n_target, x_target, y_target):
+def _train_np_with_sequential_structure(seed, model, n_context, n_target,
+                                        x_target, y_target):
     init_key, train_key, seed = random.split(seed, 3)
     neural_process = hk.transform(model)
     params = neural_process.init(
-        init_key, x_context=x_target, y_context=y_target, x_target=x_target, y_target=y_target,
+        init_key, x_context=x_target, y_context=y_target, x_target=x_target,
+        y_target=y_target,
     )
 
     params, losses = train_sequential_neural_process(
@@ -56,6 +59,24 @@ def _train_np_with_sequential_structure(seed, model, n_context, n_target, x_targ
     plt.plot(losses)
     plt.show()
     return neural_process, params
+
+
+def build_recurrent():
+    def f(**kwargs):
+        np = Recurrent(
+            decoder=hk.DeepRNN(
+                [
+                    hk.LSTM(hidden_size=20),
+                    jax.nn.tanh,
+                    hk.LSTM(hidden_size=20),
+                    jax.nn.tanh,
+                    hk.Linear(2),
+                ]
+            )
+        )
+        return np(**kwargs)
+
+    return f
 
 
 def build_ranp():
@@ -104,7 +125,8 @@ def build_rdanp():
             ),
             latent_encoder=(
                 hk.nets.MLP([dim] * 2),
-                MultiHeadAttention(num_heads=4, head_size=32, embedding=hk.nets.MLP([dim] * 2)),
+                MultiHeadAttention(num_heads=4, head_size=32,
+                                   embedding=hk.nets.MLP([dim] * 2)),
                 hk.nets.MLP([dim, dim * 2])),
             deterministic_encoder=(
                 hk.nets.MLP([dim] * 2),
@@ -205,6 +227,7 @@ def build_re_ranp():
 
 def get_model(model):
     return {
+        "Recurrent": build_recurrent(),
         "RANP": build_ranp(),
         "RDANP": build_rdanp(),
         "RecurrentEncodingRNP": build_re_rnp(),
@@ -228,7 +251,7 @@ def _plot(
         context_idx_start, context_idx_start + n_context
     )
 
-    idxs = [0, 2, 5, 7]
+    idxs = [0, 1, 2, 3]
     _, axes = plt.subplots(figsize=(10, 6), nrows=2, ncols=2)
     for _, (idx, ax) in enumerate(zip(idxs, axes.flatten())):
         time = np.squeeze(x_target[idx, :, 0])
@@ -257,7 +280,7 @@ def _plot(
             y_star = neural_process.apply(
                 params=params,
                 rng=apply_key,
-                x_context=x_target[[idx], [context_idxs], :,],
+                x_context=x_target[[idx], [context_idxs], :, ],
                 y_context=y_target[[idx], [context_idxs], :],
                 x_target=x_target[[idx], :, :],
             ).mean
@@ -287,12 +310,12 @@ def _plot(
 
 def run(model, use_discrete_data):
     model = get_model(model)
-    seq = hk.PRNGSequence(123)
+    seq = hk.PRNGSequence(12)
     (x_target, y_target), f_target = data(next(seq), use_discrete_data)
-    n_context, n_train = 20, 40
+    n_context, n_target = 30, 200
 
     neural_process, params = _train_np_with_sequential_structure(
-        next(seq), model, n_context, n_train, x_target, y_target
+        next(seq), model, n_context, n_target, x_target, y_target
     )
     _plot(
         next(seq),
@@ -301,7 +324,7 @@ def run(model, use_discrete_data):
         x_target,
         y_target,
         f_target,
-        180,
+        90,
         n_context,
     )
 
@@ -311,8 +334,9 @@ if __name__ == "__main__":
     parser.add_argument("--use-discrete-data", action='store_true')
     parser.add_argument(
         "--model",
-        choices=["RANP", "RDANP", "RecurrentEncodingRNP", "RecurrentEncodingRANP"],
+        choices=["RANP", "RDANP", "RecurrentEncodingRNP",
+                 "RecurrentEncodingRANP", "Recurrent"],
         default="RDANP"
     )
     args = parser.parse_args()
-    run(args.model, args.use_discrete_data, False)
+    run(args.model, args.use_discrete_data)

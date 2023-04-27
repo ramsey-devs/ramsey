@@ -63,10 +63,10 @@ def train_sequential_neural_process(
     early_stop = EarlyStopping(1e-5, 1000)
     for i in range(n_iter):
         train_loss = 0.0
-        kkk =next(rng_seq)
+        kkk = next(rng_seq)
         for j in range(train_iter.num_batches):
             batch = _split_data(
-               kkk, n_train, n_context, n_target, context_is_sequential, **train_iter(j)
+               kkk, n_samples, n_context, n_target, context_is_sequential, **train_iter(j)
             )
             batch_loss, params, state = step(params, state, next(rng_seq), **batch)
             train_loss += batch_loss
@@ -87,7 +87,7 @@ def train_sequential_neural_process(
 
 
 def _split_data(
-    key: random.PRNGKey,
+    seed: random.PRNGKey,
     n_train: int,
     n_context: int,
     n_target: int,
@@ -95,19 +95,24 @@ def _split_data(
     x: np.ndarray,  # pylint: disable=invalid-name
     y: np.ndarray,  # pylint: disable=invalid-name
 ):
+    assert n_train >= n_target
+
     if sequential_split:
-        train_idxs_start = random.choice(key, n_train - (n_context + n_target))
-        train_idxs = jnp.arange(
-            train_idxs_start, train_idxs_start + (n_context + n_target)
-        )
+        key1, key2, seed = random.split(seed, 3)
+        target_idxs_start = random.choice(key1, n_train - n_target + 1)
+        target_idxs = jnp.arange(target_idxs_start, target_idxs_start + n_target)
+        ctx_idxs_start = random.choice(key2, jnp.arange(target_idxs[0], target_idxs[-1] - n_context))
+        ctx_idxs = jnp.arange(ctx_idxs_start, ctx_idxs_start + n_context)
     else:
         train_idxs = random.choice(
-            key, x.shape[1], shape=(n_context + n_target,), replace=False
+            seed, x.shape[1], shape=(n_context + n_target,), replace=False
         )
-    x_context = x[:, train_idxs[:n_context], :]
-    y_context = y[:, train_idxs[:n_context], :]
-    x_target = x[:, train_idxs, :]
-    y_target = y[:, train_idxs, :]
+        ctx_idxs = train_idxs[:n_context]
+        target_idxs = train_idxs
+    x_context = x[:, ctx_idxs, :]
+    y_context = y[:, ctx_idxs, :]
+    x_target = x[:, target_idxs, :]
+    y_target = y[:, target_idxs, :]
     return {
         "x_context": x_context,
         "y_context": y_context,

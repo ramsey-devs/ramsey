@@ -9,14 +9,14 @@ __all__ = ["Recurrent"]
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
 class Recurrent(hk.Module):
-    def __init__(self, network: hk.DeepRNN, family: Family = Gaussian()):
+    def __init__(self, decoder: hk.DeepRNN, family: Family = Gaussian()):
         super().__init__()
-        self._decoder = network
+        self._decoder = decoder
         self._family = family
 
     def __call__(
         self,
-        x_target: np.ndarray,  # pylint: disable=invalid-name
+        x_target: jnp.ndarray,  # pylint: disable=invalid-name
         **kwargs,
     ):
         if "y_target" in kwargs:

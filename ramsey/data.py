@@ -106,6 +106,7 @@ def sample_from_gaussian_process(
     time = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, num_dim)
     )
+    xs = []
     ys = []
     fs = []
     for _ in range(batch_size):
@@ -133,9 +134,11 @@ def sample_from_gaussian_process(
             sample_key4, mean=f, cov=jnp.eye(num_observations) * 0.05
         )
         fs.append(f.reshape((1, num_observations, 1)))
+        xs.append(x.reshape(1, *x.shape))
         ys.append(y.reshape((1, num_observations, 1)))
 
-    x = jnp.tile(x, [batch_size, 1, 1])
+    #x = jnp.tile(x, [batch_size, 1, 1])
+    x = jnp.concatenate(jnp.array(xs))
     y = jnp.vstack(jnp.array(ys))
     f = jnp.vstack(jnp.array(fs))
 
