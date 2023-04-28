@@ -1,14 +1,14 @@
-from absl import logging
 from collections import namedtuple
 
 import chex
 import haiku as hk
 import jax
+import numpy as np
 import optax
+from absl import logging
 from flax.training.early_stopping import EarlyStopping
 from haiku import Transformed
 from jax import numpy as jnp
-import numpy as np
 from jax import random
 from rmsyutls import as_batch_iterator
 
@@ -26,7 +26,7 @@ def train_sequential_neural_process(
     context_is_sequential=True,
     batch_size=64,
     percent_data_as_validation=0.05,
-    n_early_stopping_patience=20,
+    n_early_stopping_patience=1000,
     verbose=False,
 ):
     data_key, seed = random.split(seed)
@@ -60,15 +60,22 @@ def train_sequential_neural_process(
 
     losses = np.zeros([n_iter, 2])
     logging.info(f"starting to train")
-    early_stop = EarlyStopping(1e-5, 1000)
+    early_stop = EarlyStopping(1e-5, n_early_stopping_patience)
     for i in range(n_iter):
         train_loss = 0.0
-        kkk = next(rng_seq)
+        # TODO: makes sense?
         for j in range(train_iter.num_batches):
             batch = _split_data(
-               kkk, n_samples, n_context, n_target, context_is_sequential, **train_iter(j)
+                next(rng_seq),
+                n_samples,
+                n_context,
+                n_target,
+                context_is_sequential,
+                **train_iter(j),
             )
-            batch_loss, params, state = step(params, state, next(rng_seq), **batch)
+            batch_loss, params, state = step(
+                params, state, next(rng_seq), **batch
+            )
             train_loss += batch_loss
         validation_loss = loss_fn(params, next(rng_seq), False, **batch)
         losses[i] = np.array([train_loss, validation_loss])
@@ -100,8 +107,12 @@ def _split_data(
     if sequential_split:
         key1, key2, seed = random.split(seed, 3)
         target_idxs_start = random.choice(key1, n_train - n_target + 1)
-        target_idxs = jnp.arange(target_idxs_start, target_idxs_start + n_target)
-        ctx_idxs_start = random.choice(key2, jnp.arange(target_idxs[0], target_idxs[-1] - n_context))
+        target_idxs = jnp.arange(
+            target_idxs_start, target_idxs_start + n_target
+        )
+        ctx_idxs_start = random.choice(
+            key2, jnp.arange(target_idxs[0], target_idxs[-1] - n_context)
+        )
         ctx_idxs = jnp.arange(ctx_idxs_start, ctx_idxs_start + n_context)
     else:
         train_idxs = random.choice(

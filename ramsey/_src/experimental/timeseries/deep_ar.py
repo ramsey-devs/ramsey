@@ -121,7 +121,9 @@ class DeepAR(hk.Module):
 
         feats = np.concatenate([x_swapped, y_swapped], axis=-1)
         z_swapped, state = hk.dynamic_unroll(
-            self._network, feats, self._network.initial_state(num_batches)
+            self._network,
+            feats,
+            self._network.initial_state(num_batches),
         )
 
         return z_swapped, state

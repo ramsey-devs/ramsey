@@ -101,7 +101,12 @@ def sample_from_sine_function(key, batch_size=10, num_observations=100):
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_gaussian_process(
-    key, batch_size=10, num_observations=100, num_dim=1, rho=None, sigma=None
+    rng_seq,
+    batch_size=10,
+    num_observations=100,
+    num_dim=1,
+    rho=None,
+    sigma=None,
 ):
     time = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, num_dim)
@@ -110,34 +115,28 @@ def sample_from_gaussian_process(
     ys = []
     fs = []
     for _ in range(batch_size):
-        sample_key1, sample_key2, sample_key3, sample_key4, key = random.split(
-            key, 5
-        )
         if rho is None:
-            rho = dist.InverseGamma(1, 1).sample(sample_key1)
+            rho = dist.InverseGamma(1, 1).sample(next(rng_seq))
         if sigma is None:
-            sigma = dist.InverseGamma(5, 5).sample(sample_key2)
+            sigma = dist.InverseGamma(5, 5).sample(next(rng_seq))
 
-        x_key, key = random.split(key)
         x = np.zeros((num_observations, batch_size))
-        x[:, _]  = 1
+        x[:, _] = 1
         x = jnp.concatenate([time, x], axis=-1)
-        # = time
         K = exponentiated_quadratic(x, x, sigma, rho)
 
         f = random.multivariate_normal(
-            sample_key3,
+            next(rng_seq),
             mean=jnp.zeros(num_observations),
             cov=K + jnp.diag(jnp.ones(num_observations)) * 1e-5,
         )
         y = random.multivariate_normal(
-            sample_key4, mean=f, cov=jnp.eye(num_observations) * 0.05
+            next(rng_seq), mean=f, cov=jnp.eye(num_observations) * 0.05
         )
         fs.append(f.reshape((1, num_observations, 1)))
         xs.append(x.reshape(1, *x.shape))
         ys.append(y.reshape((1, num_observations, 1)))
 
-    #x = jnp.tile(x, [batch_size, 1, 1])
     x = jnp.concatenate(jnp.array(xs))
     y = jnp.vstack(jnp.array(ys))
     f = jnp.vstack(jnp.array(fs))
