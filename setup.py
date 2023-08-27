@@ -43,11 +43,10 @@ setup(
         "jaxlib>=0.4.4",
         "blackjax",
         "chex",
-        "dm-haiku>=0.0.9",
-        "distrax",
-        "numpyro",
         "optax",
         "pandas"
+        "rmsyutls",
+        "tfp-nightly[jax]",
     ],
     extras_require={
         "dev": ["pre-commit", "black", "isort", "pylint", "tox", "pytest"],
