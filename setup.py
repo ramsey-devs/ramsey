@@ -28,7 +28,7 @@ def _version():
 setup(
     name="ramsey",
     version=_version(),
-    description="A library for probabilistic modelling using Haiku and JAX",
+    description="A library for probabilistic modelling using JAX",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/ramsey-devs/ramsey",
@@ -59,5 +59,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )

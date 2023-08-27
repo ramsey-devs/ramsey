@@ -11,8 +11,9 @@
 
 ## About
 
-Ramsey is a library for probabilistic modelling using [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax).
-It builds upon the same module system that Haiku is using and is hence fully compatible with Haiku's and NumPyro's API.
+Ramsey is a library for probabilistic modelling using [JAX](https://github.com/google/jax). Ramsey implements **probabilistic** models, 
+such as neural processes, Gaussian processes, Bayesian timeseries models and state-space-models, clustering processes, etcetc.
+Ramsey is designed to be compatible with common JAX-based frameworks, such as NumPyro or Distrax.
 
 ## Example usage
 

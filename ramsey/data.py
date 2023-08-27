@@ -1,12 +1,14 @@
 from typing import Tuple
 
-import haiku as hk
-import numpyro.distributions as dist
+
+from tensorflow_probability.substrates import jax as tfp
+tfd = tfp.distributions
+
 import pandas as pd
 from chex import Array
 from jax import nn
 from jax import numpy as jnp
-from jax import random
+from jax import random as jr
 
 from ramsey._src.datasets import M4Dataset
 from ramsey.kernels import exponentiated_quadratic
@@ -58,12 +60,12 @@ def sample_from_polynomial_function(
     ys = []
     fs = []
     for _ in range(batch_size):
-        coeffs = list(random.uniform(next(rng), shape=(order + 1, 1)) - 1)
+        coeffs = list(jr.uniform(next(rng), shape=(order + 1, 1)) - 1)
         f = 0
         for i in range(order + 1):
             f += coeffs[i] * x**i
 
-        y = f + random.normal(next(rng), shape=(num_observations, 1)) * sigma
+        y = f + jr.normal(next(rng), shape=(num_observations, 1)) * sigma
 
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
@@ -76,18 +78,18 @@ def sample_from_polynomial_function(
 
 
 # pylint: disable=too-many-locals,invalid-name
-def sample_from_sine_function(key, batch_size=10, num_observations=100):
+def sample_from_sine_function(seed, batch_size=10, num_observations=100):
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, 1)
     )
     ys = []
     fs = []
     for _ in range(batch_size):
-        key, sample_key1, sample_key2, sample_key3 = random.split(key, 4)
-        a = 2 * random.uniform(sample_key1) - 1
-        b = random.uniform(sample_key2) - 0.5
+        sample_key1, sample_key2, sample_key3, seed = jr.split(seed, 4)
+        a = 2 * jr.uniform(sample_key1) - 1
+        b = jr.uniform(sample_key2) - 0.5
         f = a * jnp.sin(x - b)
-        y = f + random.normal(sample_key3, shape=(num_observations, 1)) * 0.10
+        y = f + jr.normal(sample_key3, shape=(num_observations, 1)) * 0.10
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 
@@ -108,21 +110,21 @@ def sample_from_gaussian_process(
     ys = []
     fs = []
     for _ in range(batch_size):
-        key, sample_key1, sample_key2, sample_key3, sample_key4 = random.split(
-            key, 5
+        sample_key1, sample_key2, sample_key3, sample_key4, seed = jr.split(
+            seed, 5
         )
         if rho is None:
-            rho = dist.InverseGamma(1, 1).sample(sample_key1)
+            rho = tfd.InverseGamma(1, 1).sample(sample_key1)
         if sigma is None:
-            sigma = dist.InverseGamma(5, 5).sample(sample_key2)
+            sigma = tfd.InverseGamma(5, 5).sample(sample_key2)
         K = exponentiated_quadratic(x, x, sigma, rho)
 
-        f = random.multivariate_normal(
+        f = jr.multivariate_normal(
             sample_key3,
             mean=jnp.zeros(num_observations),
             cov=K + jnp.diag(jnp.ones(num_observations)) * 1e-5,
         )
-        y = random.multivariate_normal(
+        y = jr.multivariate_normal(
             sample_key4, mean=f, cov=jnp.eye(num_observations) * 0.05
         )
         fs.append(f.reshape((1, num_observations, 1)))
@@ -137,17 +139,18 @@ def sample_from_gaussian_process(
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_negative_binomial_linear_model(
-    key, batch_size=10, num_observations=100, num_dim=1
+    seed, batch_size=10, num_observations=100, num_dim=1
 ):
-    rng_seq = hk.PRNGSequence(key)
-    x = random.normal(next(rng_seq), (num_observations, num_dim))
-    ys = []
-    fs = []
+    x_key, seed = jr.split(seed)
+    x = jr.normal(x_key, (num_observations, num_dim))
+    ys, fs = [], []
     for _ in range(batch_size):
-        alpha = dist.Normal(1.0, 3.0).sample(next(rng_seq))
-        beta = dist.Normal(10.0, 3.0).sample(next(rng_seq), (num_dim,))
+        alpha_key, beta_key, seed = jr.split(seed, 3)
+        alpha = tfd.Normal(1.0, 3.0).sample(alpha_key)
+        beta = tfd.Normal(10.0, 3.0).sample(beta_key, (num_dim,))
         f = nn.softplus(alpha + x @ beta)
-        y = dist.Poisson(f).sample(next(rng_seq))
+        y_key, seed = jr.split(seed)
+        y = tfd.Poisson(f).sample(y_key)
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 
@@ -160,18 +163,21 @@ def sample_from_negative_binomial_linear_model(
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_linear_model(
-    key, batch_size=10, num_observations=100, num_dim=1, noise_scale=None
+    seed, batch_size=10, num_observations=100, num_dim=1, noise_scale=None
 ):
-    rng_seq = hk.PRNGSequence(key)
-    x = random.normal(next(rng_seq), (num_observations, num_dim))
+    x_key, seed = jr.split(seed)
+    x = jr.normal(x_key, (num_observations, num_dim))
     ys = []
     fs = []
     for _ in range(batch_size):
-        beta = dist.Normal(0.0, 2.0).sample(next(rng_seq), (num_dim,))
+        beta_key, seed = jr.split(seed)
+        beta = tfd.Normal(0.0, 2.0).sample(beta_key, (num_dim,))
         if noise_scale is None:
-            noise_scale = dist.Gamma(1.0, 10.0).sample(next(rng_seq))
+            noise_key, seed = jr.split(seed)
+            noise_scale = tfd.Gamma(1.0, 10.0).sample(noise_key)
         f = x @ beta
-        y = f + random.normal(next(rng_seq), f.shape) * noise_scale
+        y_key, seed = jr.split(seed)
+        y = f + jr.normal(y_key, f.shape) * noise_scale
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 

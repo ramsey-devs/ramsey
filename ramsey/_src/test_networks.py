@@ -16,7 +16,7 @@ def test_module_dimensionality():
 
     def module(**kwargs):
         np = NP(
-            decoder=hk.nets.MLP([3, 2], name="decoder"),
+            decoder=MLP([3, 2], name="decoder"),
             deterministic_encoder=hk.nets.MLP(
                 [4, 4], name="deterministic_encoder"
             ),
