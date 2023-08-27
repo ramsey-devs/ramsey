@@ -1,7 +1,7 @@
 from typing import Tuple
 
-
 from tensorflow_probability.substrates import jax as tfp
+
 tfd = tfp.distributions
 
 import pandas as pd

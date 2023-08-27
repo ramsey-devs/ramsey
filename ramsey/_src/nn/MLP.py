@@ -1,4 +1,4 @@
-from typing import Iterable, Callable
+from typing import Callable, Iterable
 
 import jax
 from flax import linen as nn
@@ -20,11 +20,15 @@ class MLP(nn.Module):
         output_sizes = tuple(self.output_sizes)
         layers = []
         for index, output_size in enumerate(output_sizes):
-            layers.append(nn.Dense(features=output_size,
-                                   kernel_init=self.kernel_init,
-                                   bias_init=self.bias_init,
-                                   use_bias=self.use_bias,
-                                   name="linear_%d" % index))
+            layers.append(
+                nn.Dense(
+                    features=output_size,
+                    kernel_init=self.kernel_init,
+                    bias_init=self.bias_init,
+                    use_bias=self.use_bias,
+                    name="linear_%d" % index,
+                )
+            )
         self.layers = tuple(layers)
         if self.dropout is not None:
             self.dropout_layer = nn.Dropout(self.dropout)

@@ -11,7 +11,7 @@
 
 ## About
 
-Ramsey is a library for probabilistic modelling using [JAX](https://github.com/google/jax). Ramsey implements **probabilistic** models, 
+Ramsey is a library for probabilistic modelling using [JAX](https://github.com/google/jax). Ramsey implements **probabilistic** models,
 such as neural processes, Gaussian processes, Bayesian timeseries models and state-space-models, clustering processes, etcetc.
 Ramsey is designed to be compatible with common JAX-based frameworks, such as NumPyro or Distrax.
 
