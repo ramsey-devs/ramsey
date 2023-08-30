@@ -77,16 +77,16 @@ class Periodic(Kernel):
 
         rho_init = self.rho_init
         if rho_init is None:
-            rho_init = hk.initializers.RandomUniform(jnp.log(0.1), jnp.log(1.0))
-        log_rho = hk.get_parameter("log_rho", [], dtype=dtype, init=rho_init)
+            rho_init = initializers.uniform()
+        log_rho =  self.param(
+            "log_rho", rho_init, [], dtype
+        )
 
         sigma_init = self.sigma_init
         if sigma_init is None:
-            sigma_init = hk.initializers.RandomUniform(
-                jnp.log(0.1), jnp.log(1.0)
-            )
-        log_sigma = hk.get_parameter(
-            "log_sigma", [], dtype=dtype, init=sigma_init
+            sigma_init = initializers.uniform()
+        log_sigma = self.param(
+            "log_sigma", sigma_init, [], dtype
         )
 
         cov = self._periodic(
@@ -106,8 +106,8 @@ class ExponentiatedQuadratic(Kernel):
     def __init__(
         self,
         active_dims: Optional[list] = None,
-        rho_init: Optional[hk.initializers.Initializer] = None,
-        sigma_init: Optional[hk.initializers.Initializer] = None,
+        rho_init: Optional[initializers.Initializer] = None,
+        sigma_init: Optional[initializers.Initializer] = None,
         name: Optional[str] = None,
     ):
         """
@@ -140,17 +140,13 @@ class ExponentiatedQuadratic(Kernel):
 
         rho_init = self.rho_init
         if rho_init is None:
-            rho_init = hk.initializers.RandomUniform(jnp.log(0.1), jnp.log(1.0))
-        log_rho = hk.get_parameter("log_rho", [], dtype=dtype, init=rho_init)
+            rho_init = initializers.constant(jnp.log(1.0))
+        log_rho = self.param("log_rho", rho_init, [], dtype)
 
         sigma_init = self.sigma_init
         if sigma_init is None:
-            sigma_init = hk.initializers.RandomUniform(
-                jnp.log(0.1), jnp.log(1.0)
-            )
-        log_sigma = hk.get_parameter(
-            "log_sigma", [], dtype=dtype, init=sigma_init
-        )
+            sigma_init = initializers.constant(jnp.log(1.0))
+        log_sigma = self.param("log_sigma", sigma_init, [], dtype)
 
         cov = exponentiated_quadratic(
             x1[..., self.active_dims],

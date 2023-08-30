@@ -2,7 +2,7 @@ from typing import Optional
 
 import distrax
 import haiku as hk
-from jax import numpy as jnp
+from jax import numpy as jnp, Array
 from jax import scipy as jsp
 
 __all__ = ["SparseGP"]
@@ -25,7 +25,7 @@ class SparseGP(hk.Module):
     def __init__(
         self,
         kernel: hk.Module,
-        m: int,
+        n_inducing: int,
         jitter: Optional[float] = 10e-8,
         sigma_init: Optional[hk.initializers.Initializer] = None,
         x_m_init: Optional[hk.initializers.Initializer] = None,
@@ -38,7 +38,7 @@ class SparseGP(hk.Module):
         ----------
         kernel: hk.Module
             a covariance function object
-        m: Optional[int]
+        n_inducing: Optional[int]
             number of inducing points
         jitter: Optional[float]
             additive jitter on covariance matrices diagonals to
@@ -51,12 +51,12 @@ class SparseGP(hk.Module):
 
         super().__init__(name=name)
         self._kernel = kernel
-        self._m = m
+        self._n_inducing = n_inducing
         self._jitter = jitter
         self._sigma_init = sigma_init
         self._x_m_init = x_m_init
 
-    def __call__(self, x: jnp.ndarray, **kwargs):
+    def __call__(self, x: Array, **kwargs):
         if "y" in kwargs and "x_star" in kwargs:
             return self._predictive(x, **kwargs)
         return self._marginal(x, **kwargs)
@@ -72,23 +72,23 @@ class SparseGP(hk.Module):
         )
         return log_sigma
 
-    def _get_x_m(self, x_n: jnp.ndarray):
+    def _get_x_m(self, x_n: Array):
         """
         Returns the m inducing points x_m
 
         Parameters
         ----------
-        x_n: jnp.ndarray
+        x_n: Array
             training points x_n for initialization of inducing points x_m
 
         Returns
         -------
-        x_m: jnp.ndarray
+        x_m: Array
             inducing points x_m
         """
 
         d = x_n.shape[1]
-        shape_x_m = (self._m, d)
+        shape_x_m = (self._n_inducing, d)
         if self._x_m_init is None:
             self._x_m_init = hk.initializers.RandomUniform(
                 jnp.min(x_n), jnp.max(x_n)
@@ -100,7 +100,7 @@ class SparseGP(hk.Module):
         return x_m
 
     # pylint: disable=too-many-locals
-    def _predictive(self, x: jnp.ndarray, y: jnp.ndarray, x_star: jnp.ndarray):
+    def _predictive(self, x: Array, y: Array, x_star: Array):
         """
         Returns the approx. Predictive Posterior Distribution
 
@@ -108,11 +108,11 @@ class SparseGP(hk.Module):
 
         Parameters
         ----------
-        x: jnp.ndarray
+        x: Array
             training point x
-        y: jnp.ndarray
+        y: Array
             training point y
-        x_star: jnp.ndarray
+        x_star: Array
             test points
 
         Returns
@@ -151,7 +151,7 @@ class SparseGP(hk.Module):
             jnp.squeeze(mu_star), jnp.linalg.cholesky(cov_star)
         )
 
-    def _marginal(self, x: jnp.ndarray, y: jnp.ndarray):
+    def _marginal(self, x: Array, y: Array):
         """
         Returns the variational lower bound of true log marginal likelihood.
         This quantity can be used as an objective to find the kernel
@@ -161,9 +161,9 @@ class SparseGP(hk.Module):
 
         Parameters
         ----------
-        x: jnp.ndarray
+        x: Array
             training point x
-        y: jnp.ndarray
+        y: Array
             training point y
 
         Returns
@@ -177,7 +177,6 @@ class SparseGP(hk.Module):
         sigma_square = jnp.exp(2 * log_sigma)
         x_m = self._get_x_m(x_n=x)
 
-        # add jitter to diagonal to increase chances that K_mm is pos. def.
         K_mm = self._kernel(x_m, x_m) + self._jitter * jnp.eye(self._m)
         K_mn = self._kernel(x_m, x)
 
@@ -201,7 +200,7 @@ class SparseGP(hk.Module):
         return variational_lower_bound
 
     @staticmethod
-    def _solve_linear(A: jnp.ndarray, b: jnp.ndarray):
+    def _solve_linear(A: Array, b: Array):
         """
         If A is symmetric and positive definite then Ax=b can be solved
         by using Cholesky decomposition.
@@ -215,9 +214,9 @@ class SparseGP(hk.Module):
 
         Parameters
         ----------
-        A: jnp.ndarray
+        A: Array
             A in term Ax=b
-        b: jnp.ndarray
+        b: Array
             b in term Ax=b
 
         Returns
@@ -234,7 +233,7 @@ class SparseGP(hk.Module):
 
     # pylint: disable=line-too-long
     @staticmethod
-    def _calculate_quadratic_form(A: jnp.ndarray, x: jnp.ndarray):
+    def _calculate_quadratic_form(A: Array, x: Array):
         """
         Calculates a quadratic form
 
@@ -245,9 +244,9 @@ class SparseGP(hk.Module):
 
         Parameters
         ----------
-        A: jnp.ndarray
+        A: Array
             A in term y = x.T * inv(A) * x
-        x: jnp.ndarray
+        x: Array
             x in term y = x.T * inv(A) * x
 
         Returns

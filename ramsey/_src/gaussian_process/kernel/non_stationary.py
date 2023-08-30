@@ -68,15 +68,13 @@ class Linear(Kernel):
         sigma_v_init = self.sigma_v_init
         if sigma_v_init is None:
             sigma_v_init = initializers.constant(jnp.log(1.0))
-        log_sigma_v = self.param(
-            "log_sigma_v", sigma_v_init, [], dtype
-        )
+        log_sigma_v = self.param("log_sigma_v", sigma_v_init, [], dtype)
 
         offset_init = self.offset_init
         if offset_init is None:
             offset_init = initializers.uniform()
         offset = self.param(
-            "offset", sigma_b_init, [], dtype
+            "offset", offset_init, [], dtype
         )
 
         cov = self._linear(

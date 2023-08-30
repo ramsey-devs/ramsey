@@ -1,15 +1,21 @@
 from typing import Optional
 
 import distrax
-import haiku as hk
-from jax import numpy as jnp
-from jax import scipy as jsp
+from flax import linen as nn
+from flax.linen import initializers
+from jax import numpy as jnp, scipy as jsp
+
+from tensorflow_probability.substrates import jax as tfp
+tfd = tfp.distributions
 
 __all__ = ["GP"]
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
-class GP(hk.Module):
+from ramsey._src.gaussian_process.kernel.base import Kernel
+
+
+class GP(nn.Module):
     """
     A Gaussian process
 
@@ -18,8 +24,8 @@ class GP(hk.Module):
 
     def __init__(
         self,
-        kernel: hk.Module,
-        sigma_init: Optional[hk.initializers.Initializer] = None,
+        kernel: Kernel,
+        sigma_init: Optional[initializers.Initializer] = None,
         name: Optional[str] = None,
     ):
         """
@@ -47,12 +53,8 @@ class GP(hk.Module):
     def _get_sigma(self, dtype):
         log_sigma_init = self.sigma_init
         if log_sigma_init is None:
-            log_sigma_init = hk.initializers.RandomUniform(
-                jnp.log(0.1), jnp.log(1.0)
-            )
-        log_sigma = hk.get_parameter(
-            "log_sigma", [], dtype=dtype, init=log_sigma_init
-        )
+            log_sigma_init = initializers.constant(jnp.log(1.0))
+        log_sigma = self.param("log_sigma", log_sigma_init, [], dtype)
         return log_sigma
 
     # pylint: disable=too-many-locals
@@ -105,17 +107,15 @@ class GP(hk.Module):
         cov_star = K_xs_xs - jnp.matmul(L_inv_K_x_xs.T, L_inv_K_x_xs)
         cov_star += jitter * jnp.eye(n_star)
 
-        return distrax.MultivariateNormalTri(
+        return tfd.MultivariateNormalTriL(
             jnp.squeeze(mu_star), jnp.linalg.cholesky(cov_star)
         )
 
     def _marginal(self, x, jitter=10e-8):
         n = x.shape[0]
-
         log_sigma = self._get_sigma(x.dtype)
         cov = self._kernel(x, x)
         cov += (jnp.square(jnp.exp(log_sigma)) + jitter) * jnp.eye(n)
-
-        return distrax.MultivariateNormalTri(
+        return tfd.MultivariateNormalTriL(
             jnp.zeros(n), jnp.linalg.cholesky(cov)
         )

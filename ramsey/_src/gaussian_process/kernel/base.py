@@ -11,7 +11,7 @@ class Kernel(ABC, nn.Module):
     """
 
     @abstractmethod
-    def __call__(self, x1: jnp.ndarray, x2: jnp.ndarray):
+    def __call__(self, x1: Array, x2: Array):
         pass
 
     def __add__(self, other):
@@ -23,8 +23,7 @@ class Kernel(ABC, nn.Module):
 
 class _Sum(Kernel):
     def __init__(self, k1: Kernel, k2: Kernel):
-        name = "(" + k1.name + "+" + k2.name + ")"
-        super().__init__(name=name)
+        super().__init__(name="(" + k1.name + "+" + k2.name + ")")
         self._k1 = k1
         self._k2 = k2
 
@@ -34,8 +33,7 @@ class _Sum(Kernel):
 
 class _Prod(Kernel):
     def __init__(self, k1: Kernel, k2: Kernel):
-        name = "(" + k1.name + "*" + k2.name + ")"
-        super().__init__(name=name)
+        super().__init__(name="(" + k1.name + "*" + k2.name + ")")
         self._k1 = k1
         self._k2 = k2
 

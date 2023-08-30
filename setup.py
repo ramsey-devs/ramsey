@@ -39,14 +39,15 @@ setup(
     include_package_data=True,
     python_requires=">=3.8",
     install_requires=[
-        "jax>=0.4.4",
-        "jaxlib>=0.4.4",
         "blackjax",
         "chex",
+        "flax",
+        "jax>=0.4.4",
+        "jaxlib>=0.4.4",
+        "numpyro",
         "optax",
         "pandas"
         "rmsyutls",
-        "tfp-nightly[jax]",
     ],
     extras_require={
         "dev": ["pre-commit", "black", "isort", "pylint", "tox", "pytest"],
