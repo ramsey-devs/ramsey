@@ -1,6 +1,7 @@
 from typing import Optional, Union
 
-import haiku as hk
+
+from flax.linen import initializers
 from jax import numpy as jnp
 
 from ramsey._src.gaussian_process.kernel.base import Kernel
@@ -16,8 +17,8 @@ class Periodic(Kernel):
         self,
         period: float,
         active_dims: Optional[list] = None,
-        rho_init: Optional[hk.initializers.Initializer] = None,
-        sigma_init: Optional[hk.initializers.Initializer] = None,
+        rho_init: Optional[initializers.Initializer] = None,
+        sigma_init: Optional[initializers.Initializer] = None,
         name: Optional[str] = None,
     ):
         """
@@ -37,6 +38,7 @@ class Periodic(Kernel):
         name: Optional[str]
             name of the layer
         """
+
         super().__init__(name=name)
         self.period = period
         self.active_dims = (
@@ -49,7 +51,7 @@ class Periodic(Kernel):
         """
         Calculates Gram matrix with periodic covariance function
 
-        For details on the periodic kernel see [1]  18.2.1.4 Periodic Kernels
+        For details on the periodic kernel see chp. 18.2.1.4 in [1]
 
         References
         ----------

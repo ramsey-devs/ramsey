@@ -1,23 +1,22 @@
 import abc
 from typing import Optional
-
+from jax import Array
+from flax import linen as nn
 import chex
-import haiku as hk
-import jax.numpy as np
 
 
 # pylint: disable=too-few-public-methods
-class Attention(abc.ABC, hk.Module):
+class Attention(abc.ABC, nn.Module):
     """
     Abstract attention base class
     """
 
-    def __init__(self, embedding: Optional[hk.Module]):
+    def __init__(self, embedding: Optional[nn.Module]):
         super().__init__()
         self._embedding = embedding
 
     @abc.abstractmethod
-    def __call__(self, key: np.ndarray, value: np.ndarray, query: np.ndarray):
+    def __call__(self, key: Array, value: Array, query: Array):
         self._check_dimensions(key, value, query)
         if self._embedding is not None:
             key, query = self._embedding(key), self._embedding(query)
@@ -25,7 +24,7 @@ class Attention(abc.ABC, hk.Module):
 
     @staticmethod
     def _check_dimensions(
-        key: np.ndarray, value: np.ndarray, query: np.ndarray
+        key: Array, value: Array, query: Array
     ):
         chex.assert_rank([key, value, query], 3)
         chex.assert_axis_dimension(key, 0, value.shape[0])
@@ -35,7 +34,7 @@ class Attention(abc.ABC, hk.Module):
 
     @staticmethod
     def _check_return_dimension(
-        rep: np.ndarray, value: np.ndarray, query: np.ndarray
+        rep: Array, value: Array, query: Array
     ):
         chex.assert_axis_dimension(rep, 0, value.shape[0])
         chex.assert_axis_dimension(rep, 1, query.shape[1])
