@@ -1,19 +1,17 @@
-import haiku as hk
+
 import jax
+from jax import Array
 import optax
-from haiku import Transformed
-from haiku._src.data_structures import FlatMapping
-from jax import numpy as jnp
-from jax import random
+from jax import numpy as jnp, random as jr
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,invalid-name
 def train_gaussian_process(
-    fn: Transformed,  # pylint: disable=invalid-name
-    params: FlatMapping,
-    rng: random.PRNGKey,
-    x: jnp.ndarray,  # pylint: disable=invalid-name
-    y: jnp.ndarray,  # pylint: disable=invalid-name
+    seed: jr.PRNGKey,
+    fn: Callable,
+    params: PyTree,
+    x: Array,
+    y: Array,
     n_iter=1000,
     stepsize=3e-03,
     verbose=False,
@@ -51,35 +49,36 @@ def train_gaussian_process(
     return params, objectives
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,invalid-name
 def train_sparse_gaussian_process(
-    fn: Transformed,  # pylint: disable=invalid-name
-    params: FlatMapping,
-    rng: random.PRNGKey,
-    x: jnp.ndarray,  # pylint: disable=invalid-name
-    y: jnp.ndarray,  # pylint: disable=invalid-name
+    seed: jr.PRNGKey,
+    fn: Callable,
+    params: PyTree,
+    x: Array,
+    y: Array,
     n_iter=1000,
     stepsize=3e-03,
 ):
+    # TODO(s): do a rewrite here with Flax train state
     def _objective(par, key, x, y):
-        variational_lower_bound = fn.apply(params=par, rng=key, x=x, y=y)
-        return -variational_lower_bound
+        elbo = fn.apply(params=par, rng=key, x=x, y=y)
+        return -elbo
 
     @jax.jit
-    def step(params, opt_state, rng, x, y):
-        loss, grads = jax.value_and_grad(_objective)(params, rng, x, y)
-        updates, opt_state = optimizer.update(grads, opt_state)
+    def step(params, state, x, y):
+        loss, grads = jax.value_and_grad(_objective)(params, x, y)
+        updates, state = optimizer.update(grads, state)
         params = optax.apply_updates(params, updates)
-        return params, opt_state, loss
+        return state, loss
 
-    rng_seq = hk.PRNGSequence(rng)
     optimizer = optax.adam(stepsize)
-    opt_state = optimizer.init(params)
+    state = optimizer.init(params)
 
     objectives = [0.0] * n_iter
     for _ in range(n_iter):
-        params, opt_state, loss_value = step(
-            params, opt_state, next(rng_seq), x=x, y=y
+        rng_key, seed = jr.split(seed)
+        state, loss_value = step(
+            state, rng_key, x=x, y=y
         )
         objectives[_] = loss_value
         if _ % 100 == 0 or _ == n_iter - 1:
@@ -87,3 +86,8 @@ def train_sparse_gaussian_process(
             print(f"Variational Lower Bound at {_}: {variational_lower_bound}")
 
     return params, objectives
+
+
+def _create_train_state():
+    # TODO
+    pass

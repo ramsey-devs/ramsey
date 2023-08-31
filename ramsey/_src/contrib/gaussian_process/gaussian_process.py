@@ -5,16 +5,13 @@ from flax import linen as nn
 from flax.linen import initializers
 from jax import numpy as jnp, scipy as jsp
 
-from tensorflow_probability.substrates import jax as tfp
-tfd = tfp.distributions
+from numpyro import distributions as dist
+
 
 __all__ = ["GP"]
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
-from ramsey._src.gaussian_process.kernel.base import Kernel
-
-
 class GP(nn.Module):
     """
     A Gaussian process
@@ -107,8 +104,9 @@ class GP(nn.Module):
         cov_star = K_xs_xs - jnp.matmul(L_inv_K_x_xs.T, L_inv_K_x_xs)
         cov_star += jitter * jnp.eye(n_star)
 
-        return tfd.MultivariateNormalTriL(
-            jnp.squeeze(mu_star), jnp.linalg.cholesky(cov_star)
+        return dist.MultivariateNormal(
+            loc=jnp.squeeze(mu_star),
+            scale_tril=jnp.linalg.cholesky(cov_star)
         )
 
     def _marginal(self, x, jitter=10e-8):
@@ -116,6 +114,7 @@ class GP(nn.Module):
         log_sigma = self._get_sigma(x.dtype)
         cov = self._kernel(x, x)
         cov += (jnp.square(jnp.exp(log_sigma)) + jitter) * jnp.eye(n)
-        return tfd.MultivariateNormalTriL(
-            jnp.zeros(n), jnp.linalg.cholesky(cov)
+        return dist.MultivariateNormal(
+            loc=jnp.zeros(n),
+            scale_tril=jnp.linalg.cholesky(cov)
         )

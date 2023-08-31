@@ -1,7 +1,8 @@
 from typing import Optional
 
-import distrax
-import haiku as hk
+from numpyro import distributions as dist
+from flax import linen as nn
+from flax.linen import initializers
 from jax import numpy as jnp, Array
 from jax import scipy as jsp
 
@@ -9,7 +10,10 @@ __all__ = ["SparseGP"]
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
-class SparseGP(hk.Module):
+from ramsey._src.contrib.gaussian_process.kernel.base import Kernel
+
+
+class SparseGP(nn.Module):
     """
     A sparse Gaussian process
 
@@ -24,11 +28,11 @@ class SparseGP(hk.Module):
 
     def __init__(
         self,
-        kernel: hk.Module,
+        kernel: Kernel,
         n_inducing: int,
         jitter: Optional[float] = 10e-8,
-        sigma_init: Optional[hk.initializers.Initializer] = None,
-        x_m_init: Optional[hk.initializers.Initializer] = None,
+        sigma_init: Optional[initializers.Initializer] = None,
+        x_inducing_init: Optional[initializers.Initializer] = None,
         name: Optional[str] = None,
     ):
         """
@@ -44,7 +48,9 @@ class SparseGP(hk.Module):
             additive jitter on covariance matrices diagonals to
             stabilize them against loosing positive definite property
         sigma_init: Optional[Initializer]
-            an initializer object from Haiku or None
+            an initializer object from Flax or None
+        x_inducing_init: Optional[Initializer]
+            an initializer object from Flax or None
         name: Optional[str]
             name of the layer
         """
@@ -54,7 +60,7 @@ class SparseGP(hk.Module):
         self._n_inducing = n_inducing
         self._jitter = jitter
         self._sigma_init = sigma_init
-        self._x_m_init = x_m_init
+        self._x_inducing_init = x_inducing_init
 
     def __call__(self, x: Array, **kwargs):
         if "y" in kwargs and "x_star" in kwargs:
@@ -64,12 +70,8 @@ class SparseGP(hk.Module):
     def _get_sigma(self, dtype):
         log_sigma_init = self._sigma_init
         if log_sigma_init is None:
-            log_sigma_init = hk.initializers.RandomUniform(
-                jnp.log(0.1), jnp.log(1.0)
-            )
-        log_sigma = hk.get_parameter(
-            "log_sigma", [], dtype=dtype, init=log_sigma_init
-        )
+            log_sigma_init = initializers.constant(jnp.log(1.0))
+        log_sigma = self.param("log_sigma", log_sigma_init, [], dtype)
         return log_sigma
 
     def _get_x_m(self, x_n: Array):
@@ -88,16 +90,16 @@ class SparseGP(hk.Module):
         """
 
         d = x_n.shape[1]
-        shape_x_m = (self._n_inducing, d)
-        if self._x_m_init is None:
-            self._x_m_init = hk.initializers.RandomUniform(
-                jnp.min(x_n), jnp.max(x_n)
+        shape_x_inducing = (self._n_inducing, d)
+        if self.x_inducing_init is None:
+            self.x_inducing_init = initializers.uniform(
+                jnp.max(x_n) - jnp.min(x_n)
             )
 
-        x_m = hk.get_parameter(
-            "x_m", shape=shape_x_m, dtype=x_n.dtype, init=self._x_m_init
+        x_inducing = self.param(
+            "x_inducing", self._x_m_init, shape_x_inducing, x_n.dtype
         )
-        return x_m
+        return x_inducing
 
     # pylint: disable=too-many-locals
     def _predictive(self, x: Array, y: Array, x_star: Array):
@@ -147,15 +149,16 @@ class SparseGP(hk.Module):
         h3 = self._calculate_quadratic_form(B_inv, K_ms)
         cov_star = K_ss - h2 + h3 + self._jitter * jnp.eye(x_star.shape[0])
 
-        return distrax.MultivariateNormalTri(
-            jnp.squeeze(mu_star), jnp.linalg.cholesky(cov_star)
+        return dist.MultivariateNormal(
+            loc=jnp.squeeze(mu_star),
+            scale_tril=jnp.linalg.cholesky(cov_star)
         )
 
     def _marginal(self, x: Array, y: Array):
         """
         Returns the variational lower bound of true log marginal likelihood.
         This quantity can be used as an objective to find the kernel
-        hyperparameters and the location of the m inducing points x_m.
+        hyperparameters and the location of the m inducing points x_inducing.
 
         The calculations are implemented according equation (9) in [1].
 
@@ -170,6 +173,8 @@ class SparseGP(hk.Module):
         -------
         float
              variational lower bound of true log marginal likelihood
+
+
         """
 
         n = x.shape[0]
@@ -186,8 +191,9 @@ class SparseGP(hk.Module):
 
         cov = Q_nn + ((self._jitter + sigma_square) * jnp.eye(n))
 
-        mvn = distrax.MultivariateNormalTri(
-            jnp.zeros(n), jnp.linalg.cholesky(cov)
+        mvn = dist.MultivariateNormal(
+            loc=jnp.zeros(n),
+            scale_tril=jnp.linalg.cholesky(cov)
         )
 
         K_nn = self._kernel(x, x)
