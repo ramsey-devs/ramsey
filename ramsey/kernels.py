@@ -1,5 +1,5 @@
-from ramsey._src.gaussian_process.kernel.non_stationary import Linear
-from ramsey._src.gaussian_process.kernel.stationary import (
+from ramsey._src.contrib.gaussian_process.kernel.non_stationary import Linear
+from ramsey._src.contrib.gaussian_process.kernel.stationary import (
     ExponentiatedQuadratic,
     Periodic,
     exponentiated_quadratic,

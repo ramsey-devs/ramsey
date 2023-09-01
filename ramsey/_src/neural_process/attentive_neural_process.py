@@ -1,7 +1,7 @@
 from typing import Tuple
 
-import haiku as hk
-import jax.numpy as np
+from flax import linen as nn
+from jax import numpy as jnp, Array
 from chex import assert_axis_dimension
 
 from ramsey._src.attention.attention import Attention
@@ -26,13 +26,12 @@ class ANP(NP):
        International Conference on Learning Representations. 2019.
     """
 
-    def __init__(
-        self,
-        decoder: hk.Module,
-        latent_encoder: Tuple[hk.Module, hk.Module],
-        deterministic_encoder: Tuple[hk.Module, Attention],
-        family: Family = Gaussian(),
-    ):
+    decoder: nn.Module
+    latent_encoder: Tuple[nn.Module, nn.Module]
+    deterministic_encoder: Tuple[nn.Module, Attention]
+    family: Family = Gaussian()
+
+    def setup(self):
         """
         Instantiates an attentive neural process
 
@@ -42,7 +41,7 @@ class ANP(NP):
             the decoder can be any network, but is typically an MLP. Note
             that the _last_ layer of the decoder needs to
             have twice the number of nodes as the data you try to model
-        latent_encoder: Tuple[hk.Module, hk.Module]
+        latent_encoders: Tuple[hk.Module, hk.Module]
             a tuple of two `hk.Module`s. The latent encoder can be any network,
             but is typically an MLP. The first element of the tuple is a neural
             network used before the aggregation step, while the second element
@@ -55,26 +54,25 @@ class ANP(NP):
             distributional family of the response variable
         """
 
-        super().__init__(
-            decoder, latent_encoder, deterministic_encoder[0], family
+        self._decoder = self.decoder
+        (self._latent_encoder, self._latent_variable_encoder) = (
+            self.latent_encoder[0],
+            self.latent_encoder[1]
         )
-        self._deterministic_cross_attention = deterministic_encoder[1]
+        self._deterministic_encoder = self.deterministic_encoder[0]
+        self._deterministic_cross_attention = self.deterministic_encoder[1]
+        self._family = self.family
 
     @staticmethod
     def _concat_and_tile(z_deterministic, z_latent, num_observations):
         if z_latent.shape[1] == 1:
-            z_latent = np.tile(z_latent, [1, num_observations, 1])
-        representation = np.concatenate([z_deterministic, z_latent], axis=-1)
+            z_latent = jnp.tile(z_latent, [1, num_observations, 1])
+        representation = jnp.concatenate([z_deterministic, z_latent], axis=-1)
         assert_axis_dimension(representation, 1, num_observations)
         return representation
 
-    def _encode_deterministic(
-        self,
-        x_context: np.ndarray,
-        y_context: np.ndarray,
-        x_target: np.ndarray,
-    ):
-        xy_context = np.concatenate([x_context, y_context], axis=-1)
+    def _encode_deterministic(self, x_context, y_context, x_target):
+        xy_context = jnp.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)
         z_deterministic = self._deterministic_cross_attention(
             x_context, z_deterministic, x_target

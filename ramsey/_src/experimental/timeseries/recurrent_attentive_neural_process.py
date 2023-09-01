@@ -1,7 +1,7 @@
 from typing import Tuple
 
-import haiku as hk
-import jax.numpy as np
+from flax import linen as nn
+from jax import numpy as jnp, Array
 from chex import assert_axis_dimension, assert_rank
 
 from ramsey import ANP
@@ -22,9 +22,9 @@ class RANP(ANP):
 
     def __init__(
         self,
-        decoder: hk.DeepRNN,
-        latent_encoder: Tuple[hk.Module, hk.Module],
-        deterministic_encoder: Tuple[hk.Module, Attention],
+        decoder: nn.recurrent.RNN,
+        latent_encoder: Tuple[nn.Module, nn.Module],
+        deterministic_encoder: Tuple[nn.Module, Attention],
         family: Family = Gaussian(),
     ):
         """
@@ -53,17 +53,17 @@ class RANP(ANP):
 
     def _decode(
         self,
-        representation: np.ndarray,
-        x_target: np.ndarray,
-        y: np.ndarray,  # pylint: disable=invalid-name
+        representation: Array,
+        x_target: Array,
+        y: Array,  # pylint: disable=invalid-name
     ):
-        target = np.concatenate([representation, x_target], axis=-1)
+        target = jnp.concatenate([representation, x_target], axis=-1)
         assert_rank(target, 3)
         assert_axis_dimension(target, 0, x_target.shape[0])
         assert_axis_dimension(target, 1, x_target.shape[1])
 
         _, num_observations, _ = target.shape
-        target, _ = hk.dynamic_unroll(
+        target, _ = nn.dynamic_unroll(
             self._decoder, target, self._decoder.initial_state(num_observations)
         )
         return self._family(target)

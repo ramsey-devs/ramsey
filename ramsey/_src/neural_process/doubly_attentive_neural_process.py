@@ -1,7 +1,7 @@
 from typing import Tuple
 
-import haiku as hk
-import jax.numpy as np
+from flax import linen as nn
+from jax import numpy as jnp, Array
 
 from ramsey._src.attention.attention import Attention
 from ramsey._src.family import Family, Gaussian
@@ -27,9 +27,9 @@ class DANP(ANP):
 
     def __init__(
         self,
-        decoder: hk.Module,
-        latent_encoder: Tuple[hk.Module, Attention, hk.Module],
-        deterministic_encoder: Tuple[hk.Module, Attention, Attention],
+        decoder: nn.Module,
+        latent_encoder: Tuple[nn.Module, Attention, nn.Module],
+        deterministic_encoder: Tuple[nn.Module, Attention, Attention],
         family: Family = Gaussian(),
     ):
         """
@@ -62,19 +62,23 @@ class DANP(ANP):
         self._latent_self_attention = latent_encoder[1]
         self._deterministic_self_attention = deterministic_encoder[1]
 
-    def _encode_latent(self, x_context: np.ndarray, y_context: np.ndarray):
-        xy_context = np.concatenate([x_context, y_context], axis=-1)
+    def _encode_latent(
+            self,
+            x_context: Array,
+            y_context: Array
+    ):
+        xy_context = jnp.concatenate([x_context, y_context], axis=-1)
         z_latent = self._latent_encoder(xy_context)
         z_latent = self._latent_self_attention(z_latent, z_latent, z_latent)
         return self._encode_latent_gaussian(z_latent)
 
     def _encode_deterministic(
         self,
-        x_context: np.ndarray,
-        y_context: np.ndarray,
-        x_target: np.ndarray,
+        x_context: Array,
+        y_context: Array,
+        x_target: Array,
     ):
-        xy_context = np.concatenate([x_context, y_context], axis=-1)
+        xy_context = jnp.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)
         z_deterministic = self._deterministic_self_attention(
             z_deterministic, z_deterministic, z_deterministic

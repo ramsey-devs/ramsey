@@ -4,7 +4,7 @@ from typing import Optional, Union
 from flax.linen import initializers
 from jax import numpy as jnp
 
-from ramsey._src.gaussian_process.kernel.base import Kernel
+from ramsey._src.contrib.gaussian_process.kernel.base import Kernel
 
 
 # pylint: disable=invalid-name

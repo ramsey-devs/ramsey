@@ -6,20 +6,20 @@ import chex
 
 
 # pylint: disable=too-few-public-methods
-class Attention(abc.ABC, nn.Module):
+class Attention(nn.Module):
     """
     Abstract attention base class
     """
 
-    def __init__(self, embedding: Optional[nn.Module]):
-        super().__init__()
-        self._embedding = embedding
+    embedding: Optional[nn.Module]
 
-    @abc.abstractmethod
+    def setup(self):
+        pass
+
     def __call__(self, key: Array, value: Array, query: Array):
         self._check_dimensions(key, value, query)
-        if self._embedding is not None:
-            key, query = self._embedding(key), self._embedding(query)
+        if self.embedding is not None:
+            key, query = self.embedding(key), self.embedding(query)
         return key, value, query
 
     @staticmethod

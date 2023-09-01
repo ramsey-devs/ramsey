@@ -1,11 +1,10 @@
 from typing import Optional
 
-import haiku as hk
-import jax.numpy as np
-from haiku import LSTM, LSTMState
+from jax import numpy as jnp, Array
+from flax import linen as nn
 
 
-class DropoutLSTM(LSTM):
+class DropoutLSTM(nn.LSTMCell):
     """
     A LSTM with Dropout
     """
@@ -16,6 +15,6 @@ class DropoutLSTM(LSTM):
         super().__init__(hidden_size, name)
         self._rate = rate
 
-    def __call__(self, inputs: np.ndarray, prev_state: LSTMState):
+    def __call__(self, inputs: Array, prev_state, is_training):
         out, state = super().__call__(inputs, prev_state)
-        return hk.dropout(hk.next_rng_key(), self._rate, out), state
+        return nn.Dropout(self._rate, deterministic=not is_training)(out), state

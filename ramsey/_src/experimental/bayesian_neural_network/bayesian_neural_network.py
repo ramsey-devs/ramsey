@@ -1,16 +1,15 @@
-import warnings
 from typing import Iterable, Optional
 
-import haiku as hk
+from flax import linen as nn
 from jax import numpy as jnp
 
-from ramsey._src.contrib.bayesian_neural_network.bayesian_linear import (
+from ramsey._src.experimental.bayesian_neural_network.bayesian_linear import (
     BayesianLinear,
 )
 from ramsey._src.family import Family, Gaussian
 
 
-class BNN(hk.Module):
+class BNN(nn.Module):
     """
     Bayesian neural network
 
@@ -27,7 +26,7 @@ class BNN(hk.Module):
 
     def __init__(
         self,
-        layers: Iterable[hk.Module],
+        layers: Iterable[nn.Module],
         family: Family = Gaussian(),
         name: Optional[str] = None,
         **kwargs,
@@ -55,9 +54,6 @@ class BNN(hk.Module):
         self._layers = layers
         self._family = family
         self._kwargs = kwargs
-        warnings.warn(
-            "The BNN class has not been tested properly. Use with caution!"
-        )
 
     def __call__(self, x: jnp.ndarray, **kwargs):
         if "y" in kwargs:
@@ -69,6 +65,7 @@ class BNN(hk.Module):
                 x = layer(x, is_training=False)
             else:
                 x = layer(x)
+
         return self._as_family(x)
 
     def _loss(self, x, y):

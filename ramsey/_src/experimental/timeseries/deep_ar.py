@@ -1,8 +1,8 @@
-import haiku as hk
-import jax.numpy as np
+from flax import linen as nn
+from jax import numpy as jnp
 import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_axis_dimension_gt, assert_rank
-from jax import nn
+from jax import Array
 
 from ramsey.family import Family, Gaussian
 
@@ -10,7 +10,7 @@ __all__ = ["DeepAR"]
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
-class DeepAR(hk.Module):
+class DeepAR(nn.Module):
     """
     DeepAR
 
@@ -23,7 +23,7 @@ class DeepAR(hk.Module):
        Forecasting 36.3 (2020): 1181-1191.
     """
 
-    def __init__(self, network: hk.DeepRNN, family: Family = Gaussian()):
+    def __init__(self, network: nn.DeepRNN, family: Family = Gaussian()):
         """
         Instantiates a DeepAR class
 
@@ -38,15 +38,15 @@ class DeepAR(hk.Module):
         super().__init__()
         self._network = network
         self._family = family
-        self._mean_fn = hk.Sequential(
+        self._mean_fn = nn.Sequential(
             [
-                hk.Linear(1),
+                nn.Dense(1),
                 lambda x: x
                 if isinstance(self._family, Gaussian)
                 else nn.softplus,
             ]
         )
-        self._dispersion_fn = hk.Sequential([hk.Linear(1), nn.softplus])
+        self._dispersion_fn = nn.Sequential([nn.Linear(1), nn.softplus])
         if isinstance(self._family, Gaussian):
             self._fam = dist.Normal
         else:
@@ -54,7 +54,7 @@ class DeepAR(hk.Module):
 
     def __call__(
         self,
-        x: np.ndarray,  # pylint: disable=invalid-name
+        x: Array,  # pylint: disable=invalid-name
         y: np.ndarray,  # pylint: disable=invalid-name
     ):
         assert_rank([x, y], 3)
@@ -66,12 +66,12 @@ class DeepAR(hk.Module):
 
     def _predict(
         self,
-        x: np.ndarray,  # pylint: disable=invalid-name
-        y: np.ndarray,  # pylint: disable=invalid-name
+        x: Array,  # pylint: disable=invalid-name
+        y: Array,  # pylint: disable=invalid-name
     ):
         # put the time-axis in front and the batch-axis as second
-        x_swapped = np.swapaxes(x, 0, 1)
-        y_swapped = np.swapaxes(y, 0, 1)
+        x_swapped = jnp.swapaxes(x, 0, 1)
+        y_swapped = jnp.swapaxes(y, 0, 1)
         assert_axis_dimension_gt(x_swapped, 0, y_swapped.shape[0])
 
         num_prediction, _, _ = x_swapped.shape
@@ -90,7 +90,7 @@ class DeepAR(hk.Module):
             z_swapped_pred, last_state = self._unroll_point(
                 x_swapped[i, :, :], y_swapped_pred_mean, last_state
             )
-            z_swapped_preds = np.concatenate(
+            z_swapped_preds = jnp.concatenate(
                 [z_swapped_preds, z_swapped_pred], axis=0
             )
 
@@ -102,21 +102,21 @@ class DeepAR(hk.Module):
         y_swapped,  # pylint: disable=invalid-name
         state,
     ):
-        feats = np.concatenate([x_swapped, y_swapped], axis=-1)
+        feats = jnp.concatenate([x_swapped, y_swapped], axis=-1)
         z_swapped, state = self._network(feats, state)
-        return z_swapped[np.newaxis, :, :], state
+        return z_swapped[jnp.newaxis, :, :], state
 
-    def _unroll(self, x_swapped: np.ndarray, y_swapped: np.ndarray):
+    def _unroll(self, x_swapped: Array, y_swapped: Array):
         assert_axis_dimension(x_swapped, 0, y_swapped.shape[0])
         assert_axis_dimension(x_swapped, 1, y_swapped.shape[1])
 
         num_observations, num_batches, _ = y_swapped.shape
-        y_swapped = np.pad(
+        y_swapped = jnp.pad(
             y_swapped, pad_width=((1, 0), (0, 0), (0, 0)), mode="constant"
         )[:num_observations, :, :]
 
-        feats = np.concatenate([x_swapped, y_swapped], axis=-1)
-        z_swapped, state = hk.dynamic_unroll(
+        feats = jnp.concatenate([x_swapped, y_swapped], axis=-1)
+        z_swapped, state = nn.recurrent.d.dynamic_unroll(
             self._network, feats, self._network.initial_state(num_batches)
         )
 
@@ -125,27 +125,27 @@ class DeepAR(hk.Module):
     @staticmethod
     def _scaling(y_swapped):
         # compute the mean over the first axis, i.e. the _time_ axis
-        return 1.0 + np.mean(y_swapped, axis=0, keepdims=1)
+        return 1.0 + jnp.mean(y_swapped, axis=0, keepdims=True)
 
     def _as_family(self, z_swapped, scale):
-        scale_sqrt = np.sqrt(scale)
+        scale_sqrt = jnp.sqrt(scale)
         mean_swapped = self._mean_fn(z_swapped) * scale
         dispersion_swapped = self._dispersion_fn(z_swapped) * scale_sqrt
 
         # we want the family to have the original axis-dimensions, hence we swap
-        mean = np.swapaxes(mean_swapped, 0, 1)
-        dispersion = np.swapaxes(dispersion_swapped, 0, 1)
+        mean = jnp.swapaxes(mean_swapped, 0, 1)
+        dispersion = jnp.swapaxes(dispersion_swapped, 0, 1)
         family = self._fam(mean, dispersion)
         return family
 
     def _loss(
         self,
-        x: np.ndarray,
-        y: np.ndarray,
+        x: Array,
+        y: Array,
     ):
         # put the time-axis in front and the batch-axis as second
-        x_swapped = np.swapaxes(x, 0, 1)
-        y_swapped = np.swapaxes(y, 0, 1)
+        x_swapped = jnp.swapaxes(x, 0, 1)
+        y_swapped = jnp.swapaxes(y, 0, 1)
 
         scale = self._scaling(y_swapped)
         y_swapped = y_swapped - scale
@@ -157,5 +157,5 @@ class DeepAR(hk.Module):
         assert_axis_dimension(family.mean, 2, y.shape[2])
 
         # sum up log-likelihood per batch, then take expectation
-        lp__ = np.sum(np.mean(family.log_prob(y), axis=0))
+        lp__ = jnp.sum(jnp.mean(family.log_prob(y), axis=0))
         return family, -lp__

@@ -33,7 +33,7 @@ class MLP(nn.Module):
         if self.dropout is not None:
             self.dropout_layer = nn.Dropout(self.dropout)
 
-    def __call__(self, inputs: jnp.ndarray, is_training):
+    def __call__(self, inputs: jnp.ndarray, is_training=False):
         num_layers = len(self.layers)
         out = inputs
         for i, layer in enumerate(self.layers):

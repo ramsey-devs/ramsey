@@ -12,50 +12,45 @@ References
     International Conference on Learning Representations. 2019.
 """
 
-import haiku as hk
+
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
-from jax import random
+from jax import random as jr
 
 from ramsey import ANP
+from ramsey.nn import MLP
 from ramsey.attention import MultiHeadAttention
 from ramsey.data import sample_from_gaussian_process
 from ramsey.train import train_neural_process
 
 
 def data(key):
-    (x_target, y_target), f_target = sample_from_gaussian_process(
+    data = sample_from_gaussian_process(
         key, batch_size=10, num_observations=200
     )
-    return (x_target, y_target), f_target
+    return (data.x, data.y), data.f
 
 
-def _neural_process(**kwargs):
+def get_neural_process():
     dim = 128
     np = ANP(
-        decoder=hk.nets.MLP([dim] * 3 + [2]),
-        latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])),
+        decoder=MLP([dim] * 3 + [2]),
+        latent_encoder=(MLP([dim] * 3), MLP([dim, dim * 2])),
         deterministic_encoder=(
-            hk.nets.MLP([dim] * 3),
+            MLP([dim] * 3),
             MultiHeadAttention(
-                num_heads=8, head_size=16, embedding=hk.nets.MLP([dim] * 2)
+                num_heads=8, head_size=16, embedding=MLP([dim] * 2)
             ),
         ),
     )
-    return np(**kwargs)
+    return np
 
 
 def train_np(key, n_context, n_target, x_target, y_target):
-    _, init_key, train_key = random.split(key, 3)
-    neural_process = hk.transform(_neural_process)
-    params = neural_process.init(
-        init_key, x_context=x_target, y_context=y_target, x_target=x_target
-    )
-
+    neural_process = get_neural_process()
     params, _ = train_neural_process(
+        key,
         neural_process,
-        params,
-        train_key,
         x=x_target,
         y=y_target,
         n_context=n_context,
@@ -67,7 +62,7 @@ def train_np(key, n_context, n_target, x_target, y_target):
 
 
 def plot(
-    key,
+    seed,
     neural_process,
     params,
     x_target,
@@ -76,8 +71,8 @@ def plot(
     n_context,
     n_target,
 ):
-    key, sample_key = random.split(key, 2)
-    sample_idxs = random.choice(
+    sample_key, seed = jr.split(seed)
+    sample_idxs = jr.choice(
         sample_key,
         x_target.shape[1],
         shape=(n_context + n_target,),
@@ -102,10 +97,10 @@ def plot(
         )
 
         for _ in range(20):
-            key, apply_key = random.split(key, 2)
+            sample_rng_key, seed = jr.split(seed, 2)
             y_star = neural_process.apply(
-                params=params,
-                rng=apply_key,
+                variables=params,
+                rngs={"sample": sample_rng_key},
                 x_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
                 y_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
                 x_target=x_target[[idx], :, :],
@@ -121,15 +116,15 @@ def plot(
 
 
 def run():
-    rng_seq = hk.PRNGSequence(12)
     n_context, n_target = 10, 20
 
-    (x_target, y_target), f_target = data(next(rng_seq))
+    data_rng_key, train_rng_key, plot_rng_key = jr.split(jr.PRNGKey(0), 3)
+    (x_target, y_target), f_target = data(data_rng_key)
     neural_process, params = train_np(
-        next(rng_seq), n_context, n_target, x_target, y_target
+        train_rng_key, n_context, n_target, x_target, y_target
     )
     plot(
-        next(rng_seq),
+        plot_rng_key,
         neural_process,
         params,
         x_target,

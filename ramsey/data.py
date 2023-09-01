@@ -1,12 +1,9 @@
-from typing import Tuple
+from collections import namedtuple
+from typing import NamedTuple
 
-from tensorflow_probability.substrates import jax as tfp
-
-tfd = tfp.distributions
+from numpyro import distributions as dist
 
 import pandas as pd
-from chex import Array
-from jax import nn
 from jax import numpy as jnp
 from jax import random as jr
 
@@ -16,8 +13,9 @@ from ramsey.kernels import exponentiated_quadratic
 
 # pylint: disable=too-many-locals,invalid-name
 def load_m4_time_series_data(
-    interval: str = "hourly", drop_na=True
-) -> Tuple[Tuple[Array, Array], Tuple[Array, Array]]:
+    interval: str = "hourly",
+    drop_na: bool = True
+) -> NamedTuple:
     """
     Load an M4 data set
 
@@ -30,7 +28,7 @@ def load_m4_time_series_data(
 
     Returns
     -------
-    Tuple[Tuple[Array, Array], Tuple[Array, Array]]
+    NamedTuple
         a tuple of tuples. The first tuple consists of two JAX arrays
         where the first element are the time series observations (Y)
         and the second are features (X). The second tuple are arrays of
@@ -47,12 +45,12 @@ def load_m4_time_series_data(
     x = jnp.tile(x, [y.shape[0], 1]).reshape((y.shape[0], y.shape[1], 1))
     train_idxs = jnp.arange(train.shape[1])
     test_idxs = jnp.arange(test.shape[1]) + train.shape[1]
-    return (y, x), (train_idxs, test_idxs)
+    return namedtuple("data", "y x train_idxs test_idxs")(y, x, train_idxs, test_idxs)
 
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_polynomial_function(
-    rng, batch_size=10, order=1, num_observations=100, sigma=0.1
+    seed, batch_size=10, order=1, num_observations=100, sigma=0.1
 ):
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, 1)
@@ -60,13 +58,13 @@ def sample_from_polynomial_function(
     ys = []
     fs = []
     for _ in range(batch_size):
-        coeffs = list(jr.uniform(next(rng), shape=(order + 1, 1)) - 1)
-        f = 0
+        y_rng_key, coeff_rng_key, seed = jr.split(seed, 3)
+        coeffs = list(jr.uniform(coeff_rng_key, shape=(order + 1, 1)) - 1)
+        f = []
         for i in range(order + 1):
             f += coeffs[i] * x**i
 
-        y = f + jr.normal(next(rng), shape=(num_observations, 1)) * sigma
-
+        y = f + jr.normal(y_rng_key, shape=(num_observations, 1)) * sigma
         fs.append(f.reshape((1, num_observations, 1)))
         ys.append(y.reshape((1, num_observations, 1)))
 
@@ -74,7 +72,7 @@ def sample_from_polynomial_function(
     y = jnp.vstack(jnp.array(ys))
     f = jnp.vstack(jnp.array(fs))
 
-    return (x, y), f
+    return namedtuple("data", "y x f")(y, x, f)
 
 
 # pylint: disable=too-many-locals,invalid-name
@@ -97,12 +95,12 @@ def sample_from_sine_function(seed, batch_size=10, num_observations=100):
     y = jnp.vstack(jnp.array(ys))
     f = jnp.vstack(jnp.array(fs))
 
-    return (x, y), f
+    return namedtuple("data", "y x f")(y, x, f)
 
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_gaussian_process(
-    key, batch_size=10, num_observations=100, num_dim=1, rho=None, sigma=None
+    seed, batch_size=10, num_observations=100, num_dim=1, rho=None, sigma=None
 ):
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, num_dim)
@@ -114,9 +112,9 @@ def sample_from_gaussian_process(
             seed, 5
         )
         if rho is None:
-            rho = tfd.InverseGamma(1, 1).sample(sample_key1)
+            rho = dist.InverseGamma(1, 1).sample(sample_key1)
         if sigma is None:
-            sigma = tfd.InverseGamma(5, 5).sample(sample_key2)
+            sigma = dist.InverseGamma(5, 5).sample(sample_key2)
         K = exponentiated_quadratic(x, x, sigma, rho)
 
         f = jr.multivariate_normal(
@@ -134,55 +132,5 @@ def sample_from_gaussian_process(
     y = jnp.vstack(jnp.array(ys))
     f = jnp.vstack(jnp.array(fs))
 
-    return (x, y), f
+    return namedtuple("data", "y x f")(y, x, f)
 
-
-# pylint: disable=too-many-locals,invalid-name
-def sample_from_negative_binomial_linear_model(
-    seed, batch_size=10, num_observations=100, num_dim=1
-):
-    x_key, seed = jr.split(seed)
-    x = jr.normal(x_key, (num_observations, num_dim))
-    ys, fs = [], []
-    for _ in range(batch_size):
-        alpha_key, beta_key, seed = jr.split(seed, 3)
-        alpha = tfd.Normal(1.0, 3.0).sample(alpha_key)
-        beta = tfd.Normal(10.0, 3.0).sample(beta_key, (num_dim,))
-        f = nn.softplus(alpha + x @ beta)
-        y_key, seed = jr.split(seed)
-        y = tfd.Poisson(f).sample(y_key)
-        fs.append(f.reshape((1, num_observations, 1)))
-        ys.append(y.reshape((1, num_observations, 1)))
-
-    x = jnp.tile(x, [batch_size, 1, 1])
-    y = jnp.vstack(jnp.array(ys))
-    f = jnp.vstack(jnp.array(fs))
-
-    return (x, y), f
-
-
-# pylint: disable=too-many-locals,invalid-name
-def sample_from_linear_model(
-    seed, batch_size=10, num_observations=100, num_dim=1, noise_scale=None
-):
-    x_key, seed = jr.split(seed)
-    x = jr.normal(x_key, (num_observations, num_dim))
-    ys = []
-    fs = []
-    for _ in range(batch_size):
-        beta_key, seed = jr.split(seed)
-        beta = tfd.Normal(0.0, 2.0).sample(beta_key, (num_dim,))
-        if noise_scale is None:
-            noise_key, seed = jr.split(seed)
-            noise_scale = tfd.Gamma(1.0, 10.0).sample(noise_key)
-        f = x @ beta
-        y_key, seed = jr.split(seed)
-        y = f + jr.normal(y_key, f.shape) * noise_scale
-        fs.append(f.reshape((1, num_observations, 1)))
-        ys.append(y.reshape((1, num_observations, 1)))
-
-    x = jnp.tile(x, [batch_size, 1, 1])
-    y = jnp.vstack(jnp.array(ys))
-    f = jnp.vstack(jnp.array(fs))
-
-    return (x, y), f

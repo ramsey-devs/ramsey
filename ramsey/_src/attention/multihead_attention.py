@@ -8,13 +8,7 @@ from flax.linen.linear import DotGeneralT
 from flax.linen.linear import PrecisionLike
 from flax.linen.linear import default_kernel_init
 from flax.linen.module import merge_param
-from jax import lax
-
-PRNGKey = Any
-Shape = Tuple[int, ...]
-Dtype = Any
-Array = Any
-from jax import numpy as jnp, Array
+from jax import lax, numpy as jnp, Array
 
 from ramsey._src.attention.attention import Attention
 
@@ -31,9 +25,11 @@ class MultiHeadAttention(Attention):
        Advances in Neural Information Processing Systems. 2017.
     """
 
-    def __init__(
-            self, num_heads, head_size, embedding: Optional[nn.Module] = None
-    ):
+    num_heads: int
+    head_size: int
+    embedding: Optional[nn.Module]
+
+    def setup(self):
         """
         Instantiates a multi-head attender
 
@@ -47,11 +43,10 @@ class MultiHeadAttention(Attention):
             neural network module to embed keys and queries before attention
         """
 
-        super().__init__(embedding)
         self._attention = _MultiHeadAttention(
-            num_heads=num_heads,
-            qkv_features=head_size * num_heads,
-            out_features=head_size,
+            num_heads=self.num_heads,
+            qkv_features=self.head_size * self.num_heads,
+            out_features=self.head_size
         )
 
     def __call__(self, key: Array, value: Array, query: Array):
@@ -63,17 +58,16 @@ class MultiHeadAttention(Attention):
 
 class _MultiHeadAttention(nn.Module):
     num_heads: int
-    dtype: Optional[Dtype] = None
-    param_dtype: Dtype = jnp.float32
+    dtype: Optional = None
+    param_dtype = jnp.float32
     qkv_features: Optional[int] = None
     out_features: Optional[int] = None
     broadcast_dropout: bool = True
     dropout_rate: float = 0.
     deterministic: Optional[bool] = None
     precision: PrecisionLike = None
-    kernel_init: Callable[[PRNGKey, Shape, Dtype], Array] = default_kernel_init
-    bias_init: Callable[
-        [PRNGKey, Shape, Dtype], Array] = initializers.zeros_init()
+    kernel_init: Callable = default_kernel_init
+    bias_init: Callable= initializers.zeros_init()
     use_bias: bool = True
     attention_fn: Callable[..., Array] = dot_product_attention
     decode: bool = False

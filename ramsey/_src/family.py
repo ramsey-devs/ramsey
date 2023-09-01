@@ -33,6 +33,7 @@ class Gaussian(Family):
         self._kwargs = kwargs
 
     def __call__(self, target: jnp.ndarray, **kwargs):
+        # TODO(s): this is not optimal and not clear. move this outside
         log_scale = kwargs.get("scale", None)
         if log_scale is not None:
             mean = target

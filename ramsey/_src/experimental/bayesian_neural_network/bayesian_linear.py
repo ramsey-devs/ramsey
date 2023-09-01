@@ -1,13 +1,15 @@
 from typing import Optional, Tuple
 
-import haiku as hk
+from flax import linen as nn
+from flax.linen import initializers
+
 from jax import numpy as jnp
 from numpyro import distributions as dist
 from numpyro.distributions import constraints, kl_divergence
 
 
 # pylint: disable=too-many-instance-attributes,too-many-locals
-class BayesianLinear(hk.Module):
+class BayesianLinear(nn.Module):
     """
     Linear Bayesian layer
 
@@ -101,7 +103,7 @@ class BayesianLinear(hk.Module):
             )
             for param_name, constraint in arg_constraints.items()
         }
-        samples = self._w_prior.__class__(**params).sample(hk.next_rng_key())
+        samples = self._w_prior.__class__(**params).sample()
         return samples, params
 
     def _get_bias(self, layer_dim, dtype):
@@ -112,7 +114,7 @@ class BayesianLinear(hk.Module):
             )
             for param_name, constraint in arg_constraints.items()
         }
-        samples = self._b_prior.__class__(**params).sample(hk.next_rng_key())
+        samples = self._b_prior.__class__(**params).sample()
         return samples, params
 
     def _init_param(self, weight_name, param_name, constraint, shape, dtype):
@@ -120,11 +122,11 @@ class BayesianLinear(hk.Module):
         if init_name in self._kwargs:
             init = self._kwargs[init_name]
         else:
-            init = hk.initializers.TruncatedNormal(stddev=1)
+            init = initializers.xavier_normal()
+
         shape = (shape,) if not isinstance(shape, Tuple) else shape
-        params = hk.get_parameter(
-            f"{weight_name}_{param_name}", shape=shape, dtype=dtype, init=init
-        )
+        params = self.param(f"{weight_name}_{param_name}", init, shape, dtype)
+
         params = jnp.where(
             constraints.positive == constraint, jnp.exp(params), params
         )

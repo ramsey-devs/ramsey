@@ -48,6 +48,7 @@ setup(
         "optax",
         "pandas"
         "rmsyutls",
+        "tqdm",
     ],
     extras_require={
         "dev": ["pre-commit", "black", "isort", "pylint", "tox", "pytest"],
