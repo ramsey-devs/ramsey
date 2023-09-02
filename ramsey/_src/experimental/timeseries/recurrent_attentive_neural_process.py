@@ -19,37 +19,43 @@ class RANP(ANP):
     Implements the core structure of a recurrent attentive neural process
     cross-attention module.
     """
-
-    def __init__(
-        self,
-        decoder: nn.recurrent.RNN,
-        latent_encoder: Tuple[nn.Module, nn.Module],
-        deterministic_encoder: Tuple[nn.Module, Attention],
-        family: Family = Gaussian(),
-    ):
+    
+    decoder: nn.Module    
+    latent_encoder: Tuple[nn.Module, nn.Module]
+    deterministic_encoder: Tuple[nn.Module, Attention]
+    family: Family = Gaussian()
+    
+    def setup(self):
         """
         Instantiates a recurrent attentive neural process
 
         Parameters
         ----------
-        decoder: hk.DeepRNN
+        decoder: nn.Sequential
             the decoder can be any network, but is typically an MLP. Note
             that the _last_ layer of the decoder needs to
             have twice the number of nodes as the data you try to model
-        latent_encoder: Tuple[hk.Module, hk.Module]
-            a tuple of two `hk.Module`s. The latent encoder can be any network,
+        latent_encoder: Tuple[nn.Module, nn.Module]
+            a tuple of two `nn.Module`s. The latent encoder can be any network,
             but is typically an MLP. The first element of the tuple is a neural
             network used before the aggregation step, while the second element
             of the tuple encodes is a neural network used to
             compute mean(s) and standard deviation(s) of the latent Gaussian.
-        deterministic_encoder: Tuple[hk.Module, Attention]
-            a tuple of a `hk.Module` and an Attention object. The deterministic
+        deterministic_encoder: Tuple[nn.Module, Attention]
+            a tuple of a `nn.Module` and an Attention object. The deterministic
             encoder can be any network, but is typically an MLP
         family: Family
             distributional family of the response variable
         """
 
-        super().__init__(decoder, latent_encoder, deterministic_encoder, family)
+        self._decoder = self.decoder
+        (self._latent_encoder, self._latent_variable_encoder) = (
+            self.latent_encoder[0],
+            self.latent_encoder[1]
+        )
+        self._deterministic_encoder = self.deterministic_encoder[0]
+        self._deterministic_cross_attention = self.deterministic_encoder[1]
+        self._family = self.family
 
     def _decode(
         self,
@@ -63,7 +69,6 @@ class RANP(ANP):
         assert_axis_dimension(target, 1, x_target.shape[1])
 
         _, num_observations, _ = target.shape
-        target, _ = nn.dynamic_unroll(
-            self._decoder, target, self._decoder.initial_state(num_observations)
-        )
+
+        target = self._decoder(target)
         return self._family(target)

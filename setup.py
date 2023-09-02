@@ -10,11 +10,6 @@ def readme():
         return fl.read()
 
 
-def _read_requirements(fl):
-    with open(fl) as fh:
-        return fh.read().splitlines()
-
-
 def _version():
     version = None
     for line in open(join(PROJECT_PATH, "ramsey", "__init__.py")):
@@ -34,12 +29,11 @@ setup(
     url="https://github.com/ramsey-devs/ramsey",
     author="The Ramsey developers",
     license="Apache 2.0",
-    keywords="bayes jax probabilistic models gaussian process neural process",
+    keywords=["bayes", "jax", "probabilistic models", "gaussian process", "neural process"],
     packages=find_packages(),
     include_package_data=True,
     python_requires=">=3.8",
     install_requires=[
-        "blackjax",
         "chex",
         "flax",
         "jax>=0.4.4",

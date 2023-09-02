@@ -1,5 +1,5 @@
 """
-ramsey: probabilistic modelling with Haiku and JAX
+ramsey: probabilistic modelling using JAX
 """
 
 

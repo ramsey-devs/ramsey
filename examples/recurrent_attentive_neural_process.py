@@ -2,76 +2,65 @@
 Recurrent attentive neural process
 ========================
 
-Here, we implement and train an recurrent attentive neural process
+Here, we implement and train a recurrent attentive neural process
 and visualize predictions thereof.
-
 """
 
-import haiku as hk
+
 import jax
-import jax.numpy as np
-import jax.random as random
 import matplotlib.pyplot as plt
+from flax import linen as nn
+from jax import random as jr, numpy as jnp
 
 from ramsey.attention import MultiHeadAttention
-from ramsey.contrib import RANP
 from ramsey.data import sample_from_gaussian_process
+from ramsey.experimental import RANP
+from ramsey.nn import MLP
 from ramsey.train import train_neural_process
 
 
 def data(key):
-    (x_target, y_target), f_target = sample_from_gaussian_process(
+    data = sample_from_gaussian_process(
         key, batch_size=10, num_observations=200
     )
-    return (x_target, y_target), f_target
+    return (data.x, data.y), data.f
 
 
-def _ranp(**kwargs):
+def get_ranp():
     dim = 128
     np = RANP(
-        decoder=hk.DeepRNN(
-            [
-                hk.LSTM(hidden_size=40),
-                jax.nn.relu,
-                hk.LSTM(hidden_size=40),
-                jax.nn.relu,
-                hk.Linear(2),
-            ]
-        ),
-        latent_encoder=(hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])),
+        decoder=nn.Sequential([
+            nn.RNN(nn.LSTMCell(features=10)),
+            jax.nn.relu,
+            nn.Dense(2)
+        ]),
+        latent_encoder=(MLP([dim] * 3), MLP([dim, dim * 2])),
         deterministic_encoder=(
-            hk.nets.MLP([dim] * 3),
+            MLP([dim] * 3),
             MultiHeadAttention(
-                num_heads=8, head_size=16, embedding=hk.nets.MLP([dim] * 2)
+                num_heads=8, head_size=16, embedding=MLP([dim] * 2)
             ),
         ),
     )
-    return np(**kwargs)
+    return np
 
 
-def _train_np(key, n_context, n_target, x_target, y_target):
-    _, init_key, train_key = random.split(key, 3)
-    neural_process = hk.transform(_ranp)
-    params = neural_process.init(
-        init_key, x_context=x_target, y_context=y_target, x_target=x_target
-    )
-
+def train(key, n_context, n_target, x_target, y_target):
+    neural_process = get_ranp()
     params, _ = train_neural_process(
+        key,
         neural_process,
-        params,
-        train_key,
         x=x_target,
         y=y_target,
         n_context=n_context,
         n_target=n_target,
         n_iter=10000,
     )
-
     return neural_process, params
 
 
-def _plot(
-    key,
+def plot(
+    seed,
     neural_process,
     params,
     x_target,
@@ -80,8 +69,8 @@ def _plot(
     n_context,
     n_target,
 ):
-    key, sample_key = random.split(key, 2)
-    sample_idxs = random.choice(
+    sample_key, seed = jr.split(seed)
+    sample_idxs = jr.choice(
         sample_key,
         x_target.shape[1],
         shape=(n_context + n_target,),
@@ -91,11 +80,11 @@ def _plot(
     idxs = [0, 2, 5, 7]
     _, axes = plt.subplots(figsize=(10, 6), nrows=2, ncols=2)
     for _, (idx, ax) in enumerate(zip(idxs, axes.flatten())):
-        x = np.squeeze(x_target[idx, :, :])
-        f = np.squeeze(f_target[idx, :, :])
-        y = np.squeeze(y_target[idx, :, :])
+        x = jnp.squeeze(x_target[idx, :, :])
+        f = jnp.squeeze(f_target[idx, :, :])
+        y = jnp.squeeze(y_target[idx, :, :])
 
-        srt_idxs = np.argsort(x)
+        srt_idxs = jnp.argsort(x)
         ax.plot(x[srt_idxs], f[srt_idxs], color="blue", alpha=0.75)
         ax.scatter(
             x[sample_idxs[:n_context]],
@@ -106,32 +95,35 @@ def _plot(
         )
 
         for _ in range(20):
-            key, apply_key = random.split(key, 2)
+            sample_rng_key, seed = jr.split(seed, 2)
             y_star = neural_process.apply(
-                params=params,
-                rng=apply_key,
-                x_context=x[np.newaxis, sample_idxs, np.newaxis],
-                y_context=y[np.newaxis, sample_idxs, np.newaxis],
+                variables=params,
+                rngs={"sample": sample_rng_key},
+                x_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
+                y_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
                 x_target=x_target[[idx], :, :],
             ).mean
-            x_star = np.squeeze(x_target[[idx], :, :])
-            y_star = np.squeeze(y_star)
+            x_star = jnp.squeeze(x_target[[idx], :, :])
+            y_star = jnp.squeeze(y_star)
             ax.plot(
                 x_star[srt_idxs], y_star[srt_idxs], color="black", alpha=0.1
             )
+        ax.grid()
+        ax.set_frame_on(False)
     plt.show()
 
 
 def run():
-    seq = hk.PRNGSequence(12)
     n_context, n_target = 10, 20
-    (x_target, y_target), f_target = data(next(seq))
+    data_rng_key, train_rng_key, plot_rng_key = jr.split(jr.PRNGKey(0), 3)
+    (x_target, y_target), f_target = data(data_rng_key)
 
-    neural_process, params = _train_np(
-        next(seq), n_context, n_target, x_target, y_target
+    neural_process, params = train(
+        train_rng_key, n_context, n_target, x_target, y_target
     )
-    _plot(
-        next(seq),
+
+    plot(
+        plot_rng_key,
         neural_process,
         params,
         x_target,

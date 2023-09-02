@@ -25,13 +25,12 @@ class DANP(ANP):
        International Conference on Learning Representations. 2019.
     """
 
-    def __init__(
-        self,
-        decoder: nn.Module,
-        latent_encoder: Tuple[nn.Module, Attention, nn.Module],
-        deterministic_encoder: Tuple[nn.Module, Attention, Attention],
-        family: Family = Gaussian(),
-    ):
+    decoder: nn.Module
+    latent_encoder: Tuple[nn.Module, Attention, nn.Module]
+    deterministic_encoder: Tuple[nn.Module, Attention, Attention]
+    family: Family = Gaussian()
+
+    def setup(self):
         """
         Instantiates a doubly-attentive neural process
 
@@ -53,14 +52,14 @@ class DANP(ANP):
             distributional family of the response variable
         """
 
-        super().__init__(
-            decoder,
-            (latent_encoder[0], latent_encoder[2]),
-            (deterministic_encoder[0], deterministic_encoder[2]),
-            family,
-        )
-        self._latent_self_attention = latent_encoder[1]
-        self._deterministic_self_attention = deterministic_encoder[1]
+        (self._latent_encoder,
+         self._latent_self_attention,
+         self._latent_variable_encoder) = self.latent_encoder
+        (self._deterministic_encoder,
+         self._deterministic_self_attention,
+         self._deterministic_cross_attention) = self.deterministic_encoder
+        self._decoder = self.decoder
+        self._family = self.family
 
     def _encode_latent(
             self,
@@ -73,10 +72,10 @@ class DANP(ANP):
         return self._encode_latent_gaussian(z_latent)
 
     def _encode_deterministic(
-        self,
-        x_context: Array,
-        y_context: Array,
-        x_target: Array,
+            self,
+            x_context: Array,
+            y_context: Array,
+            x_target: Array,
     ):
         xy_context = jnp.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)

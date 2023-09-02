@@ -57,7 +57,6 @@ def train_np(key, n_context, n_target, x_target, y_target):
         n_target=n_target,
         n_iter=10000,
     )
-
     return neural_process, params
 
 
@@ -117,12 +116,13 @@ def plot(
 
 def run():
     n_context, n_target = 10, 20
-
     data_rng_key, train_rng_key, plot_rng_key = jr.split(jr.PRNGKey(0), 3)
     (x_target, y_target), f_target = data(data_rng_key)
+
     neural_process, params = train_np(
         train_rng_key, n_context, n_target, x_target, y_target
     )
+
     plot(
         plot_rng_key,
         neural_process,

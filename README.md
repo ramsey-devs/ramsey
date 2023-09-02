@@ -7,7 +7,7 @@
 [![documentation](https://readthedocs.org/projects/ramsey/badge/?version=latest)](https://ramsey.readthedocs.io/en/latest/?badge=latest)
 [![version](https://img.shields.io/pypi/v/ramsey.svg?colorB=black&style=flat)](https://pypi.org/project/ramsey/)
 
-> Probabilistic modelling using Haiku and JAX
+> Probabilistic modelling using JAX
 
 ## About
 
@@ -21,26 +21,26 @@ Ramsey uses to Haiku's module system to construct probabilistic models
 and define parameters. For instance, a simple neural process can be constructed like this:
 
 ```python
-import haiku as hk
-import jax.random as random
+from jax import random as jr
 
 from ramsey import NP
 from ramsey.data import sample_from_sine_function
+from ramsey.nn import MLP
 
-def neural_process(**kwargs):
+def get_neural_process():
     dim = 128
     np = NP(
-        decoder=hk.nets.MLP([dim] * 3 + [2]),
+        decoder=MLP([dim] * 3 + [2]),
         latent_encoder=(
-            hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])
+            MLP([dim] * 3), MLP([dim, dim * 2])
         )
     )
-    return np(**kwargs)
+    return np
 
-key = random.PRNGKey(23)
+key = jr.PRNGKey(23)
 (x, y), _ = sample_from_sine_function(key)
 
-neural_process = hk.transform(neural_process)
+neural_process = get_neural_process()
 params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
 ```
 
@@ -59,7 +59,7 @@ command line:
 pip install git+https://github.com/ramsey-devs/ramsey@<RELEASE>
 ```
 
-See also the installation instructions for [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax), if
+See also the installation instructions for [JAX](https://github.com/google/jax), if
 you plan to use Ramsey on GPU/TPU.
 
 ## Contributing
