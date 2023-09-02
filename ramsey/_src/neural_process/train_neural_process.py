@@ -48,9 +48,9 @@ def train_neural_process(
         batch = _split_data(split_rng_key, x, y, n_context, n_target)
         state, obj = step({"sample": sample_rng_key}, state, **batch)
         objectives[i] = obj
-        if (i % 100 == 0 or i == n_iter) - 1 and verbose:
+        if (i % 100 == 0 or i == n_iter - 1) and verbose:
             elbo = -float(obj)
-            print(f"ELBO at itr {i}: {elbo}")
+            print(f"ELBO at itr {i}: {elbo:.2f}")
 
     return state.params, objectives
 

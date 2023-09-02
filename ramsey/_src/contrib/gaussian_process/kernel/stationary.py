@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-
+from flax import linen as nn
 from flax.linen import initializers
 from jax import numpy as jnp
 
@@ -103,13 +103,12 @@ class ExponentiatedQuadratic(Kernel):
     Exponentiated quadratic covariance function
     """
 
-    def __init__(
-        self,
-        active_dims: Optional[list] = None,
-        rho_init: Optional[initializers.Initializer] = None,
-        sigma_init: Optional[initializers.Initializer] = None,
-        name: Optional[str] = None,
-    ):
+    active_dims: Optional[list] = None
+    rho_init: Optional[initializers.Initializer] = None
+    sigma_init: Optional[initializers.Initializer] = None
+    name: Optional[str] = None
+
+    def setup(self):
         """
         Instantiates the covariance function
 
@@ -126,13 +125,12 @@ class ExponentiatedQuadratic(Kernel):
             name of the layer
         """
 
-        super().__init__(name=name)
-        self.active_dims = (
-            active_dims if isinstance(active_dims, list) else slice(active_dims)
+        self._active_dims = (
+            self.active_dims if isinstance(self.active_dims, list) else slice(self.active_dims)
         )
-        self.rho_init = rho_init
-        self.sigma_init = sigma_init
 
+
+    @nn.compact
     def __call__(self, x1: jnp.ndarray, x2: jnp.ndarray = None):
         if x2 is None:
             x2 = x1
@@ -149,8 +147,8 @@ class ExponentiatedQuadratic(Kernel):
         log_sigma = self.param("log_sigma", sigma_init, [], dtype)
 
         cov = exponentiated_quadratic(
-            x1[..., self.active_dims],
-            x2[..., self.active_dims],
+            x1[..., self._active_dims],
+            x2[..., self._active_dims],
             jnp.square(jnp.exp(log_sigma)),
             jnp.exp(log_rho),
         )

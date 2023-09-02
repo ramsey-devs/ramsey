@@ -30,9 +30,9 @@ from ramsey.experimental import BNN, BayesianLinear
 from ramsey.data import sample_from_gaussian_process
 
 
-def data(key):
+def data(key, n_samples):
     data = sample_from_gaussian_process(
-        key, batch_size=1, num_observations=1000
+        key, batch_size=1, num_observations=n_samples
     )
     return (
         (data.x.reshape(-1, 1), data.y.reshape(-1, 1)),
@@ -117,7 +117,6 @@ def train(seed, bnn, x, y, n_iter=10000):
 
 
 def plot(seed, bnn, params, x, f, x_train, y_train):
-    _, ax = plt.subplots(figsize=(10, 4))
     srt_idxs = jnp.argsort(jnp.squeeze(x))
     ys = []
     for i in range(100):
@@ -128,6 +127,8 @@ def plot(seed, bnn, params, x, f, x_train, y_train):
     yhat = jnp.hstack(ys).T
     yhat_mean = jnp.mean(yhat, axis=0)
     y_hat_cis = jnp.quantile(yhat, q=jnp.array([0.05, 0.95]), axis=0)
+
+    _, ax = plt.subplots(figsize=(10, 4))
     ax.plot(
         jnp.squeeze(x)[srt_idxs],
         jnp.squeeze(yhat_mean)[srt_idxs],
@@ -176,8 +177,9 @@ def run():
         "Experimental code is hardly tested or debugged."
     )
     data_rng_key, sample_rng_key, seed = jr.split(jr.PRNGKey(0), 3)
-    (x, y), f = data(data_rng_key)
-    x_train, y_train = sample_training_points(sample_rng_key, x, y, 900)
+    n_samples = 200
+    (x, y), f = data(data_rng_key, n_samples)
+    x_train, y_train = sample_training_points(sample_rng_key, x, y, int(n_samples * 0.9))
 
     train_rng_key, seed = jr.split(seed)
     bnn = get_bayesian_nn()

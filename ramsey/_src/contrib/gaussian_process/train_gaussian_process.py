@@ -1,93 +1,98 @@
+from typing import Callable
 
 import jax
+import numpy as np
+from flax.training.train_state import TrainState
 from jax import Array
 import optax
 from jax import numpy as jnp, random as jr
+from tqdm import tqdm
+
+from ramsey.contrib import GP
 
 
 # pylint: disable=too-many-locals,invalid-name
 def train_gaussian_process(
     seed: jr.PRNGKey,
-    fn: Callable,
-    params: PyTree,
+    gaussian_process: GP,
     x: Array,
     y: Array,
+    optimizer=optax.adam(3e-3),
     n_iter=1000,
-    stepsize=3e-03,
     verbose=False,
 ):
-    def _objective(par, key, x, y):
-        mvn = fn.apply(
-            params=par,
-            rng=key,
-            x=x,
-        )
-        mll = mvn.log_prob(y.T)
-        return -jnp.sum(mll)
-
     @jax.jit
-    def step(params, opt_state, rng, x, y):
-        loss, grads = jax.value_and_grad(_objective)(params, rng, x, y)
-        updates, opt_state = optimizer.update(grads, opt_state)
-        params = optax.apply_updates(params, updates)
-        return params, opt_state, loss
+    def step(rngs, state, **batch):
+        step = state.step
+        rngs = {name: jr.fold_in(rng, step) for name, rng in rngs.items()}
 
-    rng_seq = hk.PRNGSequence(rng)
-    optimizer = optax.adam(stepsize)
-    opt_state = optimizer.init(params)
+        def obj_fn(params):
+            mvn = state.apply_fn(
+                variables=params,
+                rngs=rngs,
+                x=batch["x"]
+            )
+            # TODO(simon): should not return mvn but the logprob
+            mll = mvn.log_prob(batch["y"].T)
+            return -jnp.sum(mll)
 
-    objectives = [0.0] * n_iter
-    for _ in range(n_iter):
-        params, opt_state, loss_value = step(
-            params, opt_state, next(rng_seq), x, y
-        )
-        objectives[_] = loss_value
-        if (_ % 100 == 0 or _ == n_iter - 1) and verbose:
-            mll = -float(loss_value)
-            print(f"MLL at {_}: {mll:.2f}")
+        obj, grads = jax.value_and_grad(obj_fn)(state.params)
+        new_state = state.apply_gradients(grads=grads)
+        return new_state, obj
 
-    return params, objectives
+    rng, seed = jr.split(seed)
+    state = create_train_state(rng, gaussian_process, optimizer, x=x)
+
+    objectives = np.zeros(n_iter)
+    for i in tqdm(range(n_iter)):
+        sample_rng_key, seed = jr.split(seed)
+        state, obj = step({"sample": sample_rng_key}, state, x=x, y=y)
+        objectives[i] = obj
+        if (i % 100 == 0 or i == n_iter - 1) and verbose:
+            mll = -float(obj)
+            print(f"MLL at itr {i}: {mll:.2f}")
+
+    return state.params, objectives
 
 
 # pylint: disable=too-many-locals,invalid-name
 def train_sparse_gaussian_process(
     seed: jr.PRNGKey,
-    fn: Callable,
-    params: PyTree,
+    gaussian_process: GP,
     x: Array,
     y: Array,
+    optimizer=optax.adam(3e-3),
     n_iter=1000,
-    stepsize=3e-03,
+    verbose=False,
 ):
-    # TODO(s): do a rewrite here with Flax train state
-    def _objective(par, key, x, y):
-        elbo = fn.apply(params=par, rng=key, x=x, y=y)
-        return -elbo
 
     @jax.jit
-    def step(params, state, x, y):
-        loss, grads = jax.value_and_grad(_objective)(params, x, y)
-        updates, state = optimizer.update(grads, state)
-        params = optax.apply_updates(params, updates)
-        return state, loss
+    def step(rngs, state, **batch):
+        def obj_fn(params):
+            elbo = state.apply_fn(variables=params, rngs=rngs, **batch)
+            return -elbo
 
-    optimizer = optax.adam(stepsize)
-    state = optimizer.init(params)
+        obj, grads = jax.value_and_grad(obj_fn)(state.params)
+        new_state = state.apply_gradients(grads=grads)
+        return new_state, obj
 
-    objectives = [0.0] * n_iter
-    for _ in range(n_iter):
-        rng_key, seed = jr.split(seed)
-        state, loss_value = step(
-            state, rng_key, x=x, y=y
-        )
-        objectives[_] = loss_value
-        if _ % 100 == 0 or _ == n_iter - 1:
-            variational_lower_bound = -float(loss_value)
-            print(f"Variational Lower Bound at {_}: {variational_lower_bound}")
+    rng, seed = jr.split(seed)
+    state = create_train_state(rng, gaussian_process, optimizer, x=x, y=y)
 
-    return params, objectives
+    objectives = np.zeros(n_iter)
+    for i in tqdm(range(n_iter)):
+        sample_rng_key, seed = jr.split(seed)
+        state, obj = step({"sample": sample_rng_key}, state, x=x, y=y)
+        objectives[i] = obj
+        if (i % 100 == 0 or i == n_iter - 1) and verbose:
+            elbo = -float(obj)
+            print(f"ELBO at itr {i}: {elbo:.2f}")
+
+    return state.params, objectives
 
 
-def _create_train_state():
-    # TODO
-    pass
+def create_train_state(rng, model, optimizer, **init_data):
+    init_key, sample_key = jr.split(rng)
+    params = model.init({'params': init_key}, **init_data)
+    state = TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)
+    return state
