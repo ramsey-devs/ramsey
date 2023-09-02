@@ -1,3 +1,4 @@
+import dataclasses
 from abc import ABC, abstractmethod
 
 from flax import linen as nn
@@ -5,7 +6,7 @@ from jax import numpy as jnp, Array
 
 
 # pylint: disable=too-few-public-methods
-class Kernel(ABC, nn.Module):
+class Kernel(ABC):
     """
     Kernel base class
     """
@@ -21,21 +22,19 @@ class Kernel(ABC, nn.Module):
         return _Prod(self, other)
 
 
-class _Sum(Kernel):
-    def __init__(self, k1: Kernel, k2: Kernel):
-        super().__init__(name="(" + k1.name + "+" + k2.name + ")")
-        self._k1 = k1
-        self._k2 = k2
+class _Sum(Kernel, nn.Module):
+    k1: Kernel
+    k2: Kernel
 
+    @nn.compact
     def __call__(self, x1: Array, x2: Array):
-        return self._k1(x1, x2) + self._k2(x1, x2)
+        return self.k1(x1, x2) + self.k2(x1, x2)
 
 
 class _Prod(Kernel):
-    def __init__(self, k1: Kernel, k2: Kernel):
-        super().__init__(name="(" + k1.name + "*" + k2.name + ")")
-        self._k1 = k1
-        self._k2 = k2
+    k1: Kernel
+    k2: Kernel
 
+    @nn.compact
     def __call__(self, x1: Array, x2: Array):
-        return self._k1(x1, x2) * self._k2(x1, x2)
+        return self.k1(x1, x2) * self.k2(x1, x2)

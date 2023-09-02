@@ -13,7 +13,7 @@ class Periodic(Kernel):
     Periodic Kernel / Exp-Sine-Squared Kernel
     """
 
-    def __init__(
+    def setup(
         self,
         period: float,
         active_dims: Optional[list] = None,
@@ -98,7 +98,7 @@ class Periodic(Kernel):
         return cov
 
 
-class ExponentiatedQuadratic(Kernel):
+class ExponentiatedQuadratic(Kernel, nn.Module):
     """
     Exponentiated quadratic covariance function
     """
