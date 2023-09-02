@@ -12,16 +12,15 @@ References
     "Gaussian Processes for Machine Learning". MIT press, 2006.
 """
 
-from flax import linen as nn
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from jax import numpy as jnp, random as jr
 from jax.config import config
 
 from ramsey.contrib import GP
+from ramsey.contrib.train import train_gaussian_process
 from ramsey.data import sample_from_gaussian_process
 from ramsey.kernels import ExponentiatedQuadratic
-from ramsey.contrib import train_gaussian_process
 
 config.update("jax_enable_x64", True)
 
@@ -84,7 +83,6 @@ def plot(seed, gaussian_process, params, x, y, f, x_train, y_train):
         color="#011482",
         alpha=0.2,
     )
-
     ax.legend(
         handles=[
             mpatches.Patch(color="black", label="Training data"),

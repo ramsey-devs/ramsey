@@ -8,6 +8,8 @@ import optax
 from jax import numpy as jnp, random as jr
 from tqdm import tqdm
 
+from ramsey._src.contrib.gaussian_process.sparse_gaussian_process import \
+    SparseGP
 from ramsey.contrib import GP
 
 
@@ -58,7 +60,7 @@ def train_gaussian_process(
 # pylint: disable=too-many-locals,invalid-name
 def train_sparse_gaussian_process(
     seed: jr.PRNGKey,
-    gaussian_process: GP,
+    gaussian_process: SparseGP,
     x: Array,
     y: Array,
     optimizer=optax.adam(3e-3),

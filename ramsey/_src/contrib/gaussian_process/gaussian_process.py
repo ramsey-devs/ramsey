@@ -1,6 +1,5 @@
 from typing import Optional
 
-import distrax
 from flax import linen as nn
 from flax.linen import initializers
 from jax import numpy as jnp, scipy as jsp, Array
