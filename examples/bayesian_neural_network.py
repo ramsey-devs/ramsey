@@ -16,6 +16,7 @@ import warnings
 from collections import namedtuple
 
 import numpy as np
+import matplotlib.patches as mpatches
 from flax import linen as nn
 import jax
 import matplotlib.pyplot as plt
@@ -25,7 +26,7 @@ from jax import numpy as jnp, random as jr
 from rmsyutls import as_batch_iterator
 from tqdm import tqdm
 
-from ramsey.contrib import BNN, BayesianLinear
+from ramsey.experimental import BNN, BayesianLinear
 from ramsey.data import sample_from_gaussian_process
 
 
@@ -41,9 +42,13 @@ def data(key):
 
 def get_bayesian_nn():
     layers = [
-        BayesianLinear(128, with_bias=True),
-        BayesianLinear(128, with_bias=True),
-        nn.Dense(2, with_bias=False),
+        BayesianLinear(16, use_bias=False, mc_sample_size=10),
+        jax.nn.relu,
+        nn.Dense(128, use_bias=True),
+        jax.nn.relu,
+        BayesianLinear(16, use_bias=False, mc_sample_size=10),
+        jax.nn.relu,
+        nn.Dense(2, use_bias=True),
     ]
     bnn = BNN(layers)
     return bnn
@@ -51,13 +56,29 @@ def get_bayesian_nn():
 
 def create_train_state(rng, model, **init_data):
     init_key, sample_key = jr.split(rng)
-    optimizer = optax.adam(3e-4)
+
+    boundary = 1000
+    warmup_schedule = optax.linear_schedule(
+        init_value=0.0001, end_value=0.001, transition_steps=boundary
+    )
+    decay_schedule = optax.exponential_decay(
+        decay_rate=0.9,
+        init_value=0.001,
+        end_value=0.0001,
+        transition_steps=10000,
+    )
+    schedule = optax.join_schedules(
+        [warmup_schedule, decay_schedule],
+        boundaries=[boundary]
+    )
+    optimizer = optax.adam(schedule)
+
     params = model.init({'sample': sample_key, 'params': init_key}, **init_data)
     state = TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)
     return state
 
 
-def train(seed, bnn, x, y, n_iter=1000):
+def train(seed, bnn, x, y, n_iter=10000):
     itr_key, seed = jr.split(seed)
     train_itr = as_batch_iterator(
        itr_key, namedtuple("data", "y x")(y, x), 64, True
@@ -88,7 +109,7 @@ def train(seed, bnn, x, y, n_iter=1000):
             state, train_loss = step({"sample": sample_rng_key}, state, **batch)
             objective += train_loss
         objectives[i] = objective
-        if i % 200 == 0 or i == n_iter - 1:
+        if i % 1000 == 0 or i == n_iter - 1:
             elbo = -float(objective)
             print(f"ELBO at {i}: {elbo}")
 
@@ -96,28 +117,49 @@ def train(seed, bnn, x, y, n_iter=1000):
 
 
 def plot(seed, bnn, params, x, f, x_train, y_train):
-    _, ax = plt.subplots(figsize=(8, 3))
+    _, ax = plt.subplots(figsize=(10, 4))
     srt_idxs = jnp.argsort(jnp.squeeze(x))
-    for i in range(20):
+    ys = []
+    for i in range(100):
         rng_key, sample_key, seed = jr.split(seed, 3)
         posterior = bnn.apply(variables=params, rngs={'sample': rng_key}, x=x)
         y = posterior.sample(sample_key)
-        ax.plot(
-            jnp.squeeze(x)[srt_idxs],
-            jnp.squeeze(y)[srt_idxs],
-            color="grey",
-            alpha=0.1,
-        )
+        ys.append(y)
+    yhat = jnp.hstack(ys).T
+    yhat_mean = jnp.mean(yhat, axis=0)
+    y_hat_cis = jnp.quantile(yhat, q=jnp.array([0.05, 0.95]), axis=0)
+    ax.plot(
+        jnp.squeeze(x)[srt_idxs],
+        jnp.squeeze(yhat_mean)[srt_idxs],
+        color="#011482",
+        alpha=0.9,
+    )
+    ax.fill_between(
+        np.squeeze(x),
+        y_hat_cis[0],
+        y_hat_cis[1],
+        color="#011482",
+        alpha=0.2
+    )
     ax.scatter(
         jnp.squeeze(x_train),
         jnp.squeeze(y_train),
-        color="blue",
+        color="black",
         marker=".",
-        alpha=0.75,
+        s=1
     )
-    ax.plot(jnp.squeeze(x), jnp.squeeze(f), color="blue", alpha=0.75)
+    ax.plot(jnp.squeeze(x), jnp.squeeze(f), color="black", alpha=0.5)
+    ax.legend(
+        handles=[
+            mpatches.Patch(color="black", label="Training data"),
+            mpatches.Patch(color="#011482", label="Posterior mean", alpha=0.9),
+            mpatches.Patch(color="#011482", label="90% posterior intervals", alpha=0.2),
+        ],
+        bbox_to_anchor=(1.025, 0.6), frameon=False,
+    )
     ax.grid()
     ax.set_frame_on(False)
+    plt.tight_layout()
     plt.show()
 
 
@@ -130,8 +172,8 @@ def sample_training_points(key, x, y, n_train):
 
 def run():
     warnings.warn(
-        "the BNN is labelled 'experimental'. "
-        "experimental code is hardly tested or debugged"
+        "The BNN is labelled as 'experimental'. "
+        "Experimental code is hardly tested or debugged."
     )
     data_rng_key, sample_rng_key, seed = jr.split(jr.PRNGKey(0), 3)
     (x, y), f = data(data_rng_key)
@@ -139,7 +181,7 @@ def run():
 
     train_rng_key, seed = jr.split(seed)
     bnn = get_bayesian_nn()
-    bnn, params = train(train_rng_key, bnn, x=x_train, y=y_train)
+    params, objectives = train(train_rng_key, bnn, x=x_train, y=y_train)
 
     plot_rng_key, seed = jr.split(seed)
     plot(plot_rng_key, bnn, params, x, f, x_train, y_train)

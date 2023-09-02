@@ -1,3 +1,3 @@
-from ramsey._src.family import Family, Gaussian, NegativeBinomial, Poisson
+from ramsey._src.family import Family, Gaussian, NegativeBinomial
 
-__all__ = ["Family", "Gaussian", "NegativeBinomial", "Poisson"]
+__all__ = ["Family", "Gaussian", "NegativeBinomial"]

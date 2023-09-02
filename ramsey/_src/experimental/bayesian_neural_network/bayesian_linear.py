@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from flax import linen as nn
 from flax.linen import initializers
 
-from jax import numpy as jnp
+from jax import numpy as jnp, Array
 from numpyro import distributions as dist
 from numpyro.distributions import constraints, kl_divergence
 
@@ -25,15 +25,14 @@ class BayesianLinear(nn.Module):
         "Weight Uncertainty in Neural Networks". ICML, 2015.
     """
 
-    def __init__(
-        self,
-        output_size: int,
-        with_bias: bool = True,
-        w_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0),
-        b_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0),
-        name: Optional[str] = None,
-        **kwargs,
-    ):
+    output_size: int
+    use_bias: bool = True
+    mc_sample_size: int = 10
+    w_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0)
+    b_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0)
+    name: Optional[str] = None
+
+    def setup(self):
         """
         Instantiates a linear Bayesian layer
 
@@ -61,39 +60,41 @@ class BayesianLinear(nn.Module):
             w_high_init
         """
 
-        super().__init__(name=name)
-        self._output_size = output_size
-        self._with_bias = with_bias
-        self._w_prior = w_prior
-        self._b_prior = b_prior
-        self._kwargs = kwargs
+        self._output_size = self.output_size
+        self._with_bias = self.use_bias
+        self._w_prior = self.w_prior
+        self._b_prior = self. b_prior
 
-    def __call__(self, x: jnp.ndarray, is_training: bool = False):
+    @nn.compact
+    def __call__(self, inputs: Array, is_training: bool = False):
         """
         Instantiates a sparse Gaussian process
 
         Parameters
         ----------
-        x: jnp.ndarray
+        inputs: jax.Array
             layer inputs
         is_training : bool
             training mode where KL divergence terms are calculated and returned
         """
 
-        dtype = x.dtype
-        n_in = x.shape[-1]
+        dtype = inputs.dtype
+        n_in = inputs.shape[-1]
+        outputs = inputs
         w, w_params = self._get_weights((n_in, self._output_size), dtype)
-        output = jnp.dot(x, w)
+        outputs = jnp.einsum("bj,sjk->sbk", outputs, w)
         if self._with_bias:
-            b, b_params = self._get_bias(self._output_size, dtype)
-            b = jnp.broadcast_to(b, output.shape)
-            output = output + b
+            b, b_params = self._get_bias((1, self._output_size), dtype)
+            b = jnp.broadcast_to(b, outputs.shape)
+            outputs = outputs + b
+        outputs = jnp.mean(outputs, axis=0)
+
         if is_training:
             kl_div = self._kl(self._w_prior, w_params)
             if self._with_bias:
                 kl_div += self._kl(self._b_prior, b_params)
-            return output, kl_div
-        return output
+            return outputs, kl_div
+        return outputs
 
     def _get_weights(self, layer_dim, dtype):
         arg_constraints = self._w_prior.arg_constraints
@@ -103,7 +104,10 @@ class BayesianLinear(nn.Module):
             )
             for param_name, constraint in arg_constraints.items()
         }
-        samples = self._w_prior.__class__(**params).sample()
+        samples = self._w_prior.__class__(**params).sample(
+            self.make_rng("sample"),
+            (self.mc_sample_size,)
+        )
         return samples, params
 
     def _get_bias(self, layer_dim, dtype):
@@ -114,26 +118,26 @@ class BayesianLinear(nn.Module):
             )
             for param_name, constraint in arg_constraints.items()
         }
-        samples = self._b_prior.__class__(**params).sample()
+        samples = self._b_prior.__class__(**params).sample(
+            self.make_rng("sample"),
+            (self.mc_sample_size,)
+        )
         return samples, params
 
     def _init_param(self, weight_name, param_name, constraint, shape, dtype):
-        init_name = f"{weight_name}_{param_name}_init"
-        if init_name in self._kwargs:
-            init = self._kwargs[init_name]
-        else:
-            init = initializers.xavier_normal()
+        init = initializers.xavier_normal()
 
         shape = (shape,) if not isinstance(shape, Tuple) else shape
         params = self.param(f"{weight_name}_{param_name}", init, shape, dtype)
 
         params = jnp.where(
-            constraints.positive == constraint, jnp.exp(params), params
+            constraints.positive == constraint,
+            jnp.exp(params), params
         )
         return params
 
     @staticmethod
     def _kl(prior, params):
         var_posterior = dist.Normal(**params)
-        kl_divergence(var_posterior, prior)
-        return jnp.sum(kl_divergence(var_posterior, prior))
+        kl = kl_divergence(var_posterior, prior)
+        return jnp.sum(kl)

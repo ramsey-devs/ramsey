@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
 from flax import linen as nn
-from jax import numpy as jnp
+from jax import numpy as jnp, Array
 
 from ramsey._src.experimental.bayesian_neural_network.bayesian_linear import (
     BayesianLinear,
@@ -24,13 +24,10 @@ class BNN(nn.Module):
         ICML, 2015.
     """
 
-    def __init__(
-        self,
-        layers: Iterable[nn.Module],
-        family: Family = Gaussian(),
-        name: Optional[str] = None,
-        **kwargs,
-    ):
+    layers: Iterable[nn.Module]
+    family: Family = Gaussian()
+
+    def setup(self):
         """
         Instantiates a Bayesian neural network
 
@@ -50,12 +47,10 @@ class BNN(nn.Module):
             concentration_init
         """
 
-        super().__init__(name=name)
-        self._layers = layers
-        self._family = family
-        self._kwargs = kwargs
+        self._layers = self.layers
+        self._family = self.family
 
-    def __call__(self, x: jnp.ndarray, **kwargs):
+    def __call__(self, x: Array, **kwargs):
         if "y" in kwargs:
             y = kwargs["y"]
             return self._loss(x, y)
@@ -82,7 +77,7 @@ class BNN(nn.Module):
 
         # we are building the ELBO by composing it as
         # E_q[p(y \mid z)] - KL[q(z \mid y) || p(z)] and hence
-        # see Murphy (2023), chp. 21.17
+        # see Murphy (2023), chp 21.2.2, eqn 21.17
         elbo = likelihood - kl_div
         return likelihood_fn, -elbo
 
