@@ -62,4 +62,4 @@ html_theme_options = {
     "extra_navbar": ""
 }
 
-html_title = "Ramsey"
+html_title = "Ramsey 🚀"

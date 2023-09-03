@@ -11,21 +11,27 @@
 
 ## About
 
-Ramsey is a library for probabilistic modelling using [JAX](https://github.com/google/jax). Ramsey implements **probabilistic** models,
-such as neural processes, Gaussian processes, Bayesian timeseries models and state-space-models, clustering processes, etcetc.
-Ramsey is designed to be compatible with common JAX-based frameworks, such as NumPyro or Distrax.
+Ramsey is a library for probabilistic modelling using [JAX](https://github.com/google/jax),
+[Flax](https://github.com/google/flax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
+It offers high quality implementations of neural processes, Gaussian processes, Bayesian time series and state-space models, clustering processes,
+and everything else Bayesian.
+
+Ramsey makes use of
+
+- Flax`s module system for models with trainable parameters (such as neural or Gaussian processes),
+- NumPyro for models where parameters are endowed with prior distributions (such as Gaussian processes, Bayesian neural networks, ARMA models)
+
+and is hence aimed at being fully compatible with both of them.
 
 ## Example usage
 
-Ramsey uses to Haiku's module system to construct probabilistic models
-and define parameters. For instance, a simple neural process can be constructed like this:
+You can, for instance, construct a simple neural process like this:
 
 ```python
 from jax import random as jr
 
-from ramsey import NP
+from ramsey import NP, MLP
 from ramsey.data import sample_from_sine_function
-from ramsey.nn import MLP
 
 def get_neural_process():
     dim = 128
@@ -38,11 +44,15 @@ def get_neural_process():
     return np
 
 key = jr.PRNGKey(23)
-(x, y), _ = sample_from_sine_function(key)
+data = sample_from_sine_function(key)
 
 neural_process = get_neural_process()
-params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
+params = neural_process.init(key, x_context=data.x, y_context=data.y, x_target=data.x)
 ```
+
+The neural process takes a decoder and a set of two latent encoders as argument. All of these are typically MLPs, but
+Ramsey is flexible enough that you can change them, for instance, to CNNs or RNNs. Once the model is defined, you can initialize
+its parameters just like in Flax.
 
 ## Installation
 
