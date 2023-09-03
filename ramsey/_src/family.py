@@ -26,7 +26,7 @@ class Family(abc.ABC):
 
 class Gaussian(Family):
     """
-    Family of Gaussian distributions
+    Family of Gaussian distributions.
     """
 
     def __init__(self, **kwargs):

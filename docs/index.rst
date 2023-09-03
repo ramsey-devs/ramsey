@@ -8,7 +8,7 @@ Ramsey is a library for probabilistic modelling using `JAX <https://github.com/g
 
 Ramsey makes use of
 
-- Flax` module system for models with trainable parameters (such as neural processes),
+- Flax`s module system for models with trainable parameters (such as neural processes),
 - NumPyro's random variable system for models where parameters are endowed with prior distributions.
 
 Ramsey implements **probabilistic** models, such as neural processes, Gaussian processes,

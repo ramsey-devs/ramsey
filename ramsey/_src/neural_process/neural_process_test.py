@@ -1,17 +1,16 @@
 # pylint: skip-file
 
 import chex
-import haiku as hk
 import pytest
-from jax import random
+from jax import random as jr
 
-from ramsey import NP
+from ramsey import NP, MLP
 from ramsey.data import sample_from_gaussian_process
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
 def test_module_dimensionality():
-    key = random.PRNGKey(1)
+    key = jr.PRNGKey(1)
     (x_target, y_target), _ = sample_from_gaussian_process(key)
 
     def module(**kwargs):

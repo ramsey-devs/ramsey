@@ -13,9 +13,7 @@ class Attention(nn.Module):
 
     embedding: Optional[nn.Module]
 
-    def setup(self):
-        pass
-
+    @nn.compact
     def __call__(self, key: Array, value: Array, query: Array):
         self._check_dimensions(key, value, query)
         if self.embedding is not None:

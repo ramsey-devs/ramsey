@@ -32,7 +32,7 @@ Doubly attentive neural process
 
 
 Modules
-------
+-------
 
 .. autosummary::
     MultiHeadAttention

@@ -1,12 +1,12 @@
 html[data-theme="dark"], html[data-theme="light"] {
-    --pst-color-primary: #204a87;
-    --pst-color-link: #204a87;
-    --sd-color-primary: #204a87;
+    /*--pst-color-primary: #204a87;*/
+    /*--pst-color-link: #204a87;*/
+    /*--sd-color-primary: #204a87;*/
 }
 
 h1 > code > span {
     font-family: var(--pst-font-family-monospace);
-    color: #204a87;
+    /*color: #204a87;*/
     font-weight: 700;
 }
 
@@ -15,17 +15,6 @@ nav > li > a > code.literal {
     padding-bottom: 0rem;
     background-color: white;
     border: 0px;
-}
-
-a, a > code > span.pre, a.external, a.current, a.internal {
-    color: #204a87;
-}
-
-ul > li > a,
-nav > ul > li > a:hover,
-nav > ul > li > a.current.reference.internal,
-nav > ul > li > a.current.reference.internal:checked {
-    color: #204a87;
 }
 
 nav.bd-links p.caption {

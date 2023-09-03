@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from flax import linen as nn
-from jax import numpy as jnp, Array
+from jax import numpy as jnp
 from chex import assert_axis_dimension
 
 from ramsey._src.attention.attention import Attention
@@ -14,11 +14,29 @@ __all__ = ["ANP"]
 # pylint: disable=too-many-instance-attributes,duplicate-code
 class ANP(NP):
     """
-    An attentive neural process
+    An attentive neural process.
 
     Implements the core structure of an attentive neural process [1], i.e.,
     a deterministic encoder, a latent encoder, and a decoder with a
     cross-attention module.
+
+    Attributes
+    ----------
+    decoder: flax.linen.Module
+        the decoder can be any network, but is typically an MLP. Note
+        that the _last_ layer of the decoder needs to
+        have twice the number of nodes as the data you try to model
+    latent_encoders: Tuple[flax.linen.Module, flax.linen.Module]
+        a tuple of two `flax.linen.Module`s. The latent encoder can be any network,
+        but is typically an MLP. The first element of the tuple is a neural
+        network used before the aggregation step, while the second element
+        of the tuple encodes is a neural network used to
+        compute mean(s) and standard deviation(s) of the latent Gaussian.
+    deterministic_encoder: Tuple[flax.linen.Module, Attention]
+        a tuple of a `flax.linen.Module` and an Attention object.
+        The deterministic encoder can be any network, but is typically an MLP
+    family: Family
+        distributional family of the response variable
 
     References
     ----------
@@ -31,29 +49,7 @@ class ANP(NP):
     deterministic_encoder: Tuple[nn.Module, Attention]
     family: Family = Gaussian()
 
-    def setup(self):
-        """
-        Instantiates an attentive neural process
-
-        Parameters
-        ----------
-        decoder: hk.Module
-            the decoder can be any network, but is typically an MLP. Note
-            that the _last_ layer of the decoder needs to
-            have twice the number of nodes as the data you try to model
-        latent_encoders: Tuple[hk.Module, hk.Module]
-            a tuple of two `hk.Module`s. The latent encoder can be any network,
-            but is typically an MLP. The first element of the tuple is a neural
-            network used before the aggregation step, while the second element
-            of the tuple encodes is a neural network used to
-            compute mean(s) and standard deviation(s) of the latent Gaussian.
-        deterministic_encoder: Tuple[hk.Module, Attention]
-            a tuple of a `hk.Module` and an Attention object. The deterministic
-            encoder can be any network, but is typically an MLP
-        family: Family
-            distributional family of the response variable
-        """
-
+    def setup(self):        
         self._decoder = self.decoder
         (self._latent_encoder, self._latent_variable_encoder) = (
             self.latent_encoder[0],

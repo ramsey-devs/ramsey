@@ -18,10 +18,10 @@ from jax import numpy as jnp
 from jax import random as jr
 
 from ramsey import ANP
-from ramsey.nn import MLP
-from ramsey.attention import MultiHeadAttention
+from ramsey import MLP
+from ramsey import MultiHeadAttention
 from ramsey.data import sample_from_gaussian_process
-from ramsey.train import train_neural_process
+from ramsey import train_neural_process
 
 
 def data(key):
@@ -100,9 +100,9 @@ def plot(
             y_star = neural_process.apply(
                 variables=params,
                 rngs={"sample": sample_rng_key},
-                x_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
-                y_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
-                x_target=x_target[[idx], :, :],
+                inputs_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
+                outputs_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
+                inputs_target=x_target[[idx], :, :],
             ).mean
             x_star = jnp.squeeze(x_target[[idx], :, :])
             y_star = jnp.squeeze(y_star)

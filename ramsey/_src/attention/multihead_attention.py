@@ -15,9 +15,18 @@ from ramsey._src.attention.attention import Attention
 
 class MultiHeadAttention(Attention):
     """
-    Multi-head attention
+    Multi-head attention.
 
-    As described in [1]
+    As described in [1].
+
+    Attributes
+    ----------
+    num_heads: int
+       number of heads
+    head_size: int
+       size of the heads for keys, values and queries
+    embedding: flax.linen.Module
+       neural network module to embed keys and queries before attention
 
     References
     ----------
@@ -30,26 +39,32 @@ class MultiHeadAttention(Attention):
     embedding: Optional[nn.Module]
 
     def setup(self):
-        """
-        Instantiates a multi-head attender
-
-        Parameters
-        ----------
-        num_heads: int
-            number of heads
-        head_size: int
-            size of the heads for keys, values and queries
-        embedding: hk.Module
-            neural network module to embed keys and queries before attention
-        """
-
         self._attention = _MultiHeadAttention(
             num_heads=self.num_heads,
             qkv_features=self.head_size * self.num_heads,
             out_features=self.head_size
         )
 
+    @nn.compact
     def __call__(self, key: Array, value: Array, query: Array):
+        """
+        Apply attention to the query.
+
+        Arguments
+        ---------
+        key: jax.Array
+            key
+        value: jax.Array
+            value
+        query: jax.Array
+            query
+
+        Returns
+        -------
+        jax.Array
+            Returns attended query.
+        """
+
         key, value, query = super().__call__(key, value, query)
         rep = self._attention(query, key, value)
         self._check_return_dimension(rep, value, query)

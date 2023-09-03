@@ -4,16 +4,37 @@ import jax
 from flax import linen as nn
 from flax.linen import initializers
 from flax.linen.linear import default_kernel_init
-from jax import numpy as jnp
+from jax import Array
 
 
 class MLP(nn.Module):
+    """
+    A multi-layer perceptron.
+
+    Attributes
+    ----------
+    output_sizes: Iterable[int]
+        number of hidden nodes per layer
+    dropout: Optional[float]
+        dropout rate to apply after each hidden layer
+    kernel_init: initializers.Initializer
+        initializer for weights of hidden layers
+    bias_init: initializers.Initializer
+        initializer for bias of hidden layers
+    use_bias: bool
+        boolean if hidden layers should use bias nodes
+    activation: Callable
+        activation function to apply after each hidden layer. Default is relu.
+    activate_final: bool
+        if true, activate last layer
+    """
+
     output_sizes: Iterable[int]
     dropout: float = None
-    kernel_init: Callable = default_kernel_init
-    bias_init: Callable = initializers.zeros_init()
+    kernel_init: initializers.Initializer = default_kernel_init
+    bias_init: initializers.Initializer = initializers.zeros_init()
     use_bias: bool = True
-    activation: Callable[[jnp.ndarray], jnp.ndarray] = jax.nn.relu
+    activation: Callable = jax.nn.relu
     activate_final: bool = False
 
     def setup(self):
@@ -33,7 +54,23 @@ class MLP(nn.Module):
         if self.dropout is not None:
             self.dropout_layer = nn.Dropout(self.dropout)
 
-    def __call__(self, inputs: jnp.ndarray, is_training=False):
+    def __call__(self, inputs: Array, is_training=False):
+        """
+        Transform the inputs through the MLP.
+
+        Parameters
+        ----------
+        inputs: jax.Array
+            Input data of dimension (*batch_dims, spatial_dims..., feature_dims)
+        is_training: boolean
+            if true, uses training mode (i.e., dropout)
+
+        Returns
+        -------
+        jax.Array
+            Returns the transformed inputs.
+        """
+
         num_layers = len(self.layers)
         out = inputs
         for i, layer in enumerate(self.layers):

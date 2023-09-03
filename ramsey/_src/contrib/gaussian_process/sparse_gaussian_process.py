@@ -19,6 +19,18 @@ class SparseGP(nn.Module):
 
     Implements the core structure of a sparse Gaussian process.
 
+    Attributes
+    ----------
+    kernel: Kernel
+        a covariance function
+    n_inducing: int
+    jitter: float
+
+    log_sigma_init: Optional[initializers.Initializer]
+        an initializer object from Flax
+    inducing_init: Optional[initializers.Initializer]
+        an initializer object from Flax
+
     References
     ----------
     [1] Titsias, Michalis K.
@@ -30,7 +42,7 @@ class SparseGP(nn.Module):
     n_inducing: int
     jitter: Optional[float] = 10e-8
     log_sigma_init: Optional[initializers.Initializer] = initializers.constant(jnp.log(1.0))
-    x_inducing_init: Optional[initializers.Initializer] = initializers.uniform(1)
+    inducing_init: Optional[initializers.Initializer] = initializers.uniform(1)
 
     @nn.compact
     def __call__(self, x: Array, **kwargs):
@@ -60,7 +72,7 @@ class SparseGP(nn.Module):
         d = x_n.shape[1]
         shape_x_inducing = (self.n_inducing, d)
         x_inducing = self.param(
-            "x_inducing", self.x_inducing_init, shape_x_inducing, x_n.dtype
+            "x_inducing", self.inducing_init, shape_x_inducing, x_n.dtype
         )
         return x_inducing
 

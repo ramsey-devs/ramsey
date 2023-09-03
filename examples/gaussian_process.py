@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 from jax import numpy as jnp, random as jr
 from jax.config import config
 
-from ramsey.contrib import Linear, Periodic, ExponentiatedQuadratic
+from ramsey.contrib import ExponentiatedQuadratic
 from ramsey.contrib import GP
-from ramsey.contrib.train import train_gaussian_process
+from ramsey.contrib import train_gaussian_process
 from ramsey.data import sample_from_gaussian_process
 
 
@@ -43,7 +43,7 @@ def get_gaussian_process():
 
 def train(rng_key, x, y):
     gaussian_process = get_gaussian_process()
-    params, _ = train_gaussian_process(rng_key, gaussian_process, x=x, y=y)
+    params, _ = train_gaussian_process(rng_key, gaussian_process,  x=x, y=y)
     return gaussian_process, params
 
 

@@ -16,33 +16,47 @@ from ramsey._src.contrib.gaussian_process.kernel.base import Kernel
 
 class GP(nn.Module):
     """
-    A Gaussian process
+    A Gaussian process.
 
-    Implements the core structure of a Gaussian process.
+    Attributes
+    ----------
+    kernel: Kernel
+        a covariance function
+    sigma_init: Optional[initializers.Initializer]
+        an initializer object from Flax
     """
 
     kernel: Kernel
     sigma_init: Optional[initializers.Initializer] = None
 
-    def setup(self):
+    @nn.compact
+    def __call__(self, x: Array, **kwargs):
         """
-        Instantiates a Gaussian process
+        Evaluate the Gaussian process.
 
         Parameters
         ----------
-        kernel: hk.Module
-            a covariance function object
-        sigma_init: Optional[Initializer]
-            an initializer object from Haiku or None
-        name: Optional[str]
-            name of the layer
+        inputs: jax.Array
+            training point x
+        **kwargs: keyword arguments
+            Keyword arguments can include:
+            - outputs: jax.Array.
+            - inputs_star: jax.Array
+
+        Returns
+        -------
+        numpyro.distribution
+            returns a multivariate normal distribution object
+
+        References
+        ----------
+        .. [1] Rasmussen, Carl E and Williams, Chris KI.
+           "Gaussian Processes for Machine Learning". MIT press, 2006.
         """
 
-    @nn.compact
-    def __call__(self, x: Array, **kwargs):
         if "y" in kwargs and "x_star" in kwargs:
             return self._predictive(x, **kwargs)
-        return self._marginal(x)
+        return self._marginal(x, **kwargs)
 
     def _get_sigma(self, dtype):
         log_sigma_init = self.sigma_init
@@ -54,7 +68,7 @@ class GP(nn.Module):
     # pylint: disable=too-many-locals
     def _predictive(self, x: Array, y: Array, x_star: Array, jitter=10e-8):
         """
-        Returns the Predictive Posterior Distribution
+        Returns the predictive posterior distribution
 
         For details on the implemented algorithm see [1],
         Chapter 2.2 Function-space View, Algorithm, 2.1
@@ -104,12 +118,13 @@ class GP(nn.Module):
             scale_tril=jnp.linalg.cholesky(cov_star)
         )
 
-    def _marginal(self, x, jitter=10e-8):
+    def _marginal(self, x, jitter=10e-8, **kwargs):
         n = x.shape[0]
         log_sigma = self._get_sigma(x.dtype)
         cov = self.kernel(x, x)
         cov += (jnp.square(jnp.exp(log_sigma)) + jitter) * jnp.eye(n)
-        return dist.MultivariateNormal(
+        pred_fn = dist.MultivariateNormal(
             loc=jnp.zeros(n),
             scale_tril=jnp.linalg.cholesky(cov)
         )
+        return pred_fn

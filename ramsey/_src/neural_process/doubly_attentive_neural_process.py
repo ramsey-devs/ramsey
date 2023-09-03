@@ -13,11 +13,29 @@ __all__ = ["DANP"]
 # pylint: disable=too-many-instance-attributes
 class DANP(ANP):
     """
-    A doubly-attentive neural process
+    A doubly-attentive neural process.
 
     Implements the core structure of a 'doubly-attentive' neural process [1],
     i.e., a deterministic encoder, a latent encoder with self-attention module,
     and a decoder with both self- and cross-attention modules.
+
+    Attributes
+    ----------
+    decoder: flax.linen.Module
+            the decoder can be any network, but is typically an MLP. Note
+            that the _last_ layer of the decoder needs to
+            have twice the number of nodes as the data you try to model
+    latent_encoder: Tuple[flax.linen.Module, Attention, flax.linen.Module]
+        a tuple of two `flax.linen.Module`s and an attention object. The first
+        and
+        last elements are the usual modules required for a neural process,
+        the attention object computes self-attention before the aggregation
+    deterministic_encoder: Tuple[flax.linen.Module, Attention, Attention]
+        ea tuple of a `flax.linen.Module` and an Attention object. The first
+        `attention` object is used for self-attention, the second one
+        is used for cross-attention
+    family: Family
+        distributional family of the response variable
 
     References
     ----------
@@ -31,27 +49,6 @@ class DANP(ANP):
     family: Family = Gaussian()
 
     def setup(self):
-        """
-        Instantiates a doubly-attentive neural process
-
-        Parameters
-        ----------
-        decoder: hk.Module
-            the decoder can be any network, but is typically an MLP. Note
-            that the _last_ layer of the decoder needs to
-            have twice the number of nodes as the data you try to model
-        latent_encoder: Tuple[hk.Module, Attention, hk.Module]
-            a tuple of two `hk.Module`s and an attention object. The first and
-            last elements are the usual modules required for a neural process,
-            the attention object computes self-attention before the aggregation
-        deterministic_encoder: Tuple[hk.Module, Attention, Attention]
-            ea tuple of a `hk.Module` and an Attention object. The first
-            `attention` object is used for self-attention, the second one
-            is used for cross-attention
-        family: Family
-            distributional family of the response variable
-        """
-
         (self._latent_encoder,
          self._latent_self_attention,
          self._latent_variable_encoder) = self.latent_encoder

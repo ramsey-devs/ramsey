@@ -39,7 +39,7 @@ def train_neural_process(
 ):
     rng, seed = jr.split(seed)
     state = create_train_state(
-        rng, neural_process, optimizer, x_context=x, y_context=y, x_target=x
+        rng, neural_process, optimizer, inputs_context=x, outputs_context=y, inputs_target=x
     )
 
     objectives = np.zeros(n_iter)
@@ -74,10 +74,10 @@ def _split_data(
     x_target = x[ibatch][:, idxs, :]
     y_target = y[ibatch][:, idxs, :]
 
-    return {"x_context": x_context,
-            "y_context": y_context,
-            "x_target": x_target,
-            "y_target": y_target}
+    return {"inputs_context": x_context,
+            "outputs_context": y_context,
+            "inputs_target": x_target,
+            "outputs_target": y_target}
 
 
 def create_train_state(rng, model, optimizer, **init_data):

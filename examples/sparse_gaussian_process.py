@@ -21,8 +21,8 @@ from jax import random as jr
 from jax.config import config
 
 from ramsey.contrib import SparseGP
-from ramsey.contrib.train import train_sparse_gaussian_process
-from ramsey.contrib.kernels import ExponentiatedQuadratic
+from ramsey.contrib import train_sparse_gaussian_process
+from ramsey.contrib import ExponentiatedQuadratic
 from ramsey.data import sample_from_gaussian_process
 
 config.update("jax_enable_x64", True)

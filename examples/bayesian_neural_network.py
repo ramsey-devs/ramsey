@@ -81,7 +81,7 @@ def create_train_state(rng, model, **init_data):
 def train(seed, bnn, x, y, n_iter=10000):
     itr_key, seed = jr.split(seed)
     train_itr = as_batch_iterator(
-       itr_key, namedtuple("data", "y x")(y, x), 64, True
+       itr_key, namedtuple("data", "outputs inputs")(y, x), 64, True
     )
 
     init_key, seed = jr.split(seed)
@@ -121,7 +121,7 @@ def plot(seed, bnn, params, x, f, x_train, y_train):
     ys = []
     for i in range(100):
         rng_key, sample_key, seed = jr.split(seed, 3)
-        posterior = bnn.apply(variables=params, rngs={'sample': rng_key}, x=x)
+        posterior = bnn.apply(variables=params, rngs={'sample': rng_key}, inputs=x)
         y = posterior.sample(sample_key)
         ys.append(y)
     yhat = jnp.hstack(ys).T

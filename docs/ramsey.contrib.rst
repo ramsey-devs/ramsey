@@ -1,6 +1,8 @@
 ``ramsey.contrib``
 ==================
 
+WARNING: contributed code is not native Ramsey code and subject to change.
+
 .. currentmodule:: ramsey.contrib
 
 .. automodule:: ramsey.contrib
@@ -16,13 +18,13 @@ GP
 ~~
 
 ..  autoclass:: GP
-    :members:
+    :members: __call__
 
 SparseGP
 ~~~~~~~~
 
 ..  autoclass:: SparseGP
-    :members:
+    :members: __call__
 
 
 Covariance functions
@@ -32,24 +34,33 @@ Covariance functions
     ExponentiatedQuadratic
     Linear
     Periodic
+    exponentiated_quadratic
+    linear
+    periodic
 
 ExponentiatedQuadratic
 ~~~~~~~~~~~~~~~~~~~~~~
 
 ..  autoclass:: ExponentiatedQuadratic
-    :members:
+    :members: __call__
+
+.. autofunction:: exponentiated_quadratic
 
 Linear
 ~~~~~~
 
 ..  autoclass:: Linear
-    :members:
+    :members: __call__
+
+.. autofunction:: linear
 
 Periodic
 ~~~~~~~~~
 
 ..  autoclass:: Periodic
-    :members:
+    :members: __call__
+
+.. autofunction:: periodic
 
 Train functions
 ---------------

@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from typing import Iterable
 
 from flax import linen as nn
 from jax import numpy as jnp, Array
@@ -33,40 +33,61 @@ class BNN(nn.Module):
     layers: Iterable[nn.Module]
     family: Family = Gaussian()
 
-    def setup(self):
-        self._layers = self.layers
-        self._family = self.family
+    @nn.compact
+    def __call__(self, inputs: Array, **kwargs):
+        """
+        Transform the inputs through the Bayesian neural network.
 
-    def __call__(self, x: Array, **kwargs):
-        if "y" in kwargs:
-            y = kwargs["y"]
-            return self._loss(x, y)
+        Parameters
+        ----------
+        inputs: jax.Array
+            Input data of dimension (*batch_dims, spatial_dims..., feature_dims)
+        **kwargs: kwargs
+            Keyword arguments can include:
+            - outputs: jax.Array. If an argument called outputs is provided,
+            computes the loss (negative ELBO) together with a
+            predictive posterior distribution
 
-        for layer in self._layers:
+        Returns
+        -------
+        Union[numpyro.distribution, Tuple[numpyro.distribution, float]]
+            If 'outputs' is provided as keyword argument, returns a tuple of
+            the predictive distribution and the negative ELBO which can be used
+            as loss for optimzation.
+            If 'outputs' is not provided, returns the predictive distribution
+            only.
+        """
+
+        if "outputs" in kwargs:
+            outputs = kwargs["outputs"]
+            return self._loss(inputs, outputs)
+
+        outputs = inputs
+        for layer in self.layers:
             if isinstance(layer, BayesianLinear):
-                x = layer(x, is_training=False)
+                outputs = layer(outputs, is_training=False)
             else:
-                x = layer(x)
+                outputs = layer(outputs)
+        return self._as_family(outputs)
 
-        return self._as_family(x)
-
-    def _loss(self, x, y):
+    def _loss(self, inputs, outputs):
         kl_div = 0.0
-        for layer in self._layers:
+        hidden = inputs
+        for layer in self.layers:
             if isinstance(layer, BayesianLinear):
-                x, kl_contribution = layer(x, is_training=True)
+                hidden, kl_contribution = layer(hidden, is_training=True)
                 kl_div += kl_contribution
             else:
-                x = layer(x)
+                hidden = layer(hidden)
 
-        likelihood_fn = self._as_family(x)
-        likelihood = jnp.sum(likelihood_fn.log_prob(y))
+        pred_fn = self._as_family(hidden)
+        loglik = jnp.sum(pred_fn.log_prob(outputs))
 
         # we are building the ELBO by composing it as
         # E_q[p(y \mid z)] - KL[q(z \mid y) || p(z)] and hence
         # see Murphy (2023), chp 21.2.2, eqn 21.17
-        elbo = likelihood - kl_div
-        return likelihood_fn, -elbo
+        elbo = loglik - kl_div
+        return pred_fn, -elbo
 
-    def _as_family(self, x):
-        return self._family(x)
+    def _as_family(self, inputs):
+        return self.family(inputs)
