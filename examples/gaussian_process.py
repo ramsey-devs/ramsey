@@ -17,11 +17,11 @@ import matplotlib.pyplot as plt
 from jax import numpy as jnp, random as jr
 from jax.config import config
 
-from ramsey._src.contrib.gaussian_process.kernel.non_stationary import Linear
+from ramsey.kernels import Linear, Periodic, ExponentiatedQuadratic
 from ramsey.contrib import GP
 from ramsey.contrib.train import train_gaussian_process
 from ramsey.data import sample_from_gaussian_process
-from ramsey.kernels import ExponentiatedQuadratic
+
 
 config.update("jax_enable_x64", True)
 
@@ -37,7 +37,7 @@ def data(key, rho, sigma, n=1000):
 
 
 def get_gaussian_process():
-    gp = GP(ExponentiatedQuadratic() + Linear())
+    gp = GP(ExponentiatedQuadratic())
     return gp
 
 
