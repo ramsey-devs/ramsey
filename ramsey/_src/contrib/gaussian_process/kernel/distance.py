@@ -1,4 +1,5 @@
-from jax import numpy as jnp, Array
+from jax import Array
+from jax import numpy as jnp
 
 
 def squared_distance(

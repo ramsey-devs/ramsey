@@ -1,14 +1,17 @@
 import functools
-from typing import (Any, Callable, Optional, Tuple)
+from typing import Callable, Optional
 
 from flax import linen as nn
-from flax.linen import initializers, dot_product_attention
-from flax.linen.linear import DenseGeneral
-from flax.linen.linear import DotGeneralT
-from flax.linen.linear import PrecisionLike
-from flax.linen.linear import default_kernel_init
+from flax.linen import dot_product_attention, initializers
+from flax.linen.linear import (
+    DenseGeneral,
+    DotGeneralT,
+    PrecisionLike,
+    default_kernel_init,
+)
 from flax.linen.module import merge_param
-from jax import lax, numpy as jnp, Array
+from jax import Array, lax
+from jax import numpy as jnp
 
 from ramsey._src.attention.attention import Attention
 
@@ -42,7 +45,7 @@ class MultiHeadAttention(Attention):
         self._attention = _MultiHeadAttention(
             num_heads=self.num_heads,
             qkv_features=self.head_size * self.num_heads,
-            out_features=self.head_size
+            out_features=self.head_size,
         )
 
     @nn.compact
@@ -78,11 +81,11 @@ class _MultiHeadAttention(nn.Module):
     qkv_features: Optional[int] = None
     out_features: Optional[int] = None
     broadcast_dropout: bool = True
-    dropout_rate: float = 0.
+    dropout_rate: float = 0.0
     deterministic: Optional[bool] = None
     precision: PrecisionLike = None
     kernel_init: Callable = default_kernel_init
-    bias_init: Callable= initializers.zeros_init()
+    bias_init: Callable = initializers.zeros_init()
     use_bias: bool = True
     attention_fn: Callable[..., Array] = dot_product_attention
     decode: bool = False
@@ -90,16 +93,19 @@ class _MultiHeadAttention(nn.Module):
     out_dot_general: DotGeneralT = lax.dot_general
 
     @nn.compact
-    def __call__(self,
-                 query: Array,
-                 key: Array,
-                 value: Array,
-                 mask: Optional[Array] = None,
-                 deterministic: Optional[bool] = None):
+    def __call__(
+        self,
+        query: Array,
+        key: Array,
+        value: Array,
+        mask: Optional[Array] = None,
+        deterministic: Optional[bool] = None,
+    ):
         features = self.out_features or query.shape[-1]
         qkv_features = self.qkv_features or query.shape[-1]
-        assert qkv_features % self.num_heads == 0, (
-            'Memory dimension must be divisible by number of heads.')
+        assert (
+            qkv_features % self.num_heads == 0
+        ), "Memory dimension must be divisible by number of heads."
         head_dim = qkv_features // self.num_heads
 
         dense = functools.partial(
@@ -115,16 +121,19 @@ class _MultiHeadAttention(nn.Module):
             dot_general=self.qkv_dot_general,
         )
 
-        query, key, value = (dense(name='query')(query),
-                             dense(name='key')(key),
-                             dense(name='value')(value))
+        query, key, value = (
+            dense(name="query")(query),
+            dense(name="key")(key),
+            dense(name="value")(value),
+        )
 
         dropout_rng = None
-        if self.dropout_rate > 0.:
-            m_deterministic = merge_param('deterministic', self.deterministic,
-                                          deterministic)
+        if self.dropout_rate > 0.0:
+            m_deterministic = merge_param(
+                "deterministic", self.deterministic, deterministic
+            )
             if not m_deterministic:
-                dropout_rng = self.make_rng('dropout')
+                dropout_rng = self.make_rng("dropout")
         else:
             m_deterministic = True
 
@@ -139,7 +148,8 @@ class _MultiHeadAttention(nn.Module):
             broadcast_dropout=self.broadcast_dropout,
             deterministic=m_deterministic,
             dtype=self.dtype,
-            precision=self.precision)  # pytype: disable=wrong-keyword-args
+            precision=self.precision,
+        )  # pytype: disable=wrong-keyword-args
         # back to the original inputs dimensions
         out = DenseGeneral(
             features=features,
@@ -151,6 +161,6 @@ class _MultiHeadAttention(nn.Module):
             param_dtype=self.param_dtype,
             precision=self.precision,
             dot_general=self.out_dot_general,
-            name='out',  # type: ignore[call-arg]
+            name="out",  # type: ignore[call-arg]
         )(x)
         return out

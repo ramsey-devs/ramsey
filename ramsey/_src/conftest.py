@@ -2,9 +2,7 @@
 
 import pytest
 
-from ramsey import ANP, DANP, NP
-from ramsey import MLP
-from ramsey import MultiHeadAttention
+from ramsey import ANP, DANP, MLP, NP, MultiHeadAttention
 
 
 def __lnp():

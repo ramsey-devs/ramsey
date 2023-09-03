@@ -1,11 +1,11 @@
 from typing import Optional, Tuple
 
 import jax
-from flax import linen as nn
-from jax import Array, numpy as jnp
-
 import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
+from flax import linen as nn
+from jax import Array
+from jax import numpy as jnp
 from numpyro.distributions import kl_divergence
 
 from ramsey._src.family import Family, Gaussian
@@ -13,7 +13,7 @@ from ramsey._src.family import Family, Gaussian
 __all__ = ["NP"]
 
 
-# pylint: disable=too-many-instance-attributes,duplicate-code
+# pylint: disable=too-many-instance-attributes,duplicate-code,not-callable
 class NP(nn.Module):
     """
     A neural process.
@@ -28,10 +28,10 @@ class NP(nn.Module):
         that the _last_ layer of the decoder needs to
         have twice the number of nodes as the data you try to model
     latent_encoders: Tuple[flax.linen.Module, flax.linen.Module]
-        a tuple of two `flax.linen.Module`s. The latent encoder can be any network,
-        but is typically an MLP. The first element of the tuple is a neural
-        network used before the aggregation step, while the second element
-        of the tuple encodes is a neural network used to
+        a tuple of two `flax.linen.Module`s. The latent encoder can be
+        any network, but is typically an MLP. The first element of the tuple
+        is a neural network used before the aggregation step, while the second
+        element of the tuple encodes is a neural network used to
         compute mean(s) and standard deviation(s) of the latent Gaussian.
     deterministic_encoder: Optional[flax.linen.Module]
         the deterministic encoder can be any network, but is typically an
@@ -56,15 +56,15 @@ class NP(nn.Module):
         self._family = self.family
         [self._latent_encoder, self._latent_variable_encoder] = (
             self.latent_encoder[0],
-            self.latent_encoder[1]
+            self.latent_encoder[1],
         )
 
     @nn.compact
     def __call__(
         self,
-        inputs_context: Array,
-        outputs_context: Array,
-        inputs_target: Array,
+        x_context: Array,
+        y_context: Array,
+        x_target: Array,
         **kwargs,
     ):
         """
@@ -72,72 +72,71 @@ class NP(nn.Module):
 
         Parameters
         ----------
-        inputs_context: jax.Array
+        x_context: jax.Array
             Input data of dimension (*batch_dims, spatial_dims..., feature_dims)
-        outputs_context: jax.Array
-            Input data of dimension (*batch_dims, spatial_dims..., response_dims)
-        inputs_target: jax.Array
+        y_context: jax.Array
+            Input data of dimension
+            (*batch_dims, spatial_dims..., response_dims)
+        x_target: jax.Array
             Input data of dimension (*batch_dims, spatial_dims..., feature_dims)
         **kwargs: kwargs
             Keyword arguments can include:
-            - outputs_target: jax.Array. If an argument called 'outputs_target'
+            - y_target: jax.Array. If an argument called 'y_target'
             is provided, computes the loss (negative ELBO) together with a
             predictive posterior distribution
 
         Returns
         -------
         Union[numpyro.distribution, Tuple[numpyro.distribution, float]]
-            If 'outputs_target' is provided as keyword argument, returns a tuple
+            If 'y_target' is provided as keyword argument, returns a tuple
             of the predictive distribution and the negative ELBO which can be
             used as loss for optimization.
-            If 'outputs_target' is not provided, returns the predictive
+            If 'y_target' is not provided, returns the predictive
             distribution only.
         """
 
-        assert_rank([inputs_context, outputs_context, inputs_target], 3)
-        if "outputs_target" in kwargs:
-            assert_rank(kwargs["outputs_target"], 3)
-            return self._negative_elbo(
-                inputs_context, outputs_context, inputs_target, **kwargs
-            )
+        assert_rank([x_context, y_context, x_target], 3)
+        if "y_target" in kwargs:
+            assert_rank(kwargs["y_target"], 3)
+            return self._negative_elbo(x_context, y_context, x_target, **kwargs)
 
-        _, num_observations, _ = inputs_target.shape
+        _, num_observations, _ = x_target.shape
 
-        rng = self.make_rng('sample')
-        z_latent = self._encode_latent(inputs_context, outputs_context).sample(rng)
+        rng = self.make_rng("sample")
+        z_latent = self._encode_latent(x_context, y_context).sample(rng)
         z_deterministic = self._encode_deterministic(
-            inputs_context, outputs_context, inputs_target
+            x_context, y_context, x_target
         )
         representation = self._concat_and_tile(
             z_deterministic, z_latent, num_observations
         )
-        pred_fn = self._decode(representation, inputs_target, outputs_context)
+        pred_fn = self._decode(representation, x_target, y_context)
 
         return pred_fn
 
     def _negative_elbo(  # pylint: disable=too-many-locals
         self,
-        inputs_context: Array,
-        outputs_context: Array,
-        inputs_target: Array,
-        outputs_target: Array,
+        x_context: Array,
+        y_context: Array,
+        x_target: Array,
+        y_target: Array,
     ):
-        _, num_observations, _ = inputs_target.shape
+        _, num_observations, _ = x_target.shape
 
-        prior = self._encode_latent(inputs_context, outputs_context)
-        posterior = self._encode_latent(inputs_target, outputs_target)
+        prior = self._encode_latent(x_context, y_context)
+        posterior = self._encode_latent(x_target, y_target)
 
-        rng = self.make_rng('sample')
+        rng = self.make_rng("sample")
         z_latent = posterior.sample(rng)
         z_deterministic = self._encode_deterministic(
-            inputs_context, outputs_context, inputs_target
+            x_context, y_context, x_target
         )
         representation = self._concat_and_tile(
             z_deterministic, z_latent, num_observations
         )
-        pred_fn = self._decode(representation, inputs_target, outputs_target)
+        pred_fn = self._decode(representation, x_target, y_target)
 
-        loglik = jnp.sum(pred_fn.log_prob(outputs_target), axis=1)
+        loglik = jnp.sum(pred_fn.log_prob(y_target), axis=1)
         kl = jnp.sum(kl_divergence(posterior, prior), axis=-1)
         elbo = jnp.mean(loglik - kl)
 
@@ -159,24 +158,20 @@ class NP(nn.Module):
 
     def _encode_deterministic(
         self,
-        inputs_context: Array,
-        outputs_context: Array,
-        inputs_target: Array,  # pylint: disable=unused-argument
+        x_context: Array,
+        y_context: Array,
+        x_target: Array,  # pylint: disable=unused-argument
     ):
         if self._deterministic_encoder is None:
             return None
-        xoutputs_context = jnp.concatenate([inputs_context, outputs_context], axis=-1)
-        z_deterministic = self._deterministic_encoder(xoutputs_context)
+        xy_context = jnp.concatenate([x_context, y_context], axis=-1)
+        z_deterministic = self._deterministic_encoder(xy_context)
         z_deterministic = jnp.mean(z_deterministic, axis=1, keepdims=True)
         return z_deterministic
 
-    def _encode_latent(
-            self,
-            inputs_context: Array,
-            outputs_context: Array
-    ):
-        xoutputs_context = jnp.concatenate([inputs_context, outputs_context], axis=-1)
-        z_latent = self._latent_encoder(xoutputs_context)
+    def _encode_latent(self, x_context: Array, y_context: Array):
+        xy_context = jnp.concatenate([x_context, y_context], axis=-1)
+        z_latent = self._latent_encoder(xy_context)
         return self._encode_latent_gaussian(z_latent)
 
     # pylint: disable=duplicate-code
@@ -187,24 +182,19 @@ class NP(nn.Module):
         sigma = 0.1 + 0.9 * jax.nn.sigmoid(sigma)
         return dist.Normal(loc=mean, scale=sigma)
 
-    def _decode(
-        self,
-        representation: Array,
-        inputs_target: Array,
-        y: Array
-    ):
-        target = jnp.concatenate([representation, inputs_target], axis=-1)
+    def _decode(self, representation: Array, x_target: Array, y: Array):
+        target = jnp.concatenate([representation, x_target], axis=-1)
         target = self._decoder(target)
         family = self._family(target)
-        self._check_posterior_predictive_axis(family, inputs_target, y)
+        self._check_posterior_predictive_axis(family, x_target, y)
         return family
 
     @staticmethod
     def _check_posterior_predictive_axis(
         family: dist.Distribution,
-        inputs_target: Array,
+        x_target: Array,
         y: Array,  # pylint: disable=invalid-name
     ):
-        assert_axis_dimension(family.mean, 0, inputs_target.shape[0])
-        assert_axis_dimension(family.mean, 1, inputs_target.shape[1])
+        assert_axis_dimension(family.mean, 0, x_target.shape[0])
+        assert_axis_dimension(family.mean, 1, x_target.shape[1])
         assert_axis_dimension(family.mean, 2, y.shape[2])

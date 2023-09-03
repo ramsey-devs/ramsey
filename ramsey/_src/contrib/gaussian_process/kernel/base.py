@@ -1,8 +1,7 @@
-import dataclasses
 from abc import ABC, abstractmethod
 
 from flax import linen as nn
-from jax import numpy as jnp, Array
+from jax import Array
 
 
 # pylint: disable=too-few-public-methods
@@ -28,8 +27,6 @@ class Kernel(ABC):
         jax.Array
             (`n x m`)-dimensional set of data points
         """
-
-        pass
 
     def __add__(self, other):
         return _Sum(self, other)

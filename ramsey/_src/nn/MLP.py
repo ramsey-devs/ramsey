@@ -47,13 +47,14 @@ class MLP(nn.Module):
                     kernel_init=self.kernel_init,
                     bias_init=self.bias_init,
                     use_bias=self.use_bias,
-                    name="linear_%d" % index,
+                    name=f"linear_{index}",
                 )
             )
         self.layers = tuple(layers)
         if self.dropout is not None:
             self.dropout_layer = nn.Dropout(self.dropout)
 
+    # pylint: disable=too-many-function-args
     def __call__(self, inputs: Array, is_training=False):
         """
         Transform the inputs through the MLP.

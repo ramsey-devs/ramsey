@@ -1,7 +1,8 @@
 from typing import Tuple
 
 from flax import linen as nn
-from jax import numpy as jnp, Array
+from jax import Array
+from jax import numpy as jnp
 
 from ramsey._src.attention.attention import Attention
 from ramsey._src.family import Family, Gaussian
@@ -49,30 +50,30 @@ class DANP(ANP):
     family: Family = Gaussian()
 
     def setup(self):
-        (self._latent_encoder,
-         self._latent_self_attention,
-         self._latent_variable_encoder) = self.latent_encoder
-        (self._deterministic_encoder,
-         self._deterministic_self_attention,
-         self._deterministic_cross_attention) = self.deterministic_encoder
+        (
+            self._latent_encoder,
+            self._latent_self_attention,
+            self._latent_variable_encoder,
+        ) = self.latent_encoder
+        (
+            self._deterministic_encoder,
+            self._deterministic_self_attention,
+            self._deterministic_cross_attention,
+        ) = self.deterministic_encoder
         self._decoder = self.decoder
         self._family = self.family
 
-    def _encode_latent(
-            self,
-            x_context: Array,
-            y_context: Array
-    ):
+    def _encode_latent(self, x_context: Array, y_context: Array):
         xy_context = jnp.concatenate([x_context, y_context], axis=-1)
         z_latent = self._latent_encoder(xy_context)
         z_latent = self._latent_self_attention(z_latent, z_latent, z_latent)
         return self._encode_latent_gaussian(z_latent)
 
     def _encode_deterministic(
-            self,
-            x_context: Array,
-            y_context: Array,
-            x_target: Array,
+        self,
+        x_context: Array,
+        y_context: Array,
+        x_target: Array,
     ):
         xy_context = jnp.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)

@@ -1,21 +1,17 @@
 from collections import namedtuple
 from typing import NamedTuple
 
-from numpyro import distributions as dist
-
 import pandas as pd
 from jax import numpy as jnp
 from jax import random as jr
+from numpyro import distributions as dist
 
 from ramsey._src.datasets import M4Dataset
 from ramsey.contrib import exponentiated_quadratic
 
 
 # pylint: disable=too-many-locals,invalid-name
-def m4_data(
-    interval: str = "hourly",
-    drop_na: bool = True
-) -> NamedTuple:
+def m4_data(interval: str = "hourly", drop_na: bool = True) -> NamedTuple:
     """
     Load a data set from the M4 competition
 
@@ -45,7 +41,9 @@ def m4_data(
     x = jnp.tile(x, [y.shape[0], 1]).reshape((y.shape[0], y.shape[1], 1))
     train_idxs = jnp.arange(train.shape[1])
     test_idxs = jnp.arange(test.shape[1]) + train.shape[1]
-    return namedtuple("data", "y x train_idxs test_idxs")(y, x, train_idxs, test_idxs)
+    return namedtuple("data", "y x train_idxs test_idxs")(
+        y, x, train_idxs, test_idxs
+    )
 
 
 # pylint: disable=too-many-locals,invalid-name
@@ -73,6 +71,7 @@ def sample_from_polynomial_function(
     f = jnp.vstack(jnp.array(fs))
 
     return namedtuple("data", "y x f")(y, x, f)
+
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_sine_function(seed, batch_size=10, num_observations=100):
@@ -155,4 +154,3 @@ def sample_from_gaussian_process(
     f = jnp.vstack(jnp.array(fs))
 
     return namedtuple("data", "y x f")(y, x, f)
-

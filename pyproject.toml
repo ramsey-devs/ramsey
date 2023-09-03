@@ -39,7 +39,11 @@ disable = [
     "no-name-in-module",
     "too-many-arguments",
     "duplicate-code",
-    "invalid-name"
+    "invalid-name",
+    "attribute-defined-outside-init",
+    "unsubscriptable-object",
+    "unpacking-non-sequence",
+    "arguments-differ"
 ]
 
 [[tool.mypy.overrides]]

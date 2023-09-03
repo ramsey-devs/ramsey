@@ -1,10 +1,11 @@
 from typing import Optional
 
-from numpyro import distributions as dist
 from flax import linen as nn
 from flax.linen import initializers
-from jax import numpy as jnp, Array
+from jax import Array
+from jax import numpy as jnp
 from jax import scipy as jsp
+from numpyro import distributions as dist
 
 __all__ = ["SparseGP"]
 
@@ -41,7 +42,9 @@ class SparseGP(nn.Module):
     kernel: Kernel
     n_inducing: int
     jitter: Optional[float] = 10e-8
-    log_sigma_init: Optional[initializers.Initializer] = initializers.constant(jnp.log(1.0))
+    log_sigma_init: Optional[initializers.Initializer] = initializers.constant(
+        jnp.log(1.0)
+    )
     inducing_init: Optional[initializers.Initializer] = initializers.uniform(1)
 
     @nn.compact
@@ -125,8 +128,7 @@ class SparseGP(nn.Module):
         cov_star = K_ss - h2 + h3 + self.jitter * jnp.eye(x_star.shape[0])
 
         return dist.MultivariateNormal(
-            loc=jnp.squeeze(mu_star),
-            scale_tril=jnp.linalg.cholesky(cov_star)
+            loc=jnp.squeeze(mu_star), scale_tril=jnp.linalg.cholesky(cov_star)
         )
 
     def _marginal(self, x: Array, y: Array):
@@ -165,8 +167,7 @@ class SparseGP(nn.Module):
         cov = Q_nn + ((self.jitter + sigma_square) * jnp.eye(n))
 
         mvn = dist.MultivariateNormal(
-            loc=jnp.zeros(n),
-            scale_tril=jnp.linalg.cholesky(cov)
+            loc=jnp.zeros(n), scale_tril=jnp.linalg.cholesky(cov)
         )
 
         K_nn = self.kernel(x, x)

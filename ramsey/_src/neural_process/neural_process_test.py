@@ -4,7 +4,7 @@ import chex
 import pytest
 from jax import random as jr
 
-from ramsey import NP, MLP
+from ramsey import MLP, NP
 from ramsey.data import sample_from_gaussian_process
 
 

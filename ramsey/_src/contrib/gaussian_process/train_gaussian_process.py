@@ -1,16 +1,16 @@
-from typing import Callable
-
 import jax
 import numpy as np
+import optax
 from flax.training.train_state import TrainState
 from jax import Array
-import optax
-from jax import numpy as jnp, random as jr
+from jax import numpy as jnp
+from jax import random as jr
 from tqdm import tqdm
 
-from ramsey._src.contrib.gaussian_process.sparse_gaussian_process import \
-    SparseGP
-from ramsey.contrib import GP
+from ramsey._src.contrib.gaussian_process.gaussian_process import GP
+from ramsey._src.contrib.gaussian_process.sparse_gaussian_process import (
+    SparseGP,
+)
 
 
 # pylint: disable=too-many-locals,invalid-name
@@ -29,11 +29,7 @@ def train_gaussian_process(
         rngs = {name: jr.fold_in(rng, step) for name, rng in rngs.items()}
 
         def obj_fn(params):
-            mvn = state.apply_fn(
-                variables=params,
-                rngs=rngs,
-                x=batch["x"]
-            )
+            mvn = state.apply_fn(variables=params, rngs=rngs, x=batch["x"])
             # TODO(simon): should not return mvn but the logprob
             mll = mvn.log_prob(batch["y"].T)
             return -jnp.sum(mll)
@@ -67,7 +63,6 @@ def train_sparse_gaussian_process(
     n_iter=1000,
     verbose=False,
 ):
-
     @jax.jit
     def step(rngs, state, **batch):
         def obj_fn(params):
@@ -94,7 +89,6 @@ def train_sparse_gaussian_process(
 
 
 def create_train_state(rng, model, optimizer, **init_data):
-    init_key, sample_key = jr.split(rng)
-    params = model.init({'params': init_key}, **init_data)
+    params = model.init({"params": rng}, **init_data)
     state = TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)
     return state

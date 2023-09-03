@@ -1,11 +1,11 @@
 from typing import Tuple
 
-from flax import linen as nn
-from jax import numpy as jnp, Array
 from chex import assert_axis_dimension, assert_rank
+from flax import linen as nn
+from jax import Array
+from jax import numpy as jnp
 
-from ramsey import ANP
-from ramsey import Attention
+from ramsey import ANP, Attention
 from ramsey.family import Family, Gaussian
 
 __all__ = ["RANP"]
@@ -19,12 +19,12 @@ class RANP(ANP):
     Implements the core structure of a recurrent attentive neural process
     cross-attention module.
     """
-    
-    decoder: nn.Module    
+
+    decoder: nn.Module
     latent_encoder: Tuple[nn.Module, nn.Module]
     deterministic_encoder: Tuple[nn.Module, Attention]
     family: Family = Gaussian()
-    
+
     def setup(self):
         """
         Instantiates a recurrent attentive neural process
@@ -51,7 +51,7 @@ class RANP(ANP):
         self._decoder = self.decoder
         (self._latent_encoder, self._latent_variable_encoder) = (
             self.latent_encoder[0],
-            self.latent_encoder[1]
+            self.latent_encoder[1],
         )
         self._deterministic_encoder = self.deterministic_encoder[0]
         self._deterministic_cross_attention = self.deterministic_encoder[1]
@@ -67,8 +67,6 @@ class RANP(ANP):
         assert_rank(target, 3)
         assert_axis_dimension(target, 0, x_target.shape[0])
         assert_axis_dimension(target, 1, x_target.shape[1])
-
-        _, num_observations, _ = target.shape
 
         target = self._decoder(target)
         return self._family(target)

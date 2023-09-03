@@ -1,5 +1,6 @@
 import jax
-from jax import numpy as jnp, Array
+from jax import Array
+from jax import numpy as jnp
 
 from ramsey._src.attention.attention import Attention
 

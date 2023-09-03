@@ -1,9 +1,9 @@
 from typing import Optional
 
-
-from flax.linen import initializers
-from jax import numpy as jnp, Array
 from flax import linen as nn
+from flax.linen import initializers
+from jax import Array
+from jax import numpy as jnp
 
 from ramsey._src.contrib.gaussian_process.kernel.base import Kernel
 
@@ -32,7 +32,8 @@ class Linear(Kernel, nn.Module):
 
     def setup(self):
         self._active_dims = (
-            self.active_dims if isinstance(self.active_dims, list)
+            self.active_dims
+            if isinstance(self.active_dims, list)
             else slice(self.active_dims)
         )
 
@@ -42,15 +43,11 @@ class Linear(Kernel, nn.Module):
             x2 = x1
         dtype = x1.dtype
 
-        log_sigma_b = self.param(
-            "log_sigma_b", self.sigma_b_init, [], dtype
-        )
+        log_sigma_b = self.param("log_sigma_b", self.sigma_b_init, [], dtype)
 
         log_sigma_v = self.param("log_sigma_v", self.sigma_v_init, [], dtype)
 
-        offset = self.param(
-            "offset", self.offset_init, [], dtype
-        )
+        offset = self.param("offset", self.offset_init, [], dtype)
 
         cov = linear(
             x1[..., self._active_dims],

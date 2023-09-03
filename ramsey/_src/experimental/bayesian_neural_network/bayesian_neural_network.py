@@ -1,7 +1,8 @@
 from typing import Iterable
 
 from flax import linen as nn
-from jax import numpy as jnp, Array
+from jax import Array
+from jax import numpy as jnp
 
 from ramsey._src.experimental.bayesian_neural_network.bayesian_linear import (
     BayesianLinear,

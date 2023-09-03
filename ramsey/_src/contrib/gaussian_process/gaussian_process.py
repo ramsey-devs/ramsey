@@ -2,10 +2,10 @@ from typing import Optional
 
 from flax import linen as nn
 from flax.linen import initializers
-from jax import numpy as jnp, scipy as jsp, Array
-
+from jax import Array
+from jax import numpy as jnp
+from jax import scipy as jsp
 from numpyro import distributions as dist
-
 
 __all__ = ["GP"]
 
@@ -114,17 +114,15 @@ class GP(nn.Module):
         cov_star += jitter * jnp.eye(n_star)
 
         return dist.MultivariateNormal(
-            loc=jnp.squeeze(mu_star),
-            scale_tril=jnp.linalg.cholesky(cov_star)
+            loc=jnp.squeeze(mu_star), scale_tril=jnp.linalg.cholesky(cov_star)
         )
 
-    def _marginal(self, x, jitter=10e-8, **kwargs):
+    def _marginal(self, x, jitter=10e-8):
         n = x.shape[0]
         log_sigma = self._get_sigma(x.dtype)
         cov = self.kernel(x, x)
         cov += (jnp.square(jnp.exp(log_sigma)) + jitter) * jnp.eye(n)
         pred_fn = dist.MultivariateNormal(
-            loc=jnp.zeros(n),
-            scale_tril=jnp.linalg.cholesky(cov)
+            loc=jnp.zeros(n), scale_tril=jnp.linalg.cholesky(cov)
         )
         return pred_fn

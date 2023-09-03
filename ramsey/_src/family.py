@@ -3,7 +3,6 @@ import abc
 import jax.nn
 import numpyro.distributions as dist
 from jax import numpy as jnp
-from jax.nn import softplus
 
 
 # pylint: disable=too-few-public-methods

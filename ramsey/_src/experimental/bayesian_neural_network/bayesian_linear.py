@@ -2,8 +2,8 @@ from typing import Optional, Tuple
 
 from flax import linen as nn
 from flax.linen import initializers
-
-from jax import numpy as jnp, Array
+from jax import Array
+from jax import numpy as jnp
 from numpyro import distributions as dist
 from numpyro.distributions import constraints, kl_divergence
 
@@ -63,7 +63,7 @@ class BayesianLinear(nn.Module):
         self._output_size = self.output_size
         self._with_bias = self.use_bias
         self._w_prior = self.w_prior
-        self._b_prior = self. b_prior
+        self._b_prior = self.b_prior
 
     @nn.compact
     def __call__(self, inputs: Array, is_training: bool = False):
@@ -105,8 +105,7 @@ class BayesianLinear(nn.Module):
             for param_name, constraint in arg_constraints.items()
         }
         samples = self._w_prior.__class__(**params).sample(
-            self.make_rng("sample"),
-            (self.mc_sample_size,)
+            self.make_rng("sample"), (self.mc_sample_size,)
         )
         return samples, params
 
@@ -119,8 +118,7 @@ class BayesianLinear(nn.Module):
             for param_name, constraint in arg_constraints.items()
         }
         samples = self._b_prior.__class__(**params).sample(
-            self.make_rng("sample"),
-            (self.mc_sample_size,)
+            self.make_rng("sample"), (self.mc_sample_size,)
         )
         return samples, params
 
@@ -131,8 +129,7 @@ class BayesianLinear(nn.Module):
         params = self.param(f"{weight_name}_{param_name}", init, shape, dtype)
 
         params = jnp.where(
-            constraints.positive == constraint,
-            jnp.exp(params), params
+            constraints.positive == constraint, jnp.exp(params), params
         )
         return params
 

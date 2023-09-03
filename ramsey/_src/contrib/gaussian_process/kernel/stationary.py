@@ -2,7 +2,8 @@ from typing import Optional, Union
 
 from flax import linen as nn
 from flax.linen import initializers
-from jax import numpy as jnp, Array
+from jax import Array
+from jax import numpy as jnp
 
 from ramsey._src.contrib.gaussian_process.kernel.base import Kernel
 
@@ -49,6 +50,7 @@ class Periodic(Kernel, nn.Module):
         cov = periodic(
             x1[..., self._active_dims],
             x2[..., self._active_dims],
+            self.period,
             jnp.exp(log_sigma),
             jnp.exp(log_rho),
         )
@@ -78,7 +80,9 @@ class ExponentiatedQuadratic(Kernel, nn.Module):
 
     def setup(self):
         self._active_dims = (
-            self.active_dims if isinstance(self.active_dims, list) else slice(self.active_dims)
+            self.active_dims
+            if isinstance(self.active_dims, list)
+            else slice(self.active_dims)
         )
 
     @nn.compact
@@ -110,8 +114,8 @@ class ExponentiatedQuadratic(Kernel, nn.Module):
 def exponentiated_quadratic(
     x1: Array,
     x2: Array,
-    sigma=1.0,
-    rho: Union[float, jnp.ndarray] = 1.0,
+    sigma: float,
+    rho: Union[float, jnp.ndarray],
 ):
     """
     Exponentiated-quadratic convariance function.
@@ -145,13 +149,7 @@ def exponentiated_quadratic(
 
 
 # pylint: disable=invalid-name
-def periodic(
-    x1: Array,
-    x2: Array,
-    period,
-    sigma,
-    rho
-):
+def periodic(x1: Array, x2: Array, period, sigma, rho):
     """
     Periodic convariance function.
 
@@ -180,9 +178,7 @@ def periodic(
         y_e = jnp.expand_dims(y, 0)
         r2 = jnp.sum((x_e - y_e) ** 2, axis=2)
         r = jnp.sqrt(r2)
-        K = sigma * jnp.exp(
-            -2 / rho ** 2 * jnp.sin(jnp.pi * r / period) ** 2
-        )
+        K = sigma * jnp.exp(-2 / rho**2 * jnp.sin(jnp.pi * r / period) ** 2)
         return K
 
     return _periodic(x1, x2, period, sigma, rho)
