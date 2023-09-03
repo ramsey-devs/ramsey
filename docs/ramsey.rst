@@ -35,7 +35,15 @@ Modules
 -------
 
 .. autosummary::
+    MLP
     MultiHeadAttention
+
+MLP
+~~~
+
+.. autoclass:: MLP
+   :members: __call__
+
 
 MultiHeadAttention
 ~~~~~~~~~~~~~~~~~~
