@@ -40,7 +40,7 @@ setup(
         "jaxlib>=0.4.4",
         "numpyro",
         "optax",
-        "pandas"
+        "pandas",
         "rmsyutls",
         "tqdm",
     ],

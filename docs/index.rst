@@ -1,10 +1,17 @@
 :github_url: https://github.com/ramsey-devs/ramsey/
 
-Ramsey: probabilistic modelling using Haiku
-===========================================
+👋 Welcome to Ramsey!
+=====================
 
-Ramsey is a library for probabilistic modelling using `Haiku <https://github.com/deepmind/dm-haiku>`_ and `JAX <https://github.com/google/jax>`_.
-It builds upon the same module system that Haiku is using and is hence fully compatible with its API. Ramsey implements **probabilistic** models, such as neural processes, Gaussian processes,
+Ramsey is a library for probabilistic modelling using `JAX <https://github.com/google/jax>`_ ,
+`Flax <https://github.com/google/flax>`_ and `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
+
+Ramsey makes use of
+
+- Flax` module system for models with trainable parameters (such as neural processes),
+- NumPyro's random variable system for models where parameters are endowed with prior distributions.
+
+Ramsey implements **probabilistic** models, such as neural processes, Gaussian processes,
 Bayesian neural networks, Bayesian timeseries models and state-space-models, and more.
 
 Example
@@ -16,11 +23,11 @@ and define parameters. For instance, a simple neural process can be constructed 
 .. code-block:: python
 
     import haiku as hk
-    import jax.random as random
+    from jax random as jr
     from ramsey.data import sample_from_sinus_function
-    from ramsey.models import NP
+    from ramsey import NP
 
-    def neural_process(**kwargs):
+    def get_neural_process():
         dim = 128
         np = NP(
             decoder=hk.nets.MLP([dim] * 3 + [2]),
@@ -28,11 +35,12 @@ and define parameters. For instance, a simple neural process can be constructed 
                 hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])
             )
         )
-        return np(**kwargs)
+        return get_neural_process
 
-    (x, y), _ = sample_from_sinus_function(random.PRNGKey(0))
+    data = sample_from_sinus_function(random.PRNGKey(0))
 
-    neural_process = hk.transform(neural_process)
+
+    neural_process = get_neural_process()
     params = neural_process.init(
         random.PRNGKey(1), x_context=x, y_context=y, x_target=x
     )
@@ -104,8 +112,7 @@ Ramsey is licensed under the Apache 2.0 License.
     :hidden:
 
     ramsey
-    ramsey.attention
     ramsey.contrib
+    ramsey.data
+    ramsey.experimental
     ramsey.family
-    ramsey.kernels
-    ramsey.train

@@ -22,8 +22,8 @@ from jax.config import config
 
 from ramsey.contrib import SparseGP
 from ramsey.contrib.train import train_sparse_gaussian_process
+from ramsey.contrib.kernels import ExponentiatedQuadratic
 from ramsey.data import sample_from_gaussian_process
-from ramsey.kernels import ExponentiatedQuadratic
 
 config.update("jax_enable_x64", True)
 
@@ -106,8 +106,8 @@ def plot(seed, gaussian_process, params, x, y, f, x_train, y_train):
             mpatches.Patch(color="black", label="Training data"),
             mpatches.Patch(color="red", label="Inducing points"),
             mpatches.Patch(color="grey", label="Latent GP"),
-            mpatches.Patch(color="#011482", label="Posterior mean", alpha=0.9),
-            mpatches.Patch(color="#011482", label="90% posterior intervals", alpha=0.2),
+            mpatches.Patch(color="#204a87", label="Posterior mean", alpha=0.9),
+            mpatches.Patch(color="#204a87", label="90% posterior intervals", alpha=0.2),
         ],
         bbox_to_anchor=(1.025, 0.6), frameon=False,
     )

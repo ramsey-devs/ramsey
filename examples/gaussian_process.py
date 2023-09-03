@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from jax import numpy as jnp, random as jr
 from jax.config import config
 
-from ramsey.kernels import Linear, Periodic, ExponentiatedQuadratic
+from ramsey.contrib import Linear, Periodic, ExponentiatedQuadratic
 from ramsey.contrib import GP
 from ramsey.contrib.train import train_gaussian_process
 from ramsey.data import sample_from_gaussian_process

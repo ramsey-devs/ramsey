@@ -5,33 +5,66 @@
 
 .. automodule:: ramsey.contrib
 
-Modules
--------
-
-.. autosummary::
-    BayesianLinear
-
-BayesianLinear
-~~~~~~~~~~~~~~
-
-..  autoclass:: BayesianLinear
-    :members:
-
 Models
 ------
 
 .. autosummary::
-    BNN
-    RANP
+    GP
+    SparseGP
 
-Bayesian neural network
-~~~~~~~~~~~~~~~~~~~~~~~
+GP
+~~
 
-..  autoclass:: BNN
+..  autoclass:: GP
     :members:
 
-Recurrent attentive neural process
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SparseGP
+~~~~~~~~
 
-..  autoclass:: RANP
+..  autoclass:: SparseGP
     :members:
+
+
+Covariance functions
+--------------------
+
+.. autosummary::
+    ExponentiatedQuadratic
+    Linear
+    Periodic
+
+ExponentiatedQuadratic
+~~~~~~~~~~~~~~~~~~~~~~
+
+..  autoclass:: ExponentiatedQuadratic
+    :members:
+
+Linear
+~~~~~~
+
+..  autoclass:: Linear
+    :members:
+
+Periodic
+~~~~~~~~~
+
+..  autoclass:: Periodic
+    :members:
+
+Train functions
+---------------
+
+.. autosummary::
+    train_gaussian_process
+    train_sparse_gaussian_process
+
+train_gaussian_process
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: train_gaussian_process
+
+
+train_sparse_gaussian_process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: train_sparse_gaussian_process

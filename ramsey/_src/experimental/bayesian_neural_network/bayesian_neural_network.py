@@ -11,11 +11,17 @@ from ramsey._src.family import Family, Gaussian
 
 class BNN(nn.Module):
     """
-    Bayesian neural network
+    A Bayesian neural network.
 
-    Implements a Bayesian neural network. The BNN layers can a mix of Bayesian
-    layers and conventional layers. The training objective is the ELBO and is
-    calculated according to [1].
+    The BNN layers can a mix of Bayesian layers and conventional layers.
+    The training objective is the ELBO and is calculated according to [1].
+
+    Attributes
+    ----------
+    layers: Iterable[hk.Module]
+        layers of the BNN
+    family: Family
+        exponential family of the response
 
     References
     ----------
@@ -28,25 +34,6 @@ class BNN(nn.Module):
     family: Family = Gaussian()
 
     def setup(self):
-        """
-        Instantiates a Bayesian neural network
-
-        Parameters
-        ----------
-        layers: Iterable[hk.Module]
-            layers of the BNN
-        family: Family
-            exponential family of the response
-        name: Optional[str]
-            name of the layer
-        kwargs: keyword arguments
-            you can supply the initializers for the parameters of the likelihood
-            as keyword arguments. For instance, if your likelihood belongs to
-            a Gaussian family hk.initializers.Initializer objects with names
-            scale_init, if it is a NegativeBinomial the initializer is called
-            concentration_init
-        """
-
         self._layers = self.layers
         self._family = self.family
 

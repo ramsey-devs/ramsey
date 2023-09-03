@@ -5,7 +5,7 @@ from jax import numpy as jnp, Array
 from chex import assert_axis_dimension, assert_rank
 
 from ramsey import ANP
-from ramsey.attention import Attention
+from ramsey import Attention
 from ramsey.family import Family, Gaussian
 
 __all__ = ["RANP"]

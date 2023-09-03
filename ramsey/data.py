@@ -8,16 +8,16 @@ from jax import numpy as jnp
 from jax import random as jr
 
 from ramsey._src.datasets import M4Dataset
-from ramsey.kernels import exponentiated_quadratic
+from ramsey.contrib import exponentiated_quadratic
 
 
 # pylint: disable=too-many-locals,invalid-name
-def load_m4_time_series_data(
+def m4_data(
     interval: str = "hourly",
     drop_na: bool = True
 ) -> NamedTuple:
     """
-    Load an M4 data set
+    Load a data set from the M4 competition
 
     Parameters
     ----------
@@ -74,7 +74,6 @@ def sample_from_polynomial_function(
 
     return namedtuple("data", "y x f")(y, x, f)
 
-
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_sine_function(seed, batch_size=10, num_observations=100):
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
@@ -100,10 +99,33 @@ def sample_from_sine_function(seed, batch_size=10, num_observations=100):
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_gaussian_process(
-    seed, batch_size=10, num_observations=100, num_dim=1, rho=None, sigma=None
+    seed, batch_size=10, num_observations=100, rho=None, sigma=None
 ):
+    """
+    Load a data set from the M4 competition
+
+    Parameters
+    ----------
+    seed: jax.random.PRNGKey
+        a random key for seeding
+    batch_size: int
+        size of batch
+    num_observations: int
+        number of observations per batch
+    rho: Optional[float]
+        the lengthscale of the kernel function
+    sigma: Optional[float]
+        the standard deviation of the kernel function
+
+    Returns
+    -------
+    NamedTuple
+        a tuple consisting of outputs (y), inputs (x) and latent GP
+        realization (f)
+    """
+
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
-        (num_observations, num_dim)
+        (num_observations, 1)
     )
     ys = []
     fs = []

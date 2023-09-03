@@ -10,8 +10,6 @@ Models
     ANP
     DANP
     NP
-    GP
-    SparseGP
 
 Neural process
 ~~~~~~~~~~~~~~
@@ -32,14 +30,26 @@ Doubly attentive neural process
 ..  autoclass:: DANP
     :members:
 
-Gaussian process
-~~~~~~~~~~~~~~~~
 
-..  autoclass:: GP
-    :members:
+Modules
+------
 
-Sparse Gaussian process
-~~~~~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+    MultiHeadAttention
 
-..  autoclass:: SparseGP
-    :members:
+MultiHeadAttention
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: MultiHeadAttention
+   :members:
+
+Train functions
+---------------
+
+.. autosummary::
+    train_neural_process
+
+train_neural_process
+~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: train_neural_process

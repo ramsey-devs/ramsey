@@ -153,9 +153,9 @@ def exponentiated_quadratic(
 
     Parameters
     -----------
-    x: np.ndarray
+    x: jax.Array
         (`n x p`)-dimensional set of data points
-    y: np.ndarray
+    y: jax.Array
         (`m x p`)-dimensional set of data points
     sigma: float
         the standard deviation of the kernel function
