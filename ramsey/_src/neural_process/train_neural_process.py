@@ -40,9 +40,9 @@ def train_neural_process(
         rng,
         neural_process,
         optimizer,
-        inputs_context=x,
-        outputs_context=y,
-        inputs_target=x,
+        x_context=x,
+        y_context=y,
+        x_target=x,
     )
 
     objectives = np.zeros(n_iter)
@@ -78,10 +78,10 @@ def _split_data(
     y_target = y[ibatch][:, idxs, :]
 
     return {
-        "inputs_context": x_context,
-        "outputs_context": y_context,
-        "inputs_target": x_target,
-        "outputs_target": y_target,
+        "x_context": x_context,
+        "y_context": y_context,
+        "x_target": x_target,
+        "y_target": y_target,
     }
 
 

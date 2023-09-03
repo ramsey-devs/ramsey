@@ -1,10 +1,9 @@
-from typing import Tuple
+from typing import Any
 
 from flax import linen as nn
 from jax import Array
 from jax import numpy as jnp
 
-from ramsey._src.attention.attention import Attention
 from ramsey._src.family import Family, Gaussian
 from ramsey._src.neural_process.attentive_neural_process import ANP
 
@@ -45,8 +44,8 @@ class DANP(ANP):
     """
 
     decoder: nn.Module
-    latent_encoder: Tuple[nn.Module, Attention, nn.Module]
-    deterministic_encoder: Tuple[nn.Module, Attention, Attention]
+    latent_encoder: Any
+    deterministic_encoder: Any
     family: Family = Gaussian()
 
     def setup(self):

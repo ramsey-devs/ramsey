@@ -27,7 +27,7 @@ def __anp():
         decoder=MLP([3, 2]),
         deterministic_encoder=(
             MLP([4, 4]),
-            MultiHeadAttention(8, 8, MLP([8, 8])),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
         ),
         latent_encoder=(MLP([3, 3]), MLP([3, 6])),
     )
@@ -39,12 +39,12 @@ def __danp():
         decoder=MLP([3, 2]),
         deterministic_encoder=(
             MLP([4, 4]),
-            MultiHeadAttention(8, 8, MLP([8, 8])),
-            MultiHeadAttention(8, 8, MLP([8, 8])),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
         ),
         latent_encoder=(
             MLP([3, 3]),
-            MultiHeadAttention(8, 8, MLP([8, 8])),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
             MLP([3, 6]),
         ),
     )

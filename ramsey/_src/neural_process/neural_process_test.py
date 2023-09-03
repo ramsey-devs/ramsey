@@ -11,53 +11,60 @@ from ramsey.data import sample_from_gaussian_process
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name
 def test_module_dimensionality():
     key = jr.PRNGKey(1)
-    (x_target, y_target), _ = sample_from_gaussian_process(key)
+    data = sample_from_gaussian_process(key)
+    x_target, y_target = data.x, data.y
 
-    def module(**kwargs):
+    def module():
         np = NP(
             decoder=MLP([3, 2], name="decoder"),
-            deterministic_encoder=hk.nets.MLP(
-                [4, 4], name="deterministic_encoder"
-            ),
+            deterministic_encoder=MLP([4, 4], name="deterministic_encoder"),
             latent_encoder=(
-                hk.nets.MLP([3, 3], name="latent_encoder1"),
-                hk.nets.MLP([3, 6], name="latent_encoder2"),
+                MLP([3, 3], name="latent_encoder1"),
+                MLP([3, 6], name="latent_encoder2"),
             ),
         )
-        return np(**kwargs)
+        return np
 
-    f = hk.transform(module)
+    f = module()
     params = f.init(
-        key,
+        {"sample": key, "params": key},
         x_context=x_target[:, :10, :],
         y_context=y_target[:, :10, :],
         x_target=x_target,
     )
 
-    chex.assert_shape(params["latent_encoder1/~/linear_0"]["w"], (2, 3))
-    chex.assert_shape(params["latent_encoder1/~/linear_1"]["w"], (3, 3))
-    chex.assert_shape(params["latent_encoder2/~/linear_0"]["w"], (3, 3))
-    chex.assert_shape(params["latent_encoder2/~/linear_1"]["w"], (3, 2 * 3))
-    chex.assert_shape(params["deterministic_encoder/~/linear_0"]["w"], (2, 4))
-    chex.assert_shape(params["deterministic_encoder/~/linear_1"]["w"], (4, 4))
-    chex.assert_shape(params["decoder/~/linear_0"]["w"], (3 + 4 + 1, 3))
-    chex.assert_shape(params["decoder/~/linear_1"]["w"], (3, 2))
+    params = params["params"]
+    chex.assert_shape(params["latent_encoder_0"]["linear_0"]["kernel"], (2, 3))
+    chex.assert_shape(params["latent_encoder_0"]["linear_1"]["kernel"], (3, 3))
+    chex.assert_shape(params["latent_encoder_1"]["linear_0"]["kernel"], (3, 3))
+    chex.assert_shape(
+        params["latent_encoder_1"]["linear_1"]["kernel"], (3, 2 * 3)
+    )
+    chex.assert_shape(
+        params["deterministic_encoder"]["linear_0"]["kernel"], (2, 4)
+    )
+    chex.assert_shape(
+        params["deterministic_encoder"]["linear_1"]["kernel"], (4, 4)
+    )
+    chex.assert_shape(params["decoder"]["linear_0"]["kernel"], (3 + 4 + 1, 3))
+    chex.assert_shape(params["decoder"]["linear_1"]["kernel"], (3, 2))
 
 
 def test_modules(module):
-    key = random.PRNGKey(1)
-    (x_target, y_target), _ = sample_from_gaussian_process(key)
+    key = jr.PRNGKey(1)
+    data = sample_from_gaussian_process(key)
+    x_target, y_target = data.x, data.y
 
-    f = hk.transform(module)
+    f = module()
     params = f.init(
-        key,
+        {"sample": key, "params": key},
         x_context=x_target[:, :10, :],
         y_context=y_target[:, :10, :],
         x_target=x_target,
     )
     y_star = f.apply(
-        rng=key,
-        params=params,
+        variables=params,
+        rngs={"sample": key},
         x_context=x_target[:, :10, :],
         y_context=y_target[:, :10, :],
         x_target=x_target,
@@ -66,26 +73,25 @@ def test_modules(module):
 
 
 def test_modules_false_decoder():
-    def f(**kwargs):
+    def module():
         np = NP(
-            decoder=hk.nets.MLP([3, 3], name="decoder"),
-            deterministic_encoder=hk.nets.MLP(
-                [4, 4], name="deterministic_encoder"
-            ),
+            decoder=MLP([3, 3], name="decoder"),
+            deterministic_encoder=MLP([4, 4], name="deterministic_encoder"),
             latent_encoder=(
-                hk.nets.MLP([3, 3], name="latent_encoder1"),
-                hk.nets.MLP([3, 6], name="latent_encoder2"),
+                MLP([3, 3], name="latent_encoder1"),
+                MLP([3, 6], name="latent_encoder2"),
             ),
         )
-        return np(**kwargs)
+        return np
 
-    key = random.PRNGKey(1)
-    (x_target, y_target), _ = sample_from_gaussian_process(key)
+    key = jr.PRNGKey(1)
+    data = sample_from_gaussian_process(key)
+    x_target, y_target = data.x, data.y
 
     with pytest.raises(ValueError):
-        f = hk.transform(f)
+        f = module()
         f.init(
-            key,
+            {"sample": key, "params": key},
             x_context=x_target[:, :10, :],
             y_context=y_target[:, :10, :],
             x_target=x_target,

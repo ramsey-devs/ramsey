@@ -1,10 +1,9 @@
-from typing import Tuple
+from typing import Any
 
 from chex import assert_axis_dimension
 from flax import linen as nn
 from jax import numpy as jnp
 
-from ramsey._src.attention.attention import Attention
 from ramsey._src.family import Family, Gaussian
 from ramsey._src.neural_process.neural_process import NP
 
@@ -46,8 +45,8 @@ class ANP(NP):
     """
 
     decoder: nn.Module
-    latent_encoder: Tuple[nn.Module, nn.Module]
-    deterministic_encoder: Tuple[nn.Module, Attention]
+    latent_encoder: Any
+    deterministic_encoder: Any
     family: Family = Gaussian()
 
     def setup(self):

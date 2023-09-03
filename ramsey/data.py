@@ -1,5 +1,4 @@
 from collections import namedtuple
-from typing import NamedTuple
 
 import pandas as pd
 from jax import numpy as jnp
@@ -7,11 +6,13 @@ from jax import random as jr
 from numpyro import distributions as dist
 
 from ramsey._src.datasets import M4Dataset
-from ramsey.contrib import exponentiated_quadratic
+from ramsey._src.experimental.gaussian_process.kernel.stationary import (
+    exponentiated_quadratic,
+)
 
 
 # pylint: disable=too-many-locals,invalid-name
-def m4_data(interval: str = "hourly", drop_na: bool = True) -> NamedTuple:
+def m4_data(interval: str = "hourly", drop_na: bool = True):
     """
     Load a data set from the M4 competition
 
@@ -24,11 +25,7 @@ def m4_data(interval: str = "hourly", drop_na: bool = True) -> NamedTuple:
 
     Returns
     -------
-    NamedTuple
-        a tuple of tuples. The first tuple consists of two JAX arrays
-        where the first element are the time series observations (Y)
-        and the second are features (X). The second tuple are arrays of
-        training and testing indexes that can be used to subset Y and X
+        Returns a named tuple.
     """
 
     train, test = M4Dataset().load(interval)
@@ -41,7 +38,8 @@ def m4_data(interval: str = "hourly", drop_na: bool = True) -> NamedTuple:
     x = jnp.tile(x, [y.shape[0], 1]).reshape((y.shape[0], y.shape[1], 1))
     train_idxs = jnp.arange(train.shape[1])
     test_idxs = jnp.arange(test.shape[1]) + train.shape[1]
-    return namedtuple("data", "y x train_idxs test_idxs")(
+
+    return namedtuple("data", ["y", "x", "train_idxs", "test_idxs"])(  # type: ignore
         y, x, train_idxs, test_idxs
     )
 

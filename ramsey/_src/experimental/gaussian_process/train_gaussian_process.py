@@ -7,8 +7,8 @@ from jax import numpy as jnp
 from jax import random as jr
 from tqdm import tqdm
 
-from ramsey._src.contrib.gaussian_process.gaussian_process import GP
-from ramsey._src.contrib.gaussian_process.sparse_gaussian_process import (
+from ramsey._src.experimental.gaussian_process.gaussian_process import GP
+from ramsey._src.experimental.gaussian_process.sparse_gaussian_process import (
     SparseGP,
 )
 

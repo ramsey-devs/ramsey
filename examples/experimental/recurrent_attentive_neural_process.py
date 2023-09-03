@@ -10,13 +10,12 @@ and visualize predictions thereof.
 import jax
 import matplotlib.pyplot as plt
 from flax import linen as nn
-from jax import random as jr, numpy as jnp
+from jax import numpy as jnp
+from jax import random as jr
 
-from ramsey import MultiHeadAttention
+from ramsey import MLP, MultiHeadAttention, train_neural_process
 from ramsey.data import sample_from_gaussian_process
 from ramsey.experimental import RANP
-from ramsey import MLP
-from ramsey import train_neural_process
 
 
 def data(key):
@@ -29,11 +28,9 @@ def data(key):
 def get_ranp():
     dim = 128
     np = RANP(
-        decoder=nn.Sequential([
-            nn.RNN(nn.LSTMCell(features=10)),
-            jax.nn.relu,
-            nn.Dense(2)
-        ]),
+        decoder=nn.Sequential(
+            [nn.RNN(nn.LSTMCell(features=10)), jax.nn.relu, nn.Dense(2)]
+        ),
         latent_encoder=(MLP([dim] * 3), MLP([dim, dim * 2])),
         deterministic_encoder=(
             MLP([dim] * 3),

@@ -104,7 +104,13 @@ Ramsey is licensed under the Apache 2.0 License.
     :hidden:
 
     notebooks/neural_process
-    notebooks/forecasting
+
+..  toctree::
+    :caption: Example code
+    :maxdepth: 1
+    :hidden:
+
+    examples
 
 ..  toctree::
     :caption: API
@@ -112,7 +118,6 @@ Ramsey is licensed under the Apache 2.0 License.
     :hidden:
 
     ramsey
-    ramsey.contrib
     ramsey.data
     ramsey.experimental
     ramsey.family

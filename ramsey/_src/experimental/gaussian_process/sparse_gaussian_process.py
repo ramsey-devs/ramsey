@@ -7,13 +7,12 @@ from jax import numpy as jnp
 from jax import scipy as jsp
 from numpyro import distributions as dist
 
+from ramsey._src.experimental.gaussian_process.kernel.base import Kernel
+
 __all__ = ["SparseGP"]
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
-from ramsey._src.contrib.gaussian_process.kernel.base import Kernel
-
-
 class SparseGP(nn.Module):
     """
     A sparse Gaussian process

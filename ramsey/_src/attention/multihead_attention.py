@@ -76,7 +76,7 @@ class MultiHeadAttention(Attention):
 
 class _MultiHeadAttention(nn.Module):
     num_heads: int
-    dtype: Optional = None
+    dtype = None
     param_dtype = jnp.float32
     qkv_features: Optional[int] = None
     out_features: Optional[int] = None

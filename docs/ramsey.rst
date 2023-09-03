@@ -15,20 +15,20 @@ Neural process
 ~~~~~~~~~~~~~~
 
 ..  autoclass:: NP
-    :members:
+    :members: __call__
 
 
 Attentive neural process
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 ..  autoclass:: ANP
-    :members:
+    :members: __call__
 
 Doubly attentive neural process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ..  autoclass:: DANP
-    :members:
+    :members: __call__
 
 
 Modules
@@ -41,7 +41,7 @@ MultiHeadAttention
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: MultiHeadAttention
-   :members:
+   :members: __call__
 
 Train functions
 ---------------

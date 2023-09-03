@@ -5,7 +5,7 @@ from flax.linen import initializers
 from jax import Array
 from jax import numpy as jnp
 
-from ramsey._src.contrib.gaussian_process.kernel.base import Kernel
+from ramsey._src.experimental.gaussian_process.kernel.base import Kernel
 
 
 class Linear(Kernel, nn.Module):
