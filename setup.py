@@ -10,11 +10,6 @@ def readme():
         return fl.read()
 
 
-def _read_requirements(fl):
-    with open(fl) as fh:
-        return fh.read().splitlines()
-
-
 def _version():
     version = None
     for line in open(join(PROJECT_PATH, "ramsey", "__init__.py")):
@@ -28,26 +23,26 @@ def _version():
 setup(
     name="ramsey",
     version=_version(),
-    description="A library for probabilistic modelling using Haiku and JAX",
+    description="A library for probabilistic modelling using JAX",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/ramsey-devs/ramsey",
     author="The Ramsey developers",
     license="Apache 2.0",
-    keywords="bayes jax probabilistic models gaussian process neural process",
+    keywords=["bayes", "jax", "probabilistic models", "gaussian process", "neural process"],
     packages=find_packages(),
     include_package_data=True,
     python_requires=">=3.8",
     install_requires=[
+        "chex",
+        "flax",
         "jax>=0.4.4",
         "jaxlib>=0.4.4",
-        "blackjax",
-        "chex",
-        "dm-haiku>=0.0.9",
-        "distrax",
         "numpyro",
         "optax",
-        "pandas"
+        "pandas",
+        "rmsyutls",
+        "tqdm",
     ],
     extras_require={
         "dev": ["pre-commit", "black", "isort", "pylint", "tox", "pytest"],
@@ -60,5 +55,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )

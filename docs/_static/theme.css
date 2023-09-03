@@ -1,10 +1,12 @@
 html[data-theme="dark"], html[data-theme="light"] {
-  --pst-color-primary: #0048bc;
+    /*--pst-color-primary: #204a87;*/
+    /*--pst-color-link: #204a87;*/
+    /*--sd-color-primary: #204a87;*/
 }
 
 h1 > code > span {
     font-family: var(--pst-font-family-monospace);
-    color: #0048bc;
+    /*color: #204a87;*/
     font-weight: 700;
 }
 
@@ -14,7 +16,6 @@ nav > li > a > code.literal {
     background-color: white;
     border: 0px;
 }
-
 
 nav.bd-links p.caption {
     text-transform: uppercase;

@@ -1,4 +1,0 @@
-Philosophy
-==========
-
-Todo

@@ -1,56 +1,54 @@
 # pylint: skip-file
 
-import haiku as hk
 import pytest
 
-from ramsey import ANP, DANP, NP
-from ramsey.attention import MultiHeadAttention
+from ramsey import ANP, DANP, MLP, NP, MultiHeadAttention
 
 
-def __lnp(**kwargs):
+def __lnp():
     np = NP(
-        decoder=hk.nets.MLP([3, 2]),
-        latent_encoder=(hk.nets.MLP([3, 3]), hk.nets.MLP([3, 6])),
+        decoder=MLP([3, 2]),
+        latent_encoder=(MLP([3, 3]), MLP([3, 6])),
     )
-    return np(**kwargs)
+    return np
 
 
-def __np(**kwargs):
+def __np():
     np = NP(
-        decoder=hk.nets.MLP([3, 2]),
-        deterministic_encoder=hk.nets.MLP([4, 4]),
-        latent_encoder=(hk.nets.MLP([3, 3]), hk.nets.MLP([3, 6])),
+        decoder=MLP([3, 2]),
+        deterministic_encoder=MLP([4, 4]),
+        latent_encoder=(MLP([3, 3]), MLP([3, 6])),
     )
-    return np(**kwargs)
+    return np
 
 
-def __anp(**kwargs):
+def __anp():
     np = ANP(
-        decoder=hk.nets.MLP([3, 2]),
+        decoder=MLP([3, 2]),
         deterministic_encoder=(
-            hk.nets.MLP([4, 4]),
-            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
+            MLP([4, 4]),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
         ),
-        latent_encoder=(hk.nets.MLP([3, 3]), hk.nets.MLP([3, 6])),
+        latent_encoder=(MLP([3, 3]), MLP([3, 6])),
     )
-    return np(**kwargs)
+    return np
 
 
-def __danp(**kwargs):
+def __danp():
     np = DANP(
-        decoder=hk.nets.MLP([3, 2]),
+        decoder=MLP([3, 2]),
         deterministic_encoder=(
-            hk.nets.MLP([4, 4]),
-            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
-            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
+            MLP([4, 4]),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
         ),
         latent_encoder=(
-            hk.nets.MLP([3, 3]),
-            MultiHeadAttention(8, 8, hk.nets.MLP([8, 8])),
-            hk.nets.MLP([3, 6]),
+            MLP([3, 3]),
+            MultiHeadAttention(num_heads=8, head_size=8, embedding=MLP([8, 8])),
+            MLP([3, 6]),
         ),
     )
-    return np(**kwargs)
+    return np
 
 
 @pytest.fixture(params=[__lnp, __np, __anp, __danp])

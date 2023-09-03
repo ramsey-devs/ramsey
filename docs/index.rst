@@ -1,42 +1,51 @@
 :github_url: https://github.com/ramsey-devs/ramsey/
 
-Ramsey: probabilistic modelling using Haiku
-===========================================
+👋 Welcome to Ramsey!
+=====================
 
-Ramsey is a library for probabilistic modelling using `Haiku <https://github.com/deepmind/dm-haiku>`_ and `JAX <https://github.com/google/jax>`_.
-It builds upon the same module system that Haiku is using and is hence fully compatible with its API. Ramsey implements **probabilistic** models, such as neural processes, Gaussian processes,
-Bayesian neural networks, Bayesian timeseries models and state-space-models, and more.
+Ramsey is a library for probabilistic modelling using `JAX <https://github.com/google/jax>`_ ,
+`Flax <https://github.com/google/flax>`_ and `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
+It offers high quality implementations of neural processes, Gaussian processes, Bayesian time series and state-space models, clustering processes,
+and everything else Bayesian.
 
-Example
--------
+Ramsey makes use of
 
-Ramsey uses to Haiku's module system to construct probabilistic models
-and define parameters. For instance, a simple neural process can be constructed like this:
+- Flax`s module system for models with trainable parameters (such as neural or Gaussian processes),
+- NumPyro for models where parameters are endowed with prior distributions (such as Gaussian processes, Bayesian neural networks, etc.)
+
+and is hence aimed at being fully compatible with both of them.
+
+Example usage
+-------------
+
+You can, for instance, construct a simple neural process like this:
 
 .. code-block:: python
 
-    import haiku as hk
-    import jax.random as random
-    from ramsey.data import sample_from_sinus_function
-    from ramsey.models import NP
+    from jax import random as jr
 
-    def neural_process(**kwargs):
+    from ramsey import NP, MLP
+    from ramsey.data import sample_from_sine_function
+
+    def get_neural_process():
         dim = 128
         np = NP(
-            decoder=hk.nets.MLP([dim] * 3 + [2]),
+            decoder=MLP([dim] * 3 + [2]),
             latent_encoder=(
-                hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])
+                MLP([dim] * 3), MLP([dim, dim * 2])
             )
         )
-        return np(**kwargs)
+        return np
 
-    (x, y), _ = sample_from_sinus_function(random.PRNGKey(0))
+    key = jr.PRNGKey(23)
+    data = sample_from_sine_function(key)
 
-    neural_process = hk.transform(neural_process)
-    params = neural_process.init(
-        random.PRNGKey(1), x_context=x, y_context=y, x_target=x
-    )
+    neural_process = get_neural_process()
+    params = neural_process.init(key, x_context=data.x, y_context=data.y, x_target=data.x)
 
+The neural process takes a decoder and a set of two latent encoders as argument. All of these are typically MLPs, but
+Ramsey is flexible enough that you can change them, for instance, to CNNs or RNNs. Once the model is defined, you can initialize
+its parameters just like in Flax.
 
 Why Ramsey
 ----------
@@ -61,7 +70,7 @@ command line:
 
     pip install git+https://github.com/ramsey-devs/ramsey@<RELEASE>
 
-See also the installation instructions for `Haiku <https://github.com/deepmind/dm-haiku>`_ and `JAX <https://github.com/google/jax>`_, if
+See also the installation instructions for `JAX <https://github.com/google/jax>`_, if
 you plan to use Ramsey on GPU/TPU.
 
 Contributing
@@ -83,29 +92,33 @@ License
 
 Ramsey is licensed under the Apache 2.0 License.
 
-
 ..  toctree::
     :maxdepth: 1
     :hidden:
 
-    Home <self>
+    🏠 Home <self>
+    📰 News <news>
 
 ..  toctree::
-    :caption: Tutorials
+    :caption: 🎓 Tutorials
     :maxdepth: 1
     :hidden:
 
     notebooks/neural_process
-    notebooks/forecasting
 
 ..  toctree::
-    :caption: API
+    :caption: 🎓 Example code
+    :maxdepth: 1
+    :hidden:
+
+    examples
+
+..  toctree::
+    :caption: 🧱 API
     :maxdepth: 1
     :hidden:
 
     ramsey
-    ramsey.attention
-    ramsey.contrib
+    ramsey.data
+    ramsey.experimental
     ramsey.family
-    ramsey.kernels
-    ramsey.train

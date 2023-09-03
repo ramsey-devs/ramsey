@@ -7,41 +7,52 @@
 [![documentation](https://readthedocs.org/projects/ramsey/badge/?version=latest)](https://ramsey.readthedocs.io/en/latest/?badge=latest)
 [![version](https://img.shields.io/pypi/v/ramsey.svg?colorB=black&style=flat)](https://pypi.org/project/ramsey/)
 
-> Probabilistic modelling using Haiku and JAX
+> Probabilistic modelling using JAX
 
 ## About
 
-Ramsey is a library for probabilistic modelling using [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax).
-It builds upon the same module system that Haiku is using and is hence fully compatible with Haiku's and NumPyro's API.
+Ramsey is a library for probabilistic modelling using [JAX](https://github.com/google/jax),
+[Flax](https://github.com/google/flax) and [NumPyro](https://github.com/pyro-ppl/numpyro).
+It offers high quality implementations of neural processes, Gaussian processes, Bayesian time series and state-space models, clustering processes,
+and everything else Bayesian.
+
+Ramsey makes use of
+
+- Flax`s module system for models with trainable parameters (such as neural or Gaussian processes),
+- NumPyro for models where parameters are endowed with prior distributions (such as Gaussian processes, Bayesian neural networks, ARMA models)
+
+and is hence aimed at being fully compatible with both of them.
 
 ## Example usage
 
-Ramsey uses to Haiku's module system to construct probabilistic models
-and define parameters. For instance, a simple neural process can be constructed like this:
+You can, for instance, construct a simple neural process like this:
 
 ```python
-import haiku as hk
-import jax.random as random
+from jax import random as jr
 
-from ramsey import NP
+from ramsey import NP, MLP
 from ramsey.data import sample_from_sine_function
 
-def neural_process(**kwargs):
+def get_neural_process():
     dim = 128
     np = NP(
-        decoder=hk.nets.MLP([dim] * 3 + [2]),
+        decoder=MLP([dim] * 3 + [2]),
         latent_encoder=(
-            hk.nets.MLP([dim] * 3), hk.nets.MLP([dim, dim * 2])
+            MLP([dim] * 3), MLP([dim, dim * 2])
         )
     )
-    return np(**kwargs)
+    return np
 
-key = random.PRNGKey(23)
-(x, y), _ = sample_from_sine_function(key)
+key = jr.PRNGKey(23)
+data = sample_from_sine_function(key)
 
-neural_process = hk.transform(neural_process)
-params = neural_process.init(key, x_context=x, y_context=y, x_target=x)
+neural_process = get_neural_process()
+params = neural_process.init(key, x_context=data.x, y_context=data.y, x_target=data.x)
 ```
+
+The neural process takes a decoder and a set of two latent encoders as argument. All of these are typically MLPs, but
+Ramsey is flexible enough that you can change them, for instance, to CNNs or RNNs. Once the model is defined, you can initialize
+its parameters just like in Flax.
 
 ## Installation
 
@@ -58,7 +69,7 @@ command line:
 pip install git+https://github.com/ramsey-devs/ramsey@<RELEASE>
 ```
 
-See also the installation instructions for [Haiku](https://github.com/deepmind/dm-haiku) and [JAX](https://github.com/google/jax), if
+See also the installation instructions for [JAX](https://github.com/google/jax), if
 you plan to use Ramsey on GPU/TPU.
 
 ## Contributing

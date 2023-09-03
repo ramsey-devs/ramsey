@@ -1,8 +1,8 @@
 import abc
 
+import jax.nn
 import numpyro.distributions as dist
 from jax import numpy as jnp
-from jax.nn import softplus
 
 
 # pylint: disable=too-few-public-methods
@@ -25,7 +25,7 @@ class Family(abc.ABC):
 
 class Gaussian(Family):
     """
-    Family of Gaussian distributions
+    Family of Gaussian distributions.
     """
 
     def __init__(self, **kwargs):
@@ -33,13 +33,14 @@ class Gaussian(Family):
         self._kwargs = kwargs
 
     def __call__(self, target: jnp.ndarray, **kwargs):
+        # TODO(s): this is not optimal and not clear. move this outside
         log_scale = kwargs.get("scale", None)
         if log_scale is not None:
             mean = target
             scale = jnp.exp(log_scale)
         else:
             mean, log_scale = jnp.split(target, 2, axis=-1)
-            scale = 0.1 + 0.9 * softplus(log_scale)
+            scale = 0.1 + 0.9 * jax.nn.softplus(log_scale)
         return dist.Normal(loc=mean, scale=scale)
 
     def get_canonical_parameters(self):
