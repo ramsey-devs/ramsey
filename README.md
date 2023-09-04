@@ -50,7 +50,7 @@ neural_process = get_neural_process()
 params = neural_process.init(key, x_context=data.x, y_context=data.y, x_target=data.x)
 ```
 
-The neural process takes a decoder and a set of two latent encoders as argument. All of these are typically MLPs, but
+The neural process takes a decoder and a set of two latent encoders as arguments. All of these are typically MLPs, but
 Ramsey is flexible enough that you can change them, for instance, to CNNs or RNNs. Once the model is defined, you can initialize
 its parameters just like in Flax.
 
