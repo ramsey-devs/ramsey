@@ -40,19 +40,23 @@ class ARMA(dist.Distribution):
         self.ma_coefficients = ma_coefficients
         self.scale = scale
         self.p = len(ar_coefficients)
+        self.p = len(ma_coefficients)
 
     def sample(self, rng_key, length, initial_state, sample_shape=()):
         def body_fn(states, errors, sample_key):
             states = jnp.atleast_1d(states)
-            errors = jnp.atleast_1d(errors)
             take = jnp.minimum(self.p, states.shape[0])
             loc = self.loc
             loc += jnp.einsum(
                 "i,i->", states[-take:][::-1], self.ar_coefficients[:take]
             )
+
+            errors = jnp.atleast_1d(errors)
+            take = jnp.minimum(self.q, errors.shape[0])
             loc += jnp.einsum(
                 "i,i->", errors[-take:][::-1], self.ma_coefficients[:take]
             )
+
             yt = jnp.atleast_1d(dist.Normal(loc, self.scale).sample(sample_key))
             states = jnp.concatenate([states, yt], axis=-1)
             errors = jnp.concatenate([errors, yt - loc], axis=-1)
