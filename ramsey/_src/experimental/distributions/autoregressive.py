@@ -1,11 +1,19 @@
+from functools import partial
+
 import jax
 import numpy as np
-from jax import numpy as jnp
+from jax import numpy as jnp, jit
 from jax import random as jr
 from numpyro import distributions as dist
 from numpyro.distributions import constraints
 
 __all__ = ["Autoregressive"]
+
+
+@partial(jit, static_argnums=(1,))
+def moving_window(a, size: int):
+    starts = jnp.arange(len(a) - size + 1)
+    return jax.vmap(lambda start: jax.lax.dynamic_slice(a, (start,), (size,)))(starts)
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
@@ -64,16 +72,36 @@ class Autoregressive(dist.Distribution):
         return states
 
     def log_prob(self, value):
-        states = np.atleast_1d(value)
-        rev_states_padded = np.concatenate([np.zeros(self.p), states])[::-1]
-        shape = (rev_states_padded.shape[0] - self.p + 1, self.p + 1)
-        strides = (rev_states_padded.strides[0],) + rev_states_padded.strides
-        seqs = np.lib.stride_tricks.as_strided(
-            rev_states_padded, shape=shape, strides=strides
-        )
-        seqs = seqs[: states.shape[0]]
+        states = jnp.atleast_1d(value)
+        rev_states_padded = jnp.concatenate([np.zeros(self.p), states])[::-1]
+        seqs = moving_window(rev_states_padded, self.p + 1)
+        seqs = seqs[:states.shape[0]]
         locs = self.loc + jnp.einsum(
             "ji,i->j", seqs[:, 1:], self.ar_coefficients
         )
         lp = dist.Normal(locs, self.scale).log_prob(seqs[:, 0])
         return jnp.sum(lp)
+
+    def mean(self, length=None, initial_state=None):
+        if length is None:
+            length = self.length
+
+        def body_fn(states):
+            states = jnp.atleast_1d(states)
+            take = np.minimum(self.p, states.shape[0])
+            lhs = jax.lax.dynamic_slice_in_dim(
+                states, states.shape[0] - take, take
+            )[::-1]
+            rhs = jax.lax.dynamic_slice_in_dim(self.ar_coefficients, 0, take)
+            loc = jnp.atleast_1d(self.loc + jnp.einsum("i,i->", lhs, rhs))
+            states = jnp.concatenate([states, loc], axis=-1)
+            return states
+
+        if initial_state is None:
+            initial_state = jnp.atleast_1d(self.loc)
+        states = jnp.atleast_1d(initial_state)
+        for _ in range(1, length):
+            states = body_fn(states)
+        return states
+
+

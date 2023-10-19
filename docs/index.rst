@@ -104,6 +104,7 @@ Ramsey is licensed under the Apache 2.0 License.
     :maxdepth: 1
     :hidden:
 
+    notebooks/on_inference
     notebooks/neural_process
 
 ..  toctree::
