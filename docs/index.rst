@@ -106,6 +106,8 @@ Ramsey is licensed under the Apache 2.0 License.
 
     notebooks/on_inference
     notebooks/neural_process
+    notebooks/forecasting
+    notebooks/gps_vs_bnns
 
 ..  toctree::
     :caption: 🎓 Example code
