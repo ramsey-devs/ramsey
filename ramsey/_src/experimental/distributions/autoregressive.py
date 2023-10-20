@@ -7,8 +7,6 @@ from jax import random as jr
 from numpyro import distributions as dist
 from numpyro.distributions import constraints
 
-__all__ = ["Autoregressive"]
-
 
 @partial(jit, static_argnums=(1,))
 def moving_window(a, size: int):

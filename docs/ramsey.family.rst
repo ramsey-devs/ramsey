@@ -3,7 +3,7 @@
 
 .. currentmodule:: ramsey.family
 
-.. automodule:: ramsey.family
+----
 
 Exponential families
 --------------------

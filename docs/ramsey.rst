@@ -3,6 +3,8 @@
 
 .. currentmodule:: ramsey
 
+----
+
 Models
 ------
 
@@ -29,27 +31,6 @@ Doubly attentive neural process
 
 ..  autoclass:: DANP
     :members: __call__
-
-
-Modules
--------
-
-.. autosummary::
-    MLP
-    MultiHeadAttention
-
-MLP
-~~~
-
-.. autoclass:: MLP
-   :members: __call__
-
-
-MultiHeadAttention
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: MultiHeadAttention
-   :members: __call__
 
 Train functions
 ---------------

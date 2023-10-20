@@ -34,15 +34,16 @@ SquaredExponential = ExponentiatedQuadratic
 
 
 __all__ = [
-    "ARMA",
     "Autoregressive",
+    "ARMA",
+
     "BayesianLinear",
+
     "BNN",
-    "GP",
     "RANP",
+    "GP",
     "SparseGP",
-    "train_gaussian_process",
-    "train_sparse_gaussian_process",
+
     "ExponentiatedQuadratic",
     "Linear",
     "Periodic",
@@ -50,6 +51,7 @@ __all__ = [
     "exponentiated_quadratic",
     "linear",
     "periodic",
+
     "train_gaussian_process",
     "train_sparse_gaussian_process",
 ]

@@ -5,7 +5,8 @@ from flax import linen as nn
 from jax import Array
 from jax import numpy as jnp
 
-from ramsey import ANP, Attention
+from ramsey import ANP
+from ramsey.nn import Attention
 from ramsey.family import Family, Gaussian
 
 __all__ = ["RANP"]

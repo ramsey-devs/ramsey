@@ -13,7 +13,7 @@ from flax.linen.module import merge_param
 from jax import Array, lax
 from jax import numpy as jnp
 
-from ramsey._src.attention.attention import Attention
+from ramsey._src.nn.attention.attention import Attention
 
 
 class MultiHeadAttention(Attention):

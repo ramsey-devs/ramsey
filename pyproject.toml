@@ -56,3 +56,8 @@ no_strict_optional = true
 
 [tool.bandit]
 skips = ["B101", "B310"]
+
+[tool.pydocstyle]
+convention= 'google'
+match = '^surjectors/.*/((?!_test).)*\.py'
+

@@ -7,9 +7,6 @@ from jax import random as jr
 from numpyro import distributions as dist
 from numpyro.distributions import constraints
 
-__all__ = ["ARMA"]
-
-
 @partial(jit, static_argnums=(1,))
 def moving_window(a, size: int):
     starts = jnp.arange(len(a) - size + 1)

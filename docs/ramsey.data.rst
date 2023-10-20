@@ -3,11 +3,12 @@
 
 .. currentmodule:: ramsey.data
 
-.. automodule:: ramsey.data
+----
 
 .. autosummary::
     m4_data
     sample_from_gaussian_process
+    sample_from_sine_process
 
 M4 competition data
 -------------------
@@ -18,3 +19,9 @@ Gaussian process samples
 ------------------------
 
 .. autofunction:: sample_from_gaussian_process
+
+
+Sine function samples
+-------------------
+
+.. autofunction:: sample_from_sine_process

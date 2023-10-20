@@ -1,14 +1,34 @@
 ``ramsey.experimental``
 =======================
 
+.. currentmodule:: ramsey.experimental
+
+----
+
 .. warning::
 
     Experimental code is not native Ramsey code and subject to change, and might even get deleted in the future.
     Better don't build critical code bases around the :code:`ramsey.experimental` submodule.
 
-.. currentmodule:: ramsey.experimental
 
-.. automodule:: ramsey.experimental
+Distributions
+-------------
+
+.. autosummary::
+    Autoregressive
+    ARMA
+
+Autoregressive
+~~~~~~~~~~~~~~
+
+..  autoclass:: Autoregressive
+    :members: __call__
+
+Auto-regressive moving-average
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+..  autoclass:: ARMA
+    :members: __call__
 
 Models
 ------
@@ -31,14 +51,14 @@ Recurrent attentive neural process
 ..  autoclass:: RANP
     :members: __call__
 
-GP
-~~
+Gaussian process
+~~~~~~~~~~~~~~~~
 
 ..  autoclass:: GP
     :members: __call__
 
-SparseGP
-~~~~~~~~
+Sparse Gaussian process
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ..  autoclass:: SparseGP
     :members: __call__
