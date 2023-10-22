@@ -6,7 +6,6 @@ from ramsey._src.experimental.bayesian_neural_network.bayesian_linear import (
 from ramsey._src.experimental.bayesian_neural_network.bayesian_neural_network import (
     BNN,
 )
-from ramsey._src.experimental.distributions.arma import ARMA
 from ramsey._src.experimental.distributions.autoregressive import Autoregressive
 from ramsey._src.experimental.gaussian_process.gaussian_process import GP
 from ramsey._src.experimental.gaussian_process.kernel.non_stationary import (
@@ -35,7 +34,6 @@ SquaredExponential = ExponentiatedQuadratic
 
 __all__ = [
     "Autoregressive",
-    "ARMA",
     "BayesianLinear",
     "BNN",
     "RANP",

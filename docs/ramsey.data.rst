@@ -8,7 +8,7 @@
 .. autosummary::
     m4_data
     sample_from_gaussian_process
-    sample_from_sine_process
+    sample_from_sine_function
 
 M4 competition data
 -------------------
@@ -22,6 +22,6 @@ Gaussian process samples
 
 
 Sine function samples
--------------------
+---------------------
 
-.. autofunction:: sample_from_sine_process
+.. autofunction:: sample_from_sine_function

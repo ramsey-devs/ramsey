@@ -16,18 +16,11 @@ Distributions
 
 .. autosummary::
     Autoregressive
-    ARMA
 
 Autoregressive
 ~~~~~~~~~~~~~~
 
 ..  autoclass:: Autoregressive
-    :members: __call__
-
-Auto-regressive moving-average
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-..  autoclass:: ARMA
     :members: __call__
 
 Models

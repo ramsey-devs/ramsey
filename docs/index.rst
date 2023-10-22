@@ -108,10 +108,9 @@ Ramsey is licensed under the Apache 2.0 License.
     :maxdepth: 1
     :hidden:
 
-    notebooks/on_inference
+    notebooks/inference_with_flax_and_numpyro
     notebooks/neural_processes
-    notebooks/forecasting
-    notebooks/gps_vs_bnns
+    notebooks/bayesian_modelling
 
 ..  toctree::
     :caption: 🎓 Example code
