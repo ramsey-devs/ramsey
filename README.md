@@ -7,7 +7,7 @@
 [![documentation](https://readthedocs.org/projects/ramsey/badge/?version=latest)](https://ramsey.readthedocs.io/en/latest/?badge=latest)
 [![version](https://img.shields.io/pypi/v/ramsey.svg?colorB=black&style=flat)](https://pypi.org/project/ramsey/)
 
-> Probabilistic modelling using JAX
+> Probabilistic deep learning using JAX
 
 ## About
 

@@ -8,6 +8,8 @@ from tqdm import tqdm
 
 from ramsey._src.neural_process.neural_process import NP
 
+__all__ = ["train_neural_process"]
+
 
 @jax.jit
 def step(rngs, state, **batch):
@@ -25,7 +27,7 @@ def step(rngs, state, **batch):
 
 # pylint: disable=too-many-locals
 def train_neural_process(
-    seed: jr.PRNGKey,
+    rng_key: jr.PRNGKey,
     neural_process: NP,  # pylint: disable=invalid-name
     x: Array,  # pylint: disable=invalid-name
     y: Array,  # pylint: disable=invalid-name
@@ -36,9 +38,9 @@ def train_neural_process(
     n_iter=20000,
     verbose=False,
 ):
-    rng, seed = jr.split(seed)
-    state = create_train_state(
-        rng,
+    train_state_rng, rng_key= jr.split(rng_key)
+    state = _create_train_state(
+        train_state_rng,
         neural_process,
         optimizer,
         x_context=x,
@@ -48,9 +50,9 @@ def train_neural_process(
 
     objectives = np.zeros(n_iter)
     for i in tqdm(range(n_iter)):
-        split_rng_key, sample_rng_key, seed = jr.split(seed, 3)
+        split_rng_key, sample_rng_key, seed = jr.split(rng_key, 3)
         batch = _split_data(
-            split_rng_key, x, y, n_context, n_target, batch_size
+            split_rng_key, x, y, n_context=n_context, n_target=n_target, batch_size=batch_size
         )
         state, obj = step({"sample": sample_rng_key}, state, **batch)
         objectives[i] = obj
@@ -90,7 +92,7 @@ def _split_data(
     }
 
 
-def create_train_state(rng, model, optimizer, **init_data):
+def _create_train_state(rng, model, optimizer, **init_data):
     init_key, sample_key = jr.split(rng)
     params = model.init({"sample": sample_key, "params": init_key}, **init_data)
     state = TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)

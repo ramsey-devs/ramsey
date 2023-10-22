@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 
 from chex import assert_axis_dimension
 from flax import linen as nn

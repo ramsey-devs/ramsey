@@ -66,7 +66,7 @@ class BayesianLinear(nn.Module):
         self._b_prior = self.b_prior
 
     @nn.compact
-    def __call__(self, inputs: Array, is_training: bool = False):
+    def __call__(self, x: Array, is_training: bool = False):
         """
         Instantiates a sparse Gaussian process
 
@@ -78,11 +78,11 @@ class BayesianLinear(nn.Module):
             training mode where KL divergence terms are calculated and returned
         """
 
-        dtype = inputs.dtype
-        n_in = inputs.shape[-1]
-        outputs = inputs
+        dtype = x.dtype
+        n_in = x.shape[-1]
+        outputs = x
         w, w_params = self._get_weights((n_in, self._output_size), dtype)
-        outputs = jnp.einsum("bj,sjk->sbk", outputs, w)
+        outputs = jnp.einsum("...bj,...sjk->sbk", outputs, w)
         if self._with_bias:
             b, b_params = self._get_bias((1, self._output_size), dtype)
             b = jnp.broadcast_to(b, outputs.shape)

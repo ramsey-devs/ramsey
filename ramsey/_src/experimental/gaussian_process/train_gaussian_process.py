@@ -15,7 +15,7 @@ from ramsey._src.experimental.gaussian_process.sparse_gaussian_process import (
 
 # pylint: disable=too-many-locals,invalid-name
 def train_gaussian_process(
-    seed: jr.PRNGKey,
+    rng_key: jr.PRNGKey,
     gaussian_process: GP,
     x: Array,
     y: Array,
@@ -38,12 +38,12 @@ def train_gaussian_process(
         new_state = state.apply_gradients(grads=grads)
         return new_state, obj
 
-    rng, seed = jr.split(seed)
-    state = create_train_state(rng, gaussian_process, optimizer, x=x)
+    train_state_rng, rng_key = jr.split(rng_key)
+    state = create_train_state(train_state_rng, gaussian_process, optimizer, x=x)
 
     objectives = np.zeros(n_iter)
     for i in tqdm(range(n_iter)):
-        sample_rng_key, seed = jr.split(seed)
+        sample_rng_key, seed = jr.split(rng_key)
         state, obj = step({"sample": sample_rng_key}, state, x=x, y=y)
         objectives[i] = obj
         if (i % 100 == 0 or i == n_iter - 1) and verbose:

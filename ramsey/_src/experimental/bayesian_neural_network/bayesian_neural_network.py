@@ -35,7 +35,7 @@ class BNN(nn.Module):
     family: Family = Gaussian()
 
     @nn.compact
-    def __call__(self, inputs: Array, **kwargs):
+    def __call__(self, x: Array, **kwargs):
         """
         Transform the inputs through the Bayesian neural network.
 
@@ -59,11 +59,11 @@ class BNN(nn.Module):
             only.
         """
 
-        if "outputs" in kwargs:
-            outputs = kwargs["outputs"]
-            return self._loss(inputs, outputs)
+        if "y" in kwargs:
+            y = kwargs["y"]
+            return self._loss(x, y)
 
-        outputs = inputs
+        outputs = x
         for layer in self.layers:
             if isinstance(layer, BayesianLinear):
                 outputs = layer(outputs, is_training=False)

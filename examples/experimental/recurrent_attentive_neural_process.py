@@ -50,6 +50,7 @@ def train(key, n_context, n_target, x_target, y_target, num_iter):
         neural_process,
         x=x_target,
         y=y_target,
+        batch_size=5,
         n_context=n_context,
         n_target=n_target,
         n_iter=num_iter,
