@@ -10,6 +10,7 @@ from ramsey._src.experimental.gaussian_process.kernel.stationary import (
     exponentiated_quadratic,
 )
 
+
 # pylint: disable=too-many-locals,invalid-name
 def m4_data(interval: str = "hourly", drop_na: bool = True):
     """

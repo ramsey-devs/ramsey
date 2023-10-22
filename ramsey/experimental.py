@@ -26,6 +26,7 @@ from ramsey._src.experimental.gaussian_process.train_gaussian_process import (
     train_gaussian_process,
     train_sparse_gaussian_process,
 )
+
 # pylint: disable=line-too-long
 from ramsey._src.experimental.timeseries.recurrent_attentive_neural_process import (
     RANP,
@@ -48,7 +49,6 @@ __all__ = [
     "exponentiated_quadratic",
     "linear",
     "periodic",
-
     "train_bnn",
     "train_gaussian_process",
     "train_sparse_gaussian_process",

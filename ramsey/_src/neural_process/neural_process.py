@@ -16,8 +16,7 @@ __all__ = ["NP"]
 
 # pylint: disable=too-many-instance-attributes,duplicate-code,not-callable
 class NP(nn.Module):
-    """
-    A neural process.
+    """A neural process.
 
     Implements the core structure of a neural process [1], i.e.,
     an optional deterministic encoder, a latent encoder, and a decoder.
@@ -151,9 +150,7 @@ class NP(nn.Module):
             z_deterministic, z_latent, num_observations
         )
         pred_fn = self._decode(representation, x_target, y_target)
-
         loglik = jnp.sum(pred_fn.log_prob(y_target), axis=1)
-
         elbo = jnp.mean(loglik - kl)
 
         return pred_fn, -elbo

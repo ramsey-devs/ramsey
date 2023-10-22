@@ -4,12 +4,14 @@ import jax
 import numpy as np
 import optax
 from flax.training.train_state import TrainState
-from jax import random as jr, Array
+from jax import Array
+from jax import random as jr
 from rmsyutls import as_batch_iterator
 from tqdm import tqdm
-from ramsey._src.experimental.bayesian_neural_network.bayesian_neural_network import \
-    BNN
 
+from ramsey._src.experimental.bayesian_neural_network.bayesian_neural_network import (
+    BNN,
+)
 
 __all__ = ["train_bnn"]
 
@@ -22,14 +24,14 @@ def _create_train_state(rng, model, optimizer, **init_data):
 
 
 def train_bnn(
-        rng_key,
-        bnn: BNN,
-        x: Array,
-        y: Array,
-        optimizer=optax.adam(3e-4),
-        n_iter=10000,
-        batch_size=128,
-        verbose=False
+    rng_key,
+    bnn: BNN,
+    x: Array,
+    y: Array,
+    optimizer=optax.adam(3e-4),
+    n_iter=10000,
+    batch_size=128,
+    verbose=False,
 ):
     itr_key, seed = jr.split(rng_key)
     train_itr = as_batch_iterator(

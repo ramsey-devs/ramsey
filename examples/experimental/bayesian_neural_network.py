@@ -24,9 +24,8 @@ from flax import linen as nn
 from jax import numpy as jnp
 from jax import random as jr
 
-from ramsey.experimental import train_bnn
 from ramsey.data import sample_from_gaussian_process
-from ramsey.experimental import BNN, BayesianLinear
+from ramsey.experimental import BNN, BayesianLinear, train_bnn
 
 
 def data(key, n_samples):
@@ -58,9 +57,7 @@ def plot(seed, bnn, params, x, f, x_train, y_train):
     ys = []
     for i in range(100):
         rng_key, sample_key, seed = jr.split(seed, 3)
-        posterior = bnn.apply(
-            variables=params, rngs={"sample": rng_key}, x=x
-        )
+        posterior = bnn.apply(variables=params, rngs={"sample": rng_key}, x=x)
         y = posterior.sample(sample_key)
         ys.append(y)
     yhat = jnp.hstack(ys).T
@@ -124,7 +121,12 @@ def run(args):
     train_rng_key, seed = jr.split(seed)
     bnn = get_bayesian_nn()
     params, objectives = train_bnn(
-        train_rng_key, bnn, x_train, y_train, n_iter=args.num_iter, batch_size=64
+        train_rng_key,
+        bnn,
+        x_train,
+        y_train,
+        n_iter=args.num_iter,
+        batch_size=64,
     )
 
     plot_rng_key, seed = jr.split(seed)

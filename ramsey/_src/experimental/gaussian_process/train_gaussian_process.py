@@ -39,7 +39,9 @@ def train_gaussian_process(
         return new_state, obj
 
     train_state_rng, rng_key = jr.split(rng_key)
-    state = create_train_state(train_state_rng, gaussian_process, optimizer, x=x)
+    state = create_train_state(
+        train_state_rng, gaussian_process, optimizer, x=x
+    )
 
     objectives = np.zeros(n_iter)
     for i in tqdm(range(n_iter)):

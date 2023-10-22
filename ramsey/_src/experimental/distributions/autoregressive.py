@@ -2,7 +2,8 @@ from functools import partial
 
 import jax
 import numpy as np
-from jax import numpy as jnp, jit
+from jax import jit
+from jax import numpy as jnp
 from jax import random as jr
 from numpyro import distributions as dist
 from numpyro.distributions import constraints
@@ -11,7 +12,9 @@ from numpyro.distributions import constraints
 @partial(jit, static_argnums=(1,))
 def moving_window(a, size: int):
     starts = jnp.arange(len(a) - size + 1)
-    return jax.vmap(lambda start: jax.lax.dynamic_slice(a, (start,), (size,)))(starts)
+    return jax.vmap(lambda start: jax.lax.dynamic_slice(a, (start,), (size,)))(
+        starts
+    )
 
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
@@ -73,7 +76,7 @@ class Autoregressive(dist.Distribution):
         states = jnp.atleast_1d(value)
         rev_states_padded = jnp.concatenate([np.zeros(self.p), states])[::-1]
         seqs = moving_window(rev_states_padded, self.p + 1)
-        seqs = seqs[:states.shape[0]]
+        seqs = seqs[: states.shape[0]]
         locs = self.loc + jnp.einsum(
             "ji,i->j", seqs[:, 1:], self.ar_coefficients
         )
@@ -101,5 +104,3 @@ class Autoregressive(dist.Distribution):
         for _ in range(1, length):
             states = body_fn(states)
         return states
-
-

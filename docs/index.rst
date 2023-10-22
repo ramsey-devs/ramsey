@@ -110,7 +110,6 @@ Ramsey is licensed under the Apache 2.0 License.
 
     notebooks/inference_with_flax_and_numpyro
     notebooks/neural_processes
-    notebooks/bayesian_modelling
 
 ..  toctree::
     :caption: 🎓 Example code

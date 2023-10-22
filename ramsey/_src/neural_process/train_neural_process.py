@@ -38,7 +38,7 @@ def train_neural_process(
     n_iter=20000,
     verbose=False,
 ):
-    train_state_rng, rng_key= jr.split(rng_key)
+    train_state_rng, rng_key = jr.split(rng_key)
     state = _create_train_state(
         train_state_rng,
         neural_process,
@@ -52,7 +52,12 @@ def train_neural_process(
     for i in tqdm(range(n_iter)):
         split_rng_key, sample_rng_key, seed = jr.split(rng_key, 3)
         batch = _split_data(
-            split_rng_key, x, y, n_context=n_context, n_target=n_target, batch_size=batch_size
+            split_rng_key,
+            x,
+            y,
+            n_context=n_context,
+            n_target=n_target,
+            batch_size=batch_size,
         )
         state, obj = step({"sample": sample_rng_key}, state, **batch)
         objectives[i] = obj
@@ -74,7 +79,7 @@ def _split_data(
 ):
     batch_rng_key, idx_rng_key, seed = jr.split(seed, 3)
     ibatch = jr.choice(
-        batch_rng_key, x.shape[0], shape=(batch_size,), replace=False
+        batch_rng_key, x.shape[0], shape=(2,), replace=False
     )
     idxs = jr.choice(
         idx_rng_key, x.shape[1], shape=(n_context + n_target,), replace=False
