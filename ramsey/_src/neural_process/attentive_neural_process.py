@@ -40,7 +40,7 @@ class ANP(NP):
     References
     ----------
     .. [1] Kim, Hyunjik, et al. "Attentive Neural Processes."
-       International Conference on Learning Representations. 2019.
+        International Conference on Learning Representations. 2019.
     """
 
     decoder: nn.Module

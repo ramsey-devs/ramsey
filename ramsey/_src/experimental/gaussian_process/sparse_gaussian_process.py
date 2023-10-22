@@ -211,8 +211,9 @@ class SparseGP(nn.Module):
     # pylint: disable=line-too-long
     @staticmethod
     def _calculate_quadratic_form(A: Array, x: Array):
-        """
-        Calculates a quadratic form
+        """Calculate the quadratic form.
+
+        Calculates
 
             y = x.T * inv(A) * x
 
@@ -221,15 +222,15 @@ class SparseGP(nn.Module):
 
         Parameters
         ----------
-        A: Array
+        A: jax.Array
             A in term y = x.T * inv(A) * x
-        x: Array
+        x: jax.Array
             x in term y = x.T * inv(A) * x
 
         Returns
         -------
         float
-            x.T * inv(A) * x
+            returns the result of x.T * inv(A) * x
         """
 
         L = jnp.linalg.cholesky(A)

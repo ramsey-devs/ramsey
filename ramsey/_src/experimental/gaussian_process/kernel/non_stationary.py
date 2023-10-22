@@ -9,8 +9,7 @@ from ramsey._src.experimental.gaussian_process.kernel.base import Kernel
 
 
 class Linear(Kernel, nn.Module):
-    """
-    Linear covariance function
+    """Linear covariance function.
 
 
     Parameters

@@ -54,7 +54,7 @@ def train_np(key, n_context, n_target, x_target, y_target, num_iter):
         n_context=n_context,
         n_target=n_target,
         n_iter=num_iter,
-        batch_size=5,
+        batch_size=2,
     )
     return neural_process, params
 

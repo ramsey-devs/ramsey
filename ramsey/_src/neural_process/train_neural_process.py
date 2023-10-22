@@ -12,7 +12,7 @@ __all__ = ["train_neural_process"]
 
 
 @jax.jit
-def step(rngs, state, **batch):
+def _step(rngs, state, **batch):
     current_step = state.step
     rngs = {name: jr.fold_in(rng, current_step) for name, rng in rngs.items()}
 
@@ -38,6 +38,47 @@ def train_neural_process(
     n_iter=20000,
     verbose=False,
 ):
+    """Train a neural process.
+
+    Utility function to train a latent or conditional neural process, i.e.,
+    a process belonging to the `NP` class.
+
+    Parameters
+    ----------
+    rng_key: jax.random.PRNGKey
+        a key for seeding random number generators
+    neural_process: NP
+        an object that inherits from NP
+    x: Array:
+        array of inputs. Should be a tensor of dimension
+        :math:`b \times n \times p`
+        where r`b` indexes a sequence of batches, e.g., different time
+        series, r`n` indexes the number of observations per batch, e.g., time
+        points, and r`p` indexes the number of feats
+    y: Array:
+        array of outputs. Should be a tensor of dimension
+        r`b \times n \times q`
+        where r`b` and r`n` are the same as for x and r`q` is the number of
+        outputs
+    n_context: int
+        number of context points
+    n_target: int
+        number of target points
+    batch_size: int
+        number of elements that are samples for each gradient step, i.e.,
+        number of elements in first axis of `x` and `y`
+    optimizer: optax.GradientTransformation
+        an optax optimizer object
+    n_iter: int
+        number of training iterations
+    verbose: bool
+        true if print training progress
+
+    Returns
+    -------
+    Tuple[dict, jnp.Array]
+        returns a tuple of trained parameters and training loss profile
+    """
     train_state_rng, rng_key = jr.split(rng_key)
     state = _create_train_state(
         train_state_rng,
@@ -50,7 +91,7 @@ def train_neural_process(
 
     objectives = np.zeros(n_iter)
     for i in tqdm(range(n_iter)):
-        split_rng_key, sample_rng_key, seed = jr.split(rng_key, 3)
+        split_rng_key, sample_rng_key, rng_key = jr.split(rng_key, 3)
         batch = _split_data(
             split_rng_key,
             x,
@@ -59,7 +100,7 @@ def train_neural_process(
             n_target=n_target,
             batch_size=batch_size,
         )
-        state, obj = step({"sample": sample_rng_key}, state, **batch)
+        state, obj = _step({"sample": sample_rng_key}, state, **batch)
         objectives[i] = obj
         if (i % 100 == 0 or i == n_iter - 1) and verbose:
             elbo = -float(obj)
@@ -70,16 +111,16 @@ def train_neural_process(
 
 # pylint: disable=too-many-locals
 def _split_data(
-    seed: jr.PRNGKey,
+    rng_key: jr.PRNGKey,
     x: Array,  # pylint: disable=invalid-name
     y: Array,  # pylint: disable=invalid-name
     batch_size: int,
     n_context: int,
     n_target: int,
 ):
-    batch_rng_key, idx_rng_key, seed = jr.split(seed, 3)
+    batch_rng_key, idx_rng_key, rng_key = jr.split(rng_key, 3)
     ibatch = jr.choice(
-        batch_rng_key, x.shape[0], shape=(2,), replace=False
+        batch_rng_key, x.shape[0], shape=(batch_size,), replace=False
     )
     idxs = jr.choice(
         idx_rng_key, x.shape[1], shape=(n_context + n_target,), replace=False
