@@ -54,19 +54,25 @@ class ANP(NP):
                 "either latent or deterministic encoder needs to be set"
             )
         self._decoder = self.decoder
-        (self._latent_encoder, self._latent_variable_encoder) = (
-            self.latent_encoder[0],
-            self.latent_encoder[1],
-        )
+        if self.latent_encoder is not None:
+            (self._latent_encoder, self._latent_variable_encoder) = (
+                self.latent_encoder[0],
+                self.latent_encoder[1],
+            )
         self._deterministic_encoder = self.deterministic_encoder[0]
         self._deterministic_cross_attention = self.deterministic_encoder[1]
         self._family = self.family
 
     @staticmethod
     def _concat_and_tile(z_deterministic, z_latent, num_observations):
-        if z_latent.shape[1] == 1:
-            z_latent = jnp.tile(z_latent, [1, num_observations, 1])
-        representation = jnp.concatenate([z_deterministic, z_latent], axis=-1)
+        if z_latent is not None:
+            if z_latent.shape[1] == 1:
+                z_latent = jnp.tile(z_latent, [1, num_observations, 1])
+            representation = jnp.concatenate(
+                [z_deterministic, z_latent], axis=-1
+            )
+        else:
+            representation = z_deterministic
         assert_axis_dimension(representation, 1, num_observations)
         return representation
 

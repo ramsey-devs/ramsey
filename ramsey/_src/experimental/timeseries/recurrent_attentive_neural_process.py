@@ -49,12 +49,14 @@ class RANP(ANP):
                 "either latent or deterministic encoder needs to be set"
             )
         self._decoder = self.decoder
-        (self._latent_encoder, self._latent_variable_encoder) = (
-            self.latent_encoder[0],
-            self.latent_encoder[1],
-        )
-        self._deterministic_encoder = self.deterministic_encoder[0]
-        self._deterministic_cross_attention = self.deterministic_encoder[1]
+        if self.latent_encoder is not None:
+            (self._latent_encoder, self._latent_variable_encoder) = (
+                self.latent_encoder[0],
+                self.latent_encoder[1],
+            )
+        if self.deterministic_encoder is not None:
+            self._deterministic_encoder = self.deterministic_encoder[0]
+            self._deterministic_cross_attention = self.deterministic_encoder[1]
         self._family = self.family
 
     def _decode(

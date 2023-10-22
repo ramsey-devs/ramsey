@@ -12,6 +12,7 @@ References
 [1] Blundell C., Cornebise J., Kavukcuoglu K., Wierstra D.
     "Weight Uncertainty in Neural Networks". ICML, 2015.
 """
+import argparse
 import warnings
 from collections import namedtuple
 
@@ -172,7 +173,7 @@ def sample_training_points(key, x, y, n_train):
     return x[train_idxs], y[train_idxs]
 
 
-def run():
+def run(args):
     warnings.warn(
         "The BNN is labelled as 'experimental'. "
         "Experimental code is hardly tested or debugged."
@@ -186,11 +187,15 @@ def run():
 
     train_rng_key, seed = jr.split(seed)
     bnn = get_bayesian_nn()
-    params, objectives = train(train_rng_key, bnn, x=x_train, y=y_train)
+    params, objectives = train(
+        train_rng_key, bnn, x_train, y_train, args.num_iter
+    )
 
     plot_rng_key, seed = jr.split(seed)
     plot(plot_rng_key, bnn, params, x, f, x_train, y_train)
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "---num_iter", type=int, default=10000)
+    run(parser.parse_args())

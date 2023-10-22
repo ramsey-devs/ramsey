@@ -56,13 +56,16 @@ class NP(nn.Module):
             raise ValueError(
                 "either latent or deterministic encoder needs to be set"
             )
-        self._deterministic_encoder = self.deterministic_encoder
+
         self._decoder = self.decoder
+        if self.latent_encoder is not None:
+            [self._latent_encoder, self._latent_variable_encoder] = (
+                self.latent_encoder[0],
+                self.latent_encoder[1],
+            )
+        if self.deterministic_encoder is not None:
+            self._deterministic_encoder = self.deterministic_encoder
         self._family = self.family
-        [self._latent_encoder, self._latent_variable_encoder] = (
-            self.latent_encoder[0],
-            self.latent_encoder[1],
-        )
 
     @nn.compact
     def __call__(
@@ -106,7 +109,7 @@ class NP(nn.Module):
 
         _, num_observations, _ = x_target.shape
 
-        if self._latent_encoder is not None:
+        if self.latent_encoder is not None:
             rng = self.make_rng("sample")
             z_latent = self._encode_latent(x_context, y_context).sample(rng)
         else:
@@ -131,7 +134,7 @@ class NP(nn.Module):
     ):
         _, num_observations, _ = x_target.shape
 
-        if self._latent_encoder is not None:
+        if self.latent_encoder is not None:
             rng = self.make_rng("sample")
             prior = self._encode_latent(x_context, y_context)
             posterior = self._encode_latent(x_target, y_target)
@@ -177,7 +180,7 @@ class NP(nn.Module):
         y_context: Array,
         x_target: Array,  # pylint: disable=unused-argument
     ):
-        if self._deterministic_encoder is None:
+        if self.deterministic_encoder is None:
             return None
         xy_context = jnp.concatenate([x_context, y_context], axis=-1)
         z_deterministic = self._deterministic_encoder(xy_context)

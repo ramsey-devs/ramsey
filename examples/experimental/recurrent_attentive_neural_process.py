@@ -1,11 +1,12 @@
 """
 Recurrent attentive neural process
-========================
+==================================
 
-Here, we implement and train a recurrent attentive neural process
+Here, we implement and train a conditional recurrent attentive neural process
 and visualize predictions thereof.
 """
 
+import argparse
 
 import jax
 import matplotlib.pyplot as plt
@@ -13,9 +14,10 @@ from flax import linen as nn
 from jax import numpy as jnp
 from jax import random as jr
 
-from ramsey import MLP, MultiHeadAttention, train_neural_process
+from ramsey import train_neural_process
 from ramsey.data import sample_from_gaussian_process
 from ramsey.experimental import RANP
+from ramsey.nn import MLP, MultiHeadAttention
 
 
 def data(key):
@@ -29,9 +31,8 @@ def get_ranp():
     dim = 128
     np = RANP(
         decoder=nn.Sequential(
-            [nn.RNN(nn.LSTMCell(features=10)), jax.nn.relu, nn.Dense(2)]
+            [nn.RNN(nn.LSTMCell(features=10)), jax.nn.gelu, nn.Dense(2)]
         ),
-        latent_encoder=(MLP([dim] * 3), MLP([dim, dim * 2])),
         deterministic_encoder=(
             MLP([dim] * 3),
             MultiHeadAttention(
@@ -42,7 +43,7 @@ def get_ranp():
     return np
 
 
-def train(key, n_context, n_target, x_target, y_target):
+def train(key, n_context, n_target, x_target, y_target, num_iter):
     neural_process = get_ranp()
     params, _ = train_neural_process(
         key,
@@ -51,7 +52,7 @@ def train(key, n_context, n_target, x_target, y_target):
         y=y_target,
         n_context=n_context,
         n_target=n_target,
-        n_iter=10000,
+        n_iter=num_iter,
     )
     return neural_process, params
 
@@ -96,9 +97,9 @@ def plot(
             y_star = neural_process.apply(
                 variables=params,
                 rngs={"sample": sample_rng_key},
-                inputs_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
-                outputs_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
-                inputs_target=x_target[[idx], :, :],
+                x_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
+                y_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
+                x_target=x_target[[idx], :, :],
             ).mean
             x_star = jnp.squeeze(x_target[[idx], :, :])
             y_star = jnp.squeeze(y_star)
@@ -110,13 +111,13 @@ def plot(
     plt.show()
 
 
-def run():
+def run(args):
     n_context, n_target = 10, 20
     data_rng_key, train_rng_key, plot_rng_key = jr.split(jr.PRNGKey(0), 3)
     (x_target, y_target), f_target = data(data_rng_key)
 
     neural_process, params = train(
-        train_rng_key, n_context, n_target, x_target, y_target
+        train_rng_key, n_context, n_target, x_target, y_target, args.num_iter
     )
 
     plot(
@@ -132,4 +133,6 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "---num_iter", type=int, default=10000)
+    run(parser.parse_args())

@@ -12,7 +12,7 @@ References
     "Variational Learning of Inducing Variables in Sparse Gaussian Processes".
     AISTATS, 2009.
 """
-
+import argparse
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -45,13 +45,10 @@ def get_gaussian_process():
     return gp
 
 
-def train(rng_key, x, y):
+def train(rng_key, x, y, num_iter):
     gaussian_process = get_gaussian_process()
     params, _ = train_sparse_gaussian_process(
-        rng_key,
-        gaussian_process,
-        x=x,
-        y=y,
+        rng_key, gaussian_process, x=x, y=y, n_iter=num_iter
     )
 
     return gaussian_process, params
@@ -133,17 +130,21 @@ def sample_training_points(key, x, y, n_train):
     return x[train_idxs], y[train_idxs]
 
 
-def run():
+def run(args):
     data_rng_key, sample_rng_key, seed = jr.split(jr.PRNGKey(0), 3)
     (x, y), f = data(data_rng_key, 0.25, 3.0)
     x_train, y_train = sample_training_points(sample_rng_key, x, y, 100)
 
     train_rng_key, seed = jr.split(seed)
-    gaussian_process, params = train(train_rng_key, x=x_train, y=y_train)
+    gaussian_process, params = train(
+        train_rng_key, x_train, y_train, args.num_iter
+    )
 
     plot_rng_key, seed = jr.split(seed)
     plot(plot_rng_key, gaussian_process, params, x, y, f, x_train, y_train)
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "---num_iter", type=int, default=10000)
+    run(parser.parse_args())
