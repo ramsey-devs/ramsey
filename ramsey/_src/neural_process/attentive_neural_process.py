@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from chex import assert_axis_dimension
 from flax import linen as nn
@@ -13,8 +13,7 @@ __all__ = ["ANP"]
 # pylint: disable=too-many-instance-attributes,duplicate-code
 # pylint: disable=unpacking-non-sequence,
 class ANP(NP):
-    """
-    An attentive neural process.
+    """An attentive neural process.
 
     Implements the core structure of an attentive neural process [1], i.e.,
     a deterministic encoder, a latent encoder, and a decoder with a
@@ -26,13 +25,13 @@ class ANP(NP):
         the decoder can be any network, but is typically an MLP. Note
         that the _last_ layer of the decoder needs to
         have twice the number of nodes as the data you try to model
-    latent_encoders: Tuple[flax.linen.Module, flax.linen.Module]
+    latent_encoders: Optional[Tuple[flax.linen.Module, flax.linen.Module]]
         a tuple of two `flax.linen.Module`s. The latent encoder can be any
         network, but is typically an MLP. The first element of the tuple is a
         neural network used before the aggregation step, while the second
         element of the tuple encodes is a neural network used to
         compute mean(s) and standard deviation(s) of the latent Gaussian.
-    deterministic_encoder: Tuple[flax.linen.Module, Attention]
+    deterministic_encoder: Optional[Tuple[flax.linen.Module, Attention]]
         a tuple of a `flax.linen.Module` and an Attention object.
         The deterministic encoder can be any network, but is typically an MLP
     family: Family
@@ -45,11 +44,15 @@ class ANP(NP):
     """
 
     decoder: nn.Module
-    latent_encoder: Any
-    deterministic_encoder: Any
+    latent_encoder: Optional[nn.Module] = None
+    deterministic_encoder: Optional[nn.Module] = None
     family: Family = Gaussian()
 
     def setup(self):
+        if self.latent_encoder is None and self.deterministic_encoder is None:
+            raise ValueError(
+                "either latent or deterministic encoder needs to be set"
+            )
         self._decoder = self.decoder
         (self._latent_encoder, self._latent_variable_encoder) = (
             self.latent_encoder[0],

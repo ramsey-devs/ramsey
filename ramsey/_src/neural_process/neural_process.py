@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Any, Optional, Tuple
 
+import flax
 import jax
 import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
@@ -27,7 +28,7 @@ class NP(nn.Module):
         the decoder can be any network, but is typically an MLP. Note
         that the _last_ layer of the decoder needs to
         have twice the number of nodes as the data you try to model
-    latent_encoders: Tuple[flax.linen.Module, flax.linen.Module]
+    latent_encoder: Optional[Tuple[flax.linen.Module, flax.linen.Module]]
         a tuple of two `flax.linen.Module`s. The latent encoder can be
         any network, but is typically an MLP. The first element of the tuple
         is a neural network used before the aggregation step, while the second
@@ -46,11 +47,15 @@ class NP(nn.Module):
     """
 
     decoder: nn.Module
-    latent_encoder: Any
-    deterministic_encoder: Any = None
+    latent_encoder: Optional[Tuple[flax.linen.Module, flax.linen.Module]] = None
+    deterministic_encoder: Optional[flax.linen.Module] = None
     family: Family = Gaussian()
 
     def setup(self):
+        if self.latent_encoder is None and self.deterministic_encoder is None:
+            raise ValueError(
+                "either latent or deterministic encoder needs to be set"
+            )
         self._deterministic_encoder = self.deterministic_encoder
         self._decoder = self.decoder
         self._family = self.family
@@ -67,8 +72,7 @@ class NP(nn.Module):
         x_target: Array,
         **kwargs,
     ):
-        """
-        Transform the inputs through the neural process.
+        """Transform the inputs through the neural process.
 
         Parameters
         ----------
@@ -102,8 +106,12 @@ class NP(nn.Module):
 
         _, num_observations, _ = x_target.shape
 
-        rng = self.make_rng("sample")
-        z_latent = self._encode_latent(x_context, y_context).sample(rng)
+        if self._latent_encoder is not None:
+            rng = self.make_rng("sample")
+            z_latent = self._encode_latent(x_context, y_context).sample(rng)
+        else:
+            z_latent = None
+
         z_deterministic = self._encode_deterministic(
             x_context, y_context, x_target
         )
@@ -123,11 +131,16 @@ class NP(nn.Module):
     ):
         _, num_observations, _ = x_target.shape
 
-        prior = self._encode_latent(x_context, y_context)
-        posterior = self._encode_latent(x_target, y_target)
+        if self._latent_encoder is not None:
+            rng = self.make_rng("sample")
+            prior = self._encode_latent(x_context, y_context)
+            posterior = self._encode_latent(x_target, y_target)
+            z_latent = posterior.sample(rng)
+            kl = jnp.sum(kl_divergence(posterior, prior), axis=-1)
+        else:
+            z_latent = None
+            kl = 0
 
-        rng = self.make_rng("sample")
-        z_latent = posterior.sample(rng)
         z_deterministic = self._encode_deterministic(
             x_context, y_context, x_target
         )
@@ -137,7 +150,7 @@ class NP(nn.Module):
         pred_fn = self._decode(representation, x_target, y_target)
 
         loglik = jnp.sum(pred_fn.log_prob(y_target), axis=1)
-        kl = jnp.sum(kl_divergence(posterior, prior), axis=-1)
+
         elbo = jnp.mean(loglik - kl)
 
         return pred_fn, -elbo
@@ -147,6 +160,8 @@ class NP(nn.Module):
     def _concat_and_tile(z_deterministic, z_latent, num_observations):
         if z_deterministic is None:
             representation = z_latent
+        elif z_latent is None:
+            representation = z_deterministic
         else:
             representation = jnp.concatenate(
                 [z_deterministic, z_latent], axis=-1
