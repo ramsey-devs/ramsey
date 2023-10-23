@@ -11,7 +11,6 @@ from ramsey._src.experimental.gaussian_process.kernel.base import Kernel
 class Linear(Kernel, nn.Module):
     """Linear covariance function.
 
-
     Parameters
     ----------
     active_dims: Optional[list]
@@ -30,6 +29,7 @@ class Linear(Kernel, nn.Module):
     offset_init: Optional[initializers.Initializer] = initializers.uniform()
 
     def setup(self):
+        """Construct parameters."""
         self._active_dims = (
             self.active_dims
             if isinstance(self.active_dims, list)
@@ -38,6 +38,7 @@ class Linear(Kernel, nn.Module):
 
     @nn.compact
     def __call__(self, x1: Array, x2: Array = None):
+        """Call the covariance function."""
         if x2 is None:
             x2 = x1
         dtype = x1.dtype
@@ -59,15 +60,14 @@ class Linear(Kernel, nn.Module):
 
 
 def linear(x1: Array, x2: Array, sigma_b, sigma_v, offset):
-    """
-    Linear convariance function.
+    r"""Linear convariance function.
 
     Parameters
-    -----------
+    ----------
     x1: jax.Array
-        (`n x p`)-dimensional set of data points
+        :math:`n x p`-dimensional set of data points
     x2: jax.Array
-        (`m x p`)-dimensional set of data points
+        :math:`m x p`-dimensional set of data points
     sigma_b: float
         the standard deviation of the kernel function
     sigma_v: float
@@ -77,7 +77,7 @@ def linear(x1: Array, x2: Array, sigma_b, sigma_v, offset):
     Returns
     -------
     jax.Array
-        returns a (`n x m`)-dimensional Gram matrix
+        returns a :math:`n x m`-dimensional Gram matrix
     """
 
     def _linear(x1: Array, x2: Array, sigma_b, sigma_v, offset):

@@ -14,18 +14,16 @@ __all__ = ["SparseGP"]
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
 class SparseGP(nn.Module):
-    """
-    A sparse Gaussian process
-
-    Implements the core structure of a sparse Gaussian process.
+    """A sparse Gaussian process.
 
     Attributes
     ----------
     kernel: Kernel
         a covariance function
     n_inducing: int
+        number of inducing points
     jitter: float
-
+        jitter to add to the covariance matrix diagonal
     log_sigma_init: Optional[initializers.Initializer]
         an initializer object from Flax
     inducing_init: Optional[initializers.Initializer]
@@ -48,6 +46,7 @@ class SparseGP(nn.Module):
 
     @nn.compact
     def __call__(self, x: Array, **kwargs):
+        """Call the sparse GP."""
         if "y" in kwargs and "x_star" in kwargs:
             return self._predictive(x, **kwargs)
         return self._marginal(x, **kwargs)
@@ -57,20 +56,18 @@ class SparseGP(nn.Module):
         return log_sigma
 
     def _get_x_m(self, x_n: Array):
-        """
-        Returns the m inducing points x_m
+        """Create inducing points.
 
         Parameters
         ----------
-        x_n: Array
+        x_n: jax.Array
             training points x_n for initialization of inducing points x_m
 
         Returns
         -------
-        x_m: Array
+        x_m: jax.Array
             inducing points x_m
         """
-
         d = x_n.shape[1]
         shape_x_inducing = (self.n_inducing, d)
         x_inducing = self.param(
@@ -80,18 +77,17 @@ class SparseGP(nn.Module):
 
     # pylint: disable=too-many-locals
     def _predictive(self, x: Array, y: Array, x_star: Array):
-        """
-        Returns the approx. Predictive Posterior Distribution
+        """Compute the approx. predictive posterior distribution.
 
         The distribution is calculated according equation (6) in [1]
 
         Parameters
         ----------
-        x: Array
+        x: jax.Array
             training point x
-        y: Array
+        y: jax.Array
             training point y
-        x_star: Array
+        x_star: jax.Array
             test points
 
         Returns
@@ -99,7 +95,6 @@ class SparseGP(nn.Module):
         distrax.MultivariateNormalTri
             returns a multivariate normal distribution object
         """
-
         log_sigma = self._get_sigma(x.dtype)
         sigma_square = jnp.square(jnp.exp(log_sigma))
         x_m = self._get_x_m(x_n=x)
@@ -131,7 +126,8 @@ class SparseGP(nn.Module):
         )
 
     def _marginal(self, x: Array, y: Array):
-        """
+        """Compute variational lower bound.
+
         Returns the variational lower bound of true log marginal likelihood.
         This quantity can be used as an objective to find the kernel
         hyperparameters and the location of the m inducing points x_inducing.
@@ -140,17 +136,16 @@ class SparseGP(nn.Module):
 
         Parameters
         ----------
-        x: Array
+        x: jax.Array
             training point x
-        y: Array
+        y: jax.Array
             training point y
 
         Returns
         -------
         float
-             variational lower bound of true log marginal likelihood
+             returns variational lower bound of true log marginal likelihood
         """
-
         n = x.shape[0]
         log_sigma = self._get_sigma(x.dtype)
         sigma_square = jnp.exp(2 * log_sigma)
@@ -178,7 +173,8 @@ class SparseGP(nn.Module):
 
     @staticmethod
     def _solve_linear(A: Array, b: Array):
-        """
+        """Solve a matrix.
+
         If A is symmetric and positive definite then Ax=b can be solved
         by using Cholesky decomposition.
 
@@ -191,17 +187,16 @@ class SparseGP(nn.Module):
 
         Parameters
         ----------
-        A: Array
+        A: jax.Array
             A in term Ax=b
-        b: Array
+        b: jax.Array
             b in term Ax=b
 
         Returns
-        --------
+        -------
         float
-            x from term Ax=b
+            returns x from term Ax=b
         """
-
         L = jnp.linalg.cholesky(A)
         y = jsp.linalg.solve_triangular(L, b, lower=True)
         x = jsp.linalg.solve_triangular(L.T, y, lower=False)
@@ -232,7 +227,6 @@ class SparseGP(nn.Module):
         float
             returns the result of x.T * inv(A) * x
         """
-
         L = jnp.linalg.cholesky(A)
         z = jsp.linalg.solve_triangular(L, x, lower=True)
         y = z.T @ z

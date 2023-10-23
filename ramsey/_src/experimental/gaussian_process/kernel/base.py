@@ -6,17 +6,14 @@ from jax import Array
 
 # pylint: disable=too-few-public-methods
 class Kernel(ABC):
-    """
-    Kernel base class
-    """
+    """Kernel base class."""
 
     @abstractmethod
     def __call__(self, x1: Array, x2: Array):
-        """
-        Compute the Gram matrix induced by the covariance function.
+        """Compute the Gram matrix induced by the covariance function.
 
         Parameters
-        -----------
+        ----------
         x1: jax.Array
             (`n x p`)-dimensional set of data points
         x2: jax.Array
@@ -25,13 +22,15 @@ class Kernel(ABC):
         Returns
         -------
         jax.Array
-            (`n x m`)-dimensional set of data points
+            returns (`n x m`)-dimensional set of data points
         """
 
     def __add__(self, other):
+        """Add two kernels."""
         return _Sum(self, other)
 
     def __mul__(self, other):
+        """Multiply two kernels."""
         return _Prod(self, other)
 
 

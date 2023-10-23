@@ -101,7 +101,7 @@ _M4_DATA_SETS = {
 # pylint: disable=too-few-public-methods
 @dataclass
 class M4Dataset:
-    """A wrapper class to load M4 data"""
+    """A wrapper class to load M4 data."""
 
     __INTERVALS__ = [
         "hourly",
@@ -115,8 +115,7 @@ class M4Dataset:
     )
 
     def load(self, interval: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Load an M4 data set
+        """Load a M4 data set.
 
         Parameters
         ----------
@@ -129,7 +128,6 @@ class M4Dataset:
             a tuple of data frames where the first is the training data and
             the last the testing data used during the M4 competition
         """
-
         if interval not in self.__INTERVALS__:
             raise ValueError(
                 f"'interval' should be one of: '{'/'.join(self.__INTERVALS__)}'"

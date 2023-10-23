@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import flax
 import jax
@@ -51,6 +51,7 @@ class NP(nn.Module):
     family: Family = Gaussian()
 
     def setup(self):
+        """Construct the networks of the class."""
         if self.latent_encoder is None and self.deterministic_encoder is None:
             raise ValueError(
                 "either latent or deterministic encoder needs to be set"
@@ -100,7 +101,6 @@ class NP(nn.Module):
             If 'y_target' is not provided, returns the predictive
             distribution only.
         """
-
         assert_rank([x_context, y_context, x_target], 3)
         if "y_target" in kwargs:
             assert_rank(kwargs["y_target"], 3)

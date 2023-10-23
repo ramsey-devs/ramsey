@@ -36,8 +36,7 @@ class BNN(nn.Module):
 
     @nn.compact
     def __call__(self, x: Array, **kwargs):
-        """
-        Transform the inputs through the Bayesian neural network.
+        """Transform the inputs through the Bayesian neural network.
 
         Parameters
         ----------
@@ -46,19 +45,18 @@ class BNN(nn.Module):
         **kwargs: kwargs
             Keyword arguments can include:
             - outputs: jax.Array. If an argument called outputs is provided,
-            computes the loss (negative ELBO) together with a
-            predictive posterior distribution
+              computes the loss (negative ELBO) together with a
+              predictive posterior distribution
 
         Returns
         -------
         Union[numpyro.distribution, Tuple[numpyro.distribution, float]]
-            If 'outputs' is provided as keyword argument, returns a tuple of
+            if 'outputs' is provided as keyword argument, returns a tuple of
             the predictive distribution and the negative ELBO which can be used
             as loss for optimzation.
             If 'outputs' is not provided, returns the predictive distribution
             only.
         """
-
         if "y" in kwargs:
             y = kwargs["y"]
             return self._loss(x, y)

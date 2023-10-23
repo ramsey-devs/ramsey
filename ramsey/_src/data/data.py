@@ -13,8 +13,7 @@ from ramsey._src.experimental.gaussian_process.kernel.stationary import (
 
 # pylint: disable=too-many-locals,invalid-name
 def m4_data(interval: str = "hourly", drop_na: bool = True):
-    """
-    Load a data set from the M4 competition
+    """Load a data set from the M4 competition.
 
     Parameters
     ----------
@@ -25,9 +24,10 @@ def m4_data(interval: str = "hourly", drop_na: bool = True):
 
     Returns
     -------
-        Returns a named tuple.
+    NamedTuple
+        returns a named tuple with outputs (y), inputs (x), and training and
+        testing indexes for the input-output paris
     """
-
     train, test = M4Dataset().load(interval)
     df = pd.concat([train, test.reindex(train.index)], axis=1)
     if drop_na:
@@ -47,14 +47,43 @@ def m4_data(interval: str = "hourly", drop_na: bool = True):
 
 
 # pylint: disable=too-many-locals,invalid-name
-def sample_from_sine_function(seed, batch_size=10, num_observations=100):
+def sample_from_sine_function(rng_key, batch_size=10, num_observations=100):
+    r"""Sample from a noisy sine function.
+
+    Creates samples from a noisy sine functions. For each batch,
+    chooses a new hyperparameters configuration.
+
+    The inputs, `x` of the sine function have dimensionality
+    :math:`b \times n \times 1`, where `b` is the batch size and `n` is the
+    number of observations per batch. The outputs and latent functions
+    realizations have dimension :math:`b \times n \times 1` as well.
+
+    Parameters
+    ----------
+    rng_key: jax.random.PRNGKey
+        a random key for seeding
+    batch_size: int
+        size of batch
+    num_observations: int
+        number of observations per batch
+    rho: Optional[float]
+        the lengthscale of the kernel function
+    sigma: Optional[float]
+        the standard deviation of the kernel function
+
+    Returns
+    -------
+    NamedTuple
+        a tuple consisting of outputs (y), inputs (x) and latent GP
+        realization (f) where
+    """
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, 1)
     )
     ys = []
     fs = []
     for _ in range(batch_size):
-        sample_key1, sample_key2, sample_key3, seed = jr.split(seed, 4)
+        sample_key1, sample_key2, sample_key3, rng_key = jr.split(rng_key, 4)
         a = 2 * jr.uniform(sample_key1) - 1
         b = jr.uniform(sample_key2) - 0.5
         f = a * jnp.sin(x - b)
@@ -71,14 +100,24 @@ def sample_from_sine_function(seed, batch_size=10, num_observations=100):
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_gaussian_process(
-    seed, batch_size=10, num_observations=100, rho=None, sigma=None
+    rng_key, batch_size=10, num_observations=100, rho=None, sigma=None
 ):
-    """
-    Load a data set from the M4 competition
+    r"""Sample from a Gaussian process.
+
+    Creates samples from a Gaussian process with exponentiated quadratic
+    covariance function. For each batch, chooses a new hyperparameter
+    configuration where `rho`, the kernel lengthscale is drawn
+    from an `InverseGamma(1, 1)` and sigma, the kernel lengthscale, is drawn
+    from an `InverseGamma(5, 5)`.
+
+    The inputs, `x` of the Gaussian process have dimensionality
+    :math:`b \times n \times 1`, where `b` is the batch size and `n` is the
+    number of observations per batch. The outputs and latent functions
+    realizations have dimension :math:`b \times n \times 1` as well.
 
     Parameters
     ----------
-    seed: jax.random.PRNGKey
+    rng_key: jax.random.PRNGKey
         a random key for seeding
     batch_size: int
         size of batch
@@ -93,17 +132,16 @@ def sample_from_gaussian_process(
     -------
     NamedTuple
         a tuple consisting of outputs (y), inputs (x) and latent GP
-        realization (f)
+        realization (f) where
     """
-
     x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
         (num_observations, 1)
     )
     ys = []
     fs = []
     for _ in range(batch_size):
-        sample_key1, sample_key2, sample_key3, sample_key4, seed = jr.split(
-            seed, 5
+        sample_key1, sample_key2, sample_key3, sample_key4, rng_key = jr.split(
+            rng_key, 5
         )
         if rho is None:
             rho = dist.InverseGamma(1, 1).sample(sample_key1)

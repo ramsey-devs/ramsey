@@ -33,9 +33,35 @@ def train_bnn(
     batch_size=128,
     verbose=False,
 ):
+    r"""Train a Bayesian neural network.
+
+    Parameters
+    ----------
+    rng_key: jax.random.PRNGKey
+        a key for seeding random number generators
+    bnn: BNN
+        a GP object
+    x: jax.Array
+        an input array of dimension :math:`n \times p`
+    y: an array of outputs of dimension :math:`n \times q`
+    optimizer: optax.GradientTransformation
+        an optax optimizer
+    n_iter: int
+        number of training iterations
+    batch_size: int
+        batch_size to
+    verbose: bool
+        print training details
+
+    Returns
+    -------
+    Tuple[dict, jax.Array]
+        a tuple of training parameters and training losses
+    """
     itr_key, seed = jr.split(rng_key)
+    # ignore this 'error', because mypy doesn't realize that this is correct
     train_itr = as_batch_iterator(
-        itr_key, namedtuple("data", "y x")(y, x), batch_size, True
+        itr_key, namedtuple("data", "y x")(y, x), batch_size, True  # type: ignore
     )
 
     init_key, seed = jr.split(seed)

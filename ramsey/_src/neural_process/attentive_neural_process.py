@@ -49,6 +49,7 @@ class ANP(NP):
     family: Family = Gaussian()
 
     def setup(self):
+        """Construct the neural process parameters."""
         if self.latent_encoder is None and self.deterministic_encoder is None:
             raise ValueError(
                 "either latent or deterministic encoder needs to be set"

@@ -38,7 +38,7 @@ def train_neural_process(
     n_iter=20000,
     verbose=False,
 ):
-    """Train a neural process.
+    r"""Train a neural process.
 
     Utility function to train a latent or conditional neural process, i.e.,
     a process belonging to the `NP` class.
@@ -47,26 +47,26 @@ def train_neural_process(
     ----------
     rng_key: jax.random.PRNGKey
         a key for seeding random number generators
-    neural_process: NP
+    neural_process: Union[NP, ANP, DANP]
         an object that inherits from NP
-    x: Array:
+    x: jax.Array
         array of inputs. Should be a tensor of dimension
         :math:`b \times n \times p`
-        where r`b` indexes a sequence of batches, e.g., different time
-        series, r`n` indexes the number of observations per batch, e.g., time
-        points, and r`p` indexes the number of feats
-    y: Array:
+        where :math:`b` indexes a sequence of batches, e.g., different time
+        series, :math:`n` indexes the number of observations per batch, e.g.,
+        time points, and :math:`p` indexes the number of feats
+    y: jax.Array
         array of outputs. Should be a tensor of dimension
-        r`b \times n \times q`
-        where r`b` and r`n` are the same as for x and r`q` is the number of
-        outputs
+        :math:`b \times n \times q`
+        where :math:`b` and :math:`n` are the same as for :math:`x` and
+        :math:`q` is the number of outputs
     n_context: int
         number of context points
     n_target: int
         number of target points
     batch_size: int
         number of elements that are samples for each gradient step, i.e.,
-        number of elements in first axis of `x` and `y`
+        number of elements in first axis of :math:`x` and :math:`y`
     optimizer: optax.GradientTransformation
         an optax optimizer object
     n_iter: int

@@ -52,7 +52,6 @@ class GP(nn.Module):
         .. [1] Rasmussen, Carl E and Williams, Chris KI.
            "Gaussian Processes for Machine Learning". MIT press, 2006.
         """
-
         if "y" in kwargs and "x_star" in kwargs:
             return self._predictive(x, **kwargs)
         return self._marginal(x, **kwargs)
@@ -66,7 +65,7 @@ class GP(nn.Module):
 
     # pylint: disable=too-many-locals
     def _predictive(self, x: Array, y: Array, x_star: Array, jitter=10e-8):
-        """Returns the predictive posterior distribution.
+        """Return the predictive posterior distribution.
 
         For details on the implemented algorithm see [1],
         Chapter 2.2 Function-space View, Algorithm, 2.1
@@ -92,7 +91,6 @@ class GP(nn.Module):
         .. [1] Rasmussen, Carl E and Williams, Chris KI.
             "Gaussian Processes for Machine Learning". MIT press, 2006.
         """
-
         log_sigma = self._get_sigma(x.dtype)
 
         n = x.shape[0]

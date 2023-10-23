@@ -2,15 +2,17 @@ from functools import partial
 
 import jax
 import numpy as np
-from jax import jit
+from jax import Array, jit
 from jax import numpy as jnp
 from jax import random as jr
 from numpyro import distributions as dist
 from numpyro.distributions import constraints
 
+__all__ = ["Autoregressive"]
+
 
 @partial(jit, static_argnums=(1,))
-def moving_window(a, size: int):
+def _moving_window(a, size: int):
     starts = jnp.arange(len(a) - size + 1)
     return jax.vmap(lambda start: jax.lax.dynamic_slice(a, (start,), (size,)))(
         starts
@@ -19,14 +21,13 @@ def moving_window(a, size: int):
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
 class Autoregressive(dist.Distribution):
-    """
-    An autoregressive model.
+    """An autoregressive model.
 
     Attributes
     ----------
-    parameters: jnp.Array
+    parameters: jax.Array
         an initializer object from Flax
-    parameters: Optional[jnp.Array]
+    parameters: Optional[jax.Array]
         an initializer object from Flax
     """
 
@@ -39,6 +40,7 @@ class Autoregressive(dist.Distribution):
     reparametrized_params = ["loc", "scale", "ar_coefficients"]
 
     def __init__(self, loc, ar_coefficients, scale, length=None):
+        """Construct an autoregressive distribution."""
         super().__init__()
         self.loc = loc
         self.ar_coefficients = ar_coefficients
@@ -46,7 +48,31 @@ class Autoregressive(dist.Distribution):
         self.p = len(ar_coefficients)
         self.length = length
 
-    def sample(self, rng_key, length=None, initial_state=None, sample_shape=()):
+    def sample(
+        self,
+        rng_key: jr.PRNGKey,
+        length: int = None,
+        initial_state: float = None,
+        sample_shape=(),
+    ):
+        """Sample from the distribution.
+
+        Parameters
+        ----------
+        rng_key: jax.random.PRNGKey
+            a random key for seeding
+        length: int
+            length of sequence
+        initial_state: float
+            an initial value
+        sample_shape: Tuple
+            a tuple of the form (shape,)
+
+        Returns
+        -------
+        jax.Array
+            returns an array of values
+        """
         if length is None:
             length = self.length
 
@@ -72,10 +98,22 @@ class Autoregressive(dist.Distribution):
             states = body_fn(states, sample_key)
         return states
 
-    def log_prob(self, value):
+    def log_prob(self, value: Array):
+        """Compute the log probability of a value.
+
+        Parameters
+        ----------
+        value: jax.Array
+            one-dimensional array of floats
+
+        Returns
+        -------
+        float
+             returns the mean
+        """
         states = jnp.atleast_1d(value)
         rev_states_padded = jnp.concatenate([np.zeros(self.p), states])[::-1]
-        seqs = moving_window(rev_states_padded, self.p + 1)
+        seqs = _moving_window(rev_states_padded, self.p + 1)
         seqs = seqs[: states.shape[0]]
         locs = self.loc + jnp.einsum(
             "ji,i->j", seqs[:, 1:], self.ar_coefficients
@@ -83,7 +121,22 @@ class Autoregressive(dist.Distribution):
         lp = dist.Normal(locs, self.scale).log_prob(seqs[:, 0])
         return jnp.sum(lp)
 
-    def mean(self, length=None, initial_state=None):
+    def mean(self, length: int = None, initial_state: float = None):
+        """Compute the mean of the autoregressive distribution.
+
+        Parameters
+        ----------
+        length: Optional[int]
+            "length" of the autoregressive sequence. If None, takes
+            length supplied to constructor during construction of object.
+        initial_state: float
+            initial state of the distribution. If None, takes mean
+
+        Returns
+        -------
+        float
+             returns the mean
+        """
         if length is None:
             length = self.length
 

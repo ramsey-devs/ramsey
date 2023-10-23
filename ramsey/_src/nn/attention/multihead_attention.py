@@ -42,6 +42,7 @@ class MultiHeadAttention(Attention):
     embedding: Optional[nn.Module]
 
     def setup(self):
+        """Construct the networks."""
         self._attention = _MultiHeadAttention(
             num_heads=self.num_heads,
             qkv_features=self.head_size * self.num_heads,
@@ -50,8 +51,7 @@ class MultiHeadAttention(Attention):
 
     @nn.compact
     def __call__(self, key: Array, value: Array, query: Array):
-        """
-        Apply attention to the query.
+        """Apply attention to the query.
 
         Arguments
         ---------
@@ -65,9 +65,8 @@ class MultiHeadAttention(Attention):
         Returns
         -------
         jax.Array
-            Returns attended query.
+            returns attended query
         """
-
         key, value, query = super().__call__(key, value, query)
         rep = self._attention(query, key, value)
         self._check_return_dimension(rep, value, query)

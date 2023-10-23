@@ -7,14 +7,21 @@ from jax import Array
 
 # pylint: disable=too-few-public-methods
 class Attention(nn.Module):
-    """
-    Abstract attention base class
+    """Abstract attention base class.
+
+    Can be used for designing attention modules.
+
+    Attributes
+    ----------
+    embedding: Optional[nn.Module]
+        an optional embedding network that embeds keys and queries
     """
 
     embedding: Optional[nn.Module]
 
     @nn.compact
     def __call__(self, key: Array, value: Array, query: Array):
+        """Pay attention to some key-value pairs."""
         self._check_dimensions(key, value, query)
         if self.embedding is not None:
             key, query = self.embedding(key), self.embedding(query)

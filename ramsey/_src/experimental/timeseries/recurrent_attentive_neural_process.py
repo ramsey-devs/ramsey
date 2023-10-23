@@ -44,6 +44,7 @@ class RANP(ANP):
     family: Family = Gaussian()
 
     def setup(self):
+        """Construct all networks."""
         if self.latent_encoder is None and self.deterministic_encoder is None:
             raise ValueError(
                 "either latent or deterministic encoder needs to be set"
