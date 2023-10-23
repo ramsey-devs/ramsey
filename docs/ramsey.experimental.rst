@@ -5,6 +5,9 @@
 
 ----
 
+Experimental modules such as Gaussian processes or Bayesian neural networks.
+
+
 .. warning::
 
     Experimental code is not native Ramsey code and subject to change, and might even get deleted in the future.

@@ -30,7 +30,8 @@ You can, for instance, construct a simple neural process like this:
 ```python
 from jax import random as jr
 
-from ramsey import NP, MLP
+from ramsey import NP
+from ramsey.nn import MLP
 from ramsey.data import sample_from_sine_function
 
 def get_neural_process():

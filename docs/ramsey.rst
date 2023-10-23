@@ -5,6 +5,8 @@
 
 ----
 
+Module containing all implemented probabilistic models and training functions.
+
 Models
 ------
 

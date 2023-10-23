@@ -5,6 +5,10 @@
 
 ----
 
+Neural networks and other modules for building neural processes, Bayesian
+neural networks, etc.
+
+
 Modules
 -------
 

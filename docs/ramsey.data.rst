@@ -5,6 +5,9 @@
 
 ----
 
+Functionality for loading and sampling data sets.
+
+
 .. autosummary::
     m4_data
     sample_from_gaussian_process
@@ -21,7 +24,7 @@ Gaussian process samples
 .. autofunction:: sample_from_gaussian_process
 
 
-Sine function samples
----------------------
+Noisy sine function samples
+---------------------------
 
 .. autofunction:: sample_from_sine_function

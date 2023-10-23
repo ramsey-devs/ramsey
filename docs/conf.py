@@ -48,8 +48,11 @@ html_theme_options = {
     "repository_url": "https://github.com/ramsey-devs/ramsey",
     "use_repository_button": True,
     "use_download_button": False,
-    "extra_navbar": ""
-
+    "use_fullscreen_button": False,
+    "extra_navbar": "",
+    "launch_buttons": {
+        "colab_url": "https://colab.research.google.com"
+    },
 }
 
 html_title = "Ramsey 🚀"
