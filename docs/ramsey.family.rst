@@ -3,7 +3,10 @@
 
 .. currentmodule:: ramsey.family
 
-.. automodule:: ramsey.family
+----
+
+Distributional families for constructing likelihoods and predictive distributions.
+
 
 Exponential families
 --------------------

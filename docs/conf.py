@@ -15,6 +15,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
+    "sphinx_copybutton",
     "sphinx_math_dollar",
     "IPython.sphinxext.ipython_console_highlighting",
     'sphinx_design'
@@ -41,25 +42,17 @@ exclude_patterns = [
     "examples/*py"
 ]
 
-# intersphinx_mapping = {
-#     "haiku": ("https://dm-haiku.readthedocs.io/en/latest/", None),
-#     "jax": ("https://jax.readthedocs.io/en/latest/", None),
-#     "numpyro": ("https://num.pyro.ai/en/stable/", None),
-# }
-
 html_theme = "sphinx_book_theme"
 
 html_theme_options = {
     "repository_url": "https://github.com/ramsey-devs/ramsey",
     "use_repository_button": True,
     "use_download_button": False,
-
-}
-# html_sidebars = {
-#     "**": ["sbt-sidebar-nav.html"]
-# }
-html_theme_options = {
-    "extra_navbar": ""
+    "use_fullscreen_button": False,
+    "extra_navbar": "",
+    "launch_buttons": {
+        "colab_url": "https://colab.research.google.com"
+    },
 }
 
 html_title = "Ramsey 🚀"

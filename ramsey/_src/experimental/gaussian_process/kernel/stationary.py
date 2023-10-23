@@ -32,6 +32,7 @@ class Periodic(Kernel, nn.Module):
     sigma_init: Optional[initializers.Initializer] = initializers.uniform()
 
     def setup(self):
+        """Construct the covariance function."""
         self._active_dims = (
             self.active_dims
             if isinstance(self.active_dims, list)
@@ -40,6 +41,7 @@ class Periodic(Kernel, nn.Module):
 
     @nn.compact
     def __call__(self, x1: Array, x2: Array = None):
+        """Call the covariance function."""
         if x2 is None:
             x2 = x1
         dtype = x1.dtype
@@ -79,6 +81,7 @@ class ExponentiatedQuadratic(Kernel, nn.Module):
     sigma_init: Optional[initializers.Initializer] = None
 
     def setup(self):
+        """Construct a stationary covariance."""
         self._active_dims = (
             self.active_dims
             if isinstance(self.active_dims, list)
@@ -87,6 +90,7 @@ class ExponentiatedQuadratic(Kernel, nn.Module):
 
     @nn.compact
     def __call__(self, x1: Array, x2: Array = None):
+        """Call the covariance function."""
         if x2 is None:
             x2 = x1
         dtype = x1.dtype
@@ -117,11 +121,10 @@ def exponentiated_quadratic(
     sigma: float,
     rho: Union[float, jnp.ndarray],
 ):
-    """
-    Exponentiated-quadratic convariance function.
+    """Exponentiated-quadratic convariance function.
 
     Parameters
-    -----------
+    ----------
     x1: jax.Array
         (`n x p`)-dimensional set of data points
     x2: jax.Array
@@ -150,11 +153,10 @@ def exponentiated_quadratic(
 
 # pylint: disable=invalid-name
 def periodic(x1: Array, x2: Array, period, sigma, rho):
-    """
-    Periodic convariance function.
+    """Periodic convariance function.
 
     Parameters
-    -----------
+    ----------
     x1: jax.Array
         (`n x p`)-dimensional set of data points
     x2: jax.Array

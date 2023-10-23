@@ -49,16 +49,23 @@ class DANP(ANP):
     family: Family = Gaussian()
 
     def setup(self):
-        (
-            self._latent_encoder,
-            self._latent_self_attention,
-            self._latent_variable_encoder,
-        ) = self.latent_encoder
-        (
-            self._deterministic_encoder,
-            self._deterministic_self_attention,
-            self._deterministic_cross_attention,
-        ) = self.deterministic_encoder
+        """Construct all networks."""
+        if self.latent_encoder is None and self.deterministic_encoder is None:
+            raise ValueError(
+                "either latent or deterministic encoder needs to be set"
+            )
+        if self.latent_encoder is not None:
+            (
+                self._latent_encoder,
+                self._latent_self_attention,
+                self._latent_variable_encoder,
+            ) = self.latent_encoder
+        if self.deterministic_encoder is not None:
+            (
+                self._deterministic_encoder,
+                self._deterministic_self_attention,
+                self._deterministic_cross_attention,
+            ) = self.deterministic_encoder
         self._decoder = self.decoder
         self._family = self.family
 

@@ -1,6 +1,10 @@
 📰 News
 =======
 
+*Latest news on the development of Ramsey.*
+
+----
+
 .. note::
 
     With :code:`Haiku` having gone into a maintenance mode after the merger of Google Brain and Deepmind,

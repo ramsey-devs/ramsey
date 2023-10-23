@@ -7,7 +7,7 @@
 [![documentation](https://readthedocs.org/projects/ramsey/badge/?version=latest)](https://ramsey.readthedocs.io/en/latest/?badge=latest)
 [![version](https://img.shields.io/pypi/v/ramsey.svg?colorB=black&style=flat)](https://pypi.org/project/ramsey/)
 
-> Probabilistic modelling using JAX
+> Probabilistic deep learning using JAX
 
 ## About
 
@@ -30,7 +30,8 @@ You can, for instance, construct a simple neural process like this:
 ```python
 from jax import random as jr
 
-from ramsey import NP, MLP
+from ramsey import NP
+from ramsey.nn import MLP
 from ramsey.data import sample_from_sine_function
 
 def get_neural_process():

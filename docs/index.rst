@@ -3,6 +3,10 @@
 👋 Welcome to Ramsey!
 =====================
 
+*Probabilistic deep learning using JAX*
+
+----
+
 Ramsey is a library for probabilistic modelling using `JAX <https://github.com/google/jax>`_ ,
 `Flax <https://github.com/google/flax>`_ and `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
 It offers high quality implementations of neural processes, Gaussian processes, Bayesian time series and state-space models, clustering processes,
@@ -24,7 +28,8 @@ You can, for instance, construct a simple neural process like this:
 
     from jax import random as jr
 
-    from ramsey import NP, MLP
+    from ramsey import NP
+    from ramsey.nn import MLP
     from ramsey.data import sample_from_sine_function
 
     def get_neural_process():
@@ -104,7 +109,8 @@ Ramsey is licensed under the Apache 2.0 License.
     :maxdepth: 1
     :hidden:
 
-    notebooks/neural_process
+    notebooks/inference_with_flax_and_numpyro
+    notebooks/neural_processes
 
 ..  toctree::
     :caption: 🎓 Example code
@@ -115,10 +121,11 @@ Ramsey is licensed under the Apache 2.0 License.
 
 ..  toctree::
     :caption: 🧱 API
-    :maxdepth: 1
+    :maxdepth: 2
     :hidden:
 
     ramsey
     ramsey.data
     ramsey.experimental
     ramsey.family
+    ramsey.nn

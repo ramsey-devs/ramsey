@@ -38,6 +38,7 @@ class MLP(nn.Module):
     activate_final: bool = False
 
     def setup(self):
+        """Construct all networks."""
         output_sizes = tuple(self.output_sizes)
         layers = []
         for index, output_size in enumerate(output_sizes):
@@ -56,22 +57,20 @@ class MLP(nn.Module):
 
     # pylint: disable=too-many-function-args
     def __call__(self, inputs: Array, is_training=False):
-        """
-        Transform the inputs through the MLP.
+        """Transform the inputs through the MLP.
 
         Parameters
         ----------
         inputs: jax.Array
-            Input data of dimension (*batch_dims, spatial_dims..., feature_dims)
+            input data of dimension (*batch_dims, spatial_dims..., feature_dims)
         is_training: boolean
             if true, uses training mode (i.e., dropout)
 
         Returns
         -------
         jax.Array
-            Returns the transformed inputs.
+            returns the transformed inputs
         """
-
         num_layers = len(self.layers)
         out = inputs
         for i, layer in enumerate(self.layers):

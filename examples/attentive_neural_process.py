@@ -11,14 +11,15 @@ References
 [1] Kim, Hyunjik, et al. "Attentive Neural Processes."
     International Conference on Learning Representations. 2019.
 """
-
+import argparse
 
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from jax import random as jr
 
-from ramsey import ANP, MLP, MultiHeadAttention, train_neural_process
+from ramsey import ANP, train_neural_process
 from ramsey.data import sample_from_gaussian_process
+from ramsey.nn import MLP, MultiHeadAttention
 
 
 def data(key):
@@ -43,7 +44,7 @@ def get_neural_process():
     return np
 
 
-def train_np(key, n_context, n_target, x_target, y_target):
+def train_np(key, n_context, n_target, x_target, y_target, num_iter):
     neural_process = get_neural_process()
     params, _ = train_neural_process(
         key,
@@ -52,7 +53,8 @@ def train_np(key, n_context, n_target, x_target, y_target):
         y=y_target,
         n_context=n_context,
         n_target=n_target,
-        n_iter=10000,
+        n_iter=num_iter,
+        batch_size=2,
     )
     return neural_process, params
 
@@ -111,13 +113,13 @@ def plot(
     plt.show()
 
 
-def run():
+def run(args):
     n_context, n_target = 10, 20
     data_rng_key, train_rng_key, plot_rng_key = jr.split(jr.PRNGKey(0), 3)
     (x_target, y_target), f_target = data(data_rng_key)
 
     neural_process, params = train_np(
-        train_rng_key, n_context, n_target, x_target, y_target
+        train_rng_key, n_context, n_target, x_target, y_target, args.num_iter
     )
 
     plot(
@@ -133,4 +135,6 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "---num_iter", type=int, default=10000)
+    run(parser.parse_args())

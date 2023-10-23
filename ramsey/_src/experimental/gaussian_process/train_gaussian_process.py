@@ -15,7 +15,7 @@ from ramsey._src.experimental.gaussian_process.sparse_gaussian_process import (
 
 # pylint: disable=too-many-locals,invalid-name
 def train_gaussian_process(
-    seed: jr.PRNGKey,
+    rng_key: jr.PRNGKey,
     gaussian_process: GP,
     x: Array,
     y: Array,
@@ -23,6 +23,30 @@ def train_gaussian_process(
     n_iter=1000,
     verbose=False,
 ):
+    r"""Train a Gaussian process.
+
+    Parameters
+    ----------
+    rng_key: jax.random.PRNGKey
+        a key for seeding random number generators
+    gaussian_process: GP
+        a GP object
+    x: jax.Array
+        an input array of dimension :math:`n \times p`
+    y: an array of outputs of dimension :math:`n \times 1`
+    optimizer: optax.GradientTransformation
+        an optax optimizer
+    n_iter: int
+        number of training iterations
+    verbose: bool
+        print training details
+
+    Returns
+    -------
+    Tuple[dict, jax.Array]
+        a tuple of training parameters and training losses
+    """
+
     @jax.jit
     def step(rngs, state, **batch):
         step = state.step
@@ -38,12 +62,14 @@ def train_gaussian_process(
         new_state = state.apply_gradients(grads=grads)
         return new_state, obj
 
-    rng, seed = jr.split(seed)
-    state = create_train_state(rng, gaussian_process, optimizer, x=x)
+    train_state_rng, rng_key = jr.split(rng_key)
+    state = _create_train_state(
+        train_state_rng, gaussian_process, optimizer, x=x
+    )
 
     objectives = np.zeros(n_iter)
     for i in tqdm(range(n_iter)):
-        sample_rng_key, seed = jr.split(seed)
+        sample_rng_key, rng_key = jr.split(rng_key)
         state, obj = step({"sample": sample_rng_key}, state, x=x, y=y)
         objectives[i] = obj
         if (i % 100 == 0 or i == n_iter - 1) and verbose:
@@ -55,7 +81,7 @@ def train_gaussian_process(
 
 # pylint: disable=too-many-locals,invalid-name
 def train_sparse_gaussian_process(
-    seed: jr.PRNGKey,
+    rng_key: jr.PRNGKey,
     gaussian_process: SparseGP,
     x: Array,
     y: Array,
@@ -63,6 +89,30 @@ def train_sparse_gaussian_process(
     n_iter=1000,
     verbose=False,
 ):
+    r"""Train a sparse Gaussian process.
+
+    Parameters
+    ----------
+    rng_key: jax.random.PRNGKey
+        a key for seeding random number generators
+    gaussian_process: SparseGP
+        a SparseGP object
+    x: jax.Array
+        an input array of dimension :math:`n \times p`
+    y: an array of outputs of dimension :math:`n \times 1`
+    optimizer: optax.GradientTransformation
+        an optax optimizer
+    n_iter: int
+        number of training iterations
+    verbose: bool
+        print training details
+
+    Returns
+    -------
+    Tuple[dict, jax.Array]
+        a tuple of training parameters and training losses
+    """
+
     @jax.jit
     def step(rngs, state, **batch):
         def obj_fn(params):
@@ -73,12 +123,14 @@ def train_sparse_gaussian_process(
         new_state = state.apply_gradients(grads=grads)
         return new_state, obj
 
-    rng, seed = jr.split(seed)
-    state = create_train_state(rng, gaussian_process, optimizer, x=x, y=y)
+    train_state_key, rng_key = jr.split(rng_key)
+    state = _create_train_state(
+        train_state_key, gaussian_process, optimizer, x=x, y=y
+    )
 
     objectives = np.zeros(n_iter)
     for i in tqdm(range(n_iter)):
-        sample_rng_key, seed = jr.split(seed)
+        sample_rng_key, rng_key = jr.split(rng_key)
         state, obj = step({"sample": sample_rng_key}, state, x=x, y=y)
         objectives[i] = obj
         if (i % 100 == 0 or i == n_iter - 1) and verbose:
@@ -88,7 +140,7 @@ def train_sparse_gaussian_process(
     return state.params, objectives
 
 
-def create_train_state(rng, model, optimizer, **init_data):
+def _create_train_state(rng, model, optimizer, **init_data):
     params = model.init({"params": rng}, **init_data)
     state = TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)
     return state

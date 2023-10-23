@@ -4,8 +4,9 @@ import chex
 import pytest
 from jax import random as jr
 
-from ramsey import MLP, NP
-from ramsey.data import sample_from_gaussian_process
+from ramsey._src.data.data import sample_from_gaussian_process
+from ramsey._src.neural_process.neural_process import NP
+from ramsey._src.nn.MLP import MLP
 
 
 #  pylint: disable=too-many-locals,invalid-name,redefined-outer-name

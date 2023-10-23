@@ -10,18 +10,39 @@ from numpyro.distributions import constraints, kl_divergence
 
 # pylint: disable=too-many-instance-attributes,too-many-locals
 class BayesianLinear(nn.Module):
-    """
-    Linear Bayesian layer
+    """Linear Bayesian layer.
 
     A linear Bayesian layer using distributions over weights and bias.
     The KL divergences between the variational posteriors and priors
     for weigths and bias are calculated. The KL divergence terms can be
     used to obtain the ELBO as an objective to train a Bayesian neural network.
 
+    Attributes
+    ----------
+    output_size: int
+        number of layer outputs
+    with_bias: bool
+        control usage of bias term
+    w_prior: Optional[Distribution]
+        prior distribution for weights
+    b_prior: Optional[Distribution]
+        prior distribution for bias
+    name: Optional[str]
+        name of the layer
+    kwargs: keyword arguments
+        you can supply the initializers for the parameters of the priors
+        using the keyword arguments. For instance, if your prior on the
+        weights is a dist.Normal(loc, scale) then you can supply
+        hk.initializers.Initializer objects with names w_loc_init and
+        w_scale_init as keyword arguments. Likewise you can supply
+        initializers called b_loc_init and b_scale_init for the prior on the
+        bias. If your prior on the weights is a dist.Uniform(low, high)
+        you will need to supply initializers called w_low_init and
+        w_high_init
+
     References
     ----------
-
-    [1] Blundell C., Cornebise J., Kavukcuoglu K., Wierstra D.
+    .. [1] Blundell C., Cornebise J., Kavukcuoglu K., Wierstra D.
         "Weight Uncertainty in Neural Networks". ICML, 2015.
     """
 
@@ -33,42 +54,15 @@ class BayesianLinear(nn.Module):
     name: Optional[str] = None
 
     def setup(self):
-        """
-        Instantiates a linear Bayesian layer
-
-        Parameters
-        ----------
-        output_size: int
-            number of layer outputs
-        with_bias: bool
-            control usage of bias term
-        w_prior: Optional[Distribution]
-            prior distribution for weights
-        b_prior: Optional[Distribution]
-            prior distribution for bias
-        name: Optional[str]
-            name of the layer
-        kwargs: keyword arguments
-            you can supply the initializers for the parameters of the priors
-            using the keyword arguments. For instance, if your prior on the
-            weights is a dist.Normal(loc, scale) then you can supply
-            hk.initializers.Initializer objects with names w_loc_init and
-            w_scale_init as keyword arguments. Likewise you can supply
-            initializers called b_loc_init and b_scale_init for the prior on the
-            bias. If your prior on the weights is a dist.Uniform(low, high)
-            you will need to supply initializers called w_low_init and
-            w_high_init
-        """
-
+        """Construct a linear Bayesian layer."""
         self._output_size = self.output_size
         self._with_bias = self.use_bias
         self._w_prior = self.w_prior
         self._b_prior = self.b_prior
 
     @nn.compact
-    def __call__(self, inputs: Array, is_training: bool = False):
-        """
-        Instantiates a sparse Gaussian process
+    def __call__(self, x: Array, is_training: bool = False):
+        """Call a sparse Gaussian process.
 
         Parameters
         ----------
@@ -77,12 +71,11 @@ class BayesianLinear(nn.Module):
         is_training : bool
             training mode where KL divergence terms are calculated and returned
         """
-
-        dtype = inputs.dtype
-        n_in = inputs.shape[-1]
-        outputs = inputs
+        dtype = x.dtype
+        n_in = x.shape[-1]
+        outputs = x
         w, w_params = self._get_weights((n_in, self._output_size), dtype)
-        outputs = jnp.einsum("bj,sjk->sbk", outputs, w)
+        outputs = jnp.einsum("...bj,...sjk->sbk", outputs, w)
         if self._with_bias:
             b, b_params = self._get_bias((1, self._output_size), dtype)
             b = jnp.broadcast_to(b, outputs.shape)
