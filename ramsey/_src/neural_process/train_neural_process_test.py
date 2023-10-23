@@ -22,4 +22,5 @@ def test_neural_process_training(module):
         n_context=10,
         n_target=10,
         n_iter=10,
+        batch_size=2,
     )

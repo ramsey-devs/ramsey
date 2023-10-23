@@ -33,10 +33,10 @@ setup(
               "probabilistic models", "neural process"],
     packages=find_packages(),
     include_package_data=True,
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=[
         "chex",
-        "flax",
+        "flax>=0.7.2",
         "jax>=0.4.4",
         "jaxlib>=0.4.4",
         "numpyro",
