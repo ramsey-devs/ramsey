@@ -53,6 +53,11 @@ repos:
        flake8-pyproject==1.1.0.post0
      ]
 
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.1
+  hooks:
+    - id: ruff
+
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.910-1
   hooks:
