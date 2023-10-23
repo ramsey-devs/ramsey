@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Optional
 
 import jax
 import numpy as np
@@ -19,7 +20,8 @@ def _moving_window(a, size: int):
     )
 
 
-# pylint: disable=too-many-instance-attributes,duplicate-code
+# pylint: disable=too-many-instance-attributes,duplicate-code,arguments-renamed
+# pylint: disable=invalid-overridden-method,abstract-method
 class Autoregressive(dist.Distribution):
     """An autoregressive model.
 
@@ -51,8 +53,8 @@ class Autoregressive(dist.Distribution):
     def sample(
         self,
         rng_key: jr.PRNGKey,
-        length: int = None,
-        initial_state: float = None,
+        length: Optional[int] = None,
+        initial_state: Optional[float] = None,
         sample_shape=(),
     ):
         """Sample from the distribution.
@@ -61,9 +63,9 @@ class Autoregressive(dist.Distribution):
         ----------
         rng_key: jax.random.PRNGKey
             a random key for seeding
-        length: int
+        length: Optional[int]
             length of sequence
-        initial_state: float
+        initial_state: Optional[float]
             an initial value
         sample_shape: Tuple
             a tuple of the form (shape,)
@@ -121,7 +123,11 @@ class Autoregressive(dist.Distribution):
         lp = dist.Normal(locs, self.scale).log_prob(seqs[:, 0])
         return jnp.sum(lp)
 
-    def mean(self, length: int = None, initial_state: float = None):
+    def mean(
+        self,
+        length: Optional[int] = None,
+        initial_state: Optional[float] = None,
+    ):
         """Compute the mean of the autoregressive distribution.
 
         Parameters
@@ -129,7 +135,7 @@ class Autoregressive(dist.Distribution):
         length: Optional[int]
             "length" of the autoregressive sequence. If None, takes
             length supplied to constructor during construction of object.
-        initial_state: float
+        initial_state: Optional[int]
             initial state of the distribution. If None, takes mean
 
         Returns

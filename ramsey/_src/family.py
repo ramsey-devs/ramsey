@@ -16,12 +16,10 @@ class Family(abc.ABC):
     @abc.abstractmethod
     def __call__(self, target: jnp.ndarray):
         """Compose a NumPyro distribution."""
-        pass
 
     @abc.abstractmethod
     def get_canonical_parameters(self):
         """Getter for canonical parameters."""
-        pass
 
 
 class Gaussian(Family):

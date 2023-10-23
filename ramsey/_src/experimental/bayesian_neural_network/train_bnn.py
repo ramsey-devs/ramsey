@@ -9,6 +9,7 @@ from jax import random as jr
 from rmsyutls import as_batch_iterator
 from tqdm import tqdm
 
+# pylint: disable=line-too-long
 from ramsey._src.experimental.bayesian_neural_network.bayesian_neural_network import (
     BNN,
 )
@@ -23,6 +24,7 @@ def _create_train_state(rng, model, optimizer, **init_data):
     return state
 
 
+# pylint: disable=too-many-locals
 def train_bnn(
     rng_key,
     bnn: BNN,
@@ -61,7 +63,10 @@ def train_bnn(
     itr_key, seed = jr.split(rng_key)
     # ignore this 'error', because mypy doesn't realize that this is correct
     train_itr = as_batch_iterator(
-        itr_key, namedtuple("data", "y x")(y, x), batch_size, True  # type: ignore
+        itr_key,
+        namedtuple("data", "y x")(y, x),  # type: ignore
+        batch_size,
+        True,
     )
 
     init_key, seed = jr.split(seed)
