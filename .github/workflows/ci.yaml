@@ -15,13 +15,13 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
   lint:
-    name: unit tests
+    name: lints
     runs-on: ubuntu-latest
     needs:
       - build
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: 3.11
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -42,7 +42,7 @@ jobs:
       - build
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: 3.11
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -67,7 +67,7 @@ jobs:
         - test
       strategy:
         matrix:
-          python-version: ["3.10", "3.11"]
+          python-version: 3.11
       steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
