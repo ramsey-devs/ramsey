@@ -1,3 +1,5 @@
+from typing import Iterable, Tuple, Union
+
 import jax
 import numpy as np
 import optax
@@ -31,8 +33,8 @@ def train_neural_process(
     neural_process: NP,  # pylint: disable=invalid-name
     x: Array,  # pylint: disable=invalid-name
     y: Array,  # pylint: disable=invalid-name
-    n_context: int,
-    n_target: int,
+    n_context: Union[int, Tuple[int]],
+    n_target: Union[int, Tuple[int]],
     batch_size: int,
     optimizer=optax.adam(3e-4),
     n_iter=20000,
@@ -60,10 +62,16 @@ def train_neural_process(
         :math:`b \times n \times q`
         where :math:`b` and :math:`n` are the same as for :math:`x` and
         :math:`q` is the number of outputs
-    n_context: int
-        number of context points
-    n_target: int
-        number of target points
+    n_context: Union[int, Tuple[int]]
+        number of context points. If a tuple is given samples the number of
+        context points per iteration on the interval defined by the tuple.
+    n_target: Union[int, Tuple[int]]
+        number of target points. If a tuple is given samples the number of
+        context points per iteration on the interval defined by the tuple.
+        The number of target points includes the
+        number of context points, that means, if n_context=5 and n_target=10
+        then the target set contains 5 more points than the context set but
+        includes the contexts, too. In
     batch_size: int
         number of elements that are samples for each gradient step, i.e.,
         number of elements in first axis of :math:`x` and :math:`y`
@@ -115,9 +123,21 @@ def _split_data(
     x: Array,  # pylint: disable=invalid-name
     y: Array,  # pylint: disable=invalid-name
     batch_size: int,
-    n_context: int,
-    n_target: int,
+    n_context: Union[int, Tuple[int]],
+    n_target: Union[int, Tuple[int]],
 ):
+    if isinstance(n_context, Tuple):
+        cnt_key, rng_key = jr.split(rng_key)
+        n_context = jr.randint(
+            cnt_key, minval=n_context[0], maxval=n_context[1], shape=()
+        )
+    if isinstance(n_target, Tuple):
+        trg_key, rng_key = jr.split(rng_key)
+        n_target = jr.randint(
+            trg_key, minval=n_target[0], maxval=n_target[1], shape=()
+        )
+
+    assert n_target > n_context
     batch_rng_key, idx_rng_key, rng_key = jr.split(rng_key, 3)
     ibatch = jr.choice(
         batch_rng_key, x.shape[0], shape=(batch_size,), replace=False

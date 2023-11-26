@@ -13,6 +13,9 @@ References
 """
 import argparse
 
+import matplotlib
+
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from jax import random as jr
@@ -114,7 +117,7 @@ def plot(
 
 
 def run(args):
-    n_context, n_target = 10, 20
+    n_context, n_target = (5, 10), (20, 30)
     data_rng_key, train_rng_key, plot_rng_key = jr.split(jr.PRNGKey(0), 3)
     (x_target, y_target), f_target = data(data_rng_key)
 
@@ -129,8 +132,8 @@ def run(args):
         x_target,
         y_target,
         f_target,
-        n_context,
-        n_target,
+        n_context=10,
+        n_target=20,
     )
 
 
