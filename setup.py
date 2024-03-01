@@ -1,5 +1,6 @@
 import re
 from os.path import abspath, dirname, join
+
 from setuptools import find_packages, setup
 
 PROJECT_PATH = dirname(abspath(__file__))
@@ -29,8 +30,13 @@ setup(
     url="https://github.com/ramsey-devs/ramsey",
     author="The Ramsey developers",
     license="Apache 2.0",
-    keywords=["bayes", "jax", "probabilistic deep learning",
-              "probabilistic models", "neural process"],
+    keywords=[
+        "Bayes",
+        "jax",
+        "probabilistic deep learning",
+        "probabilistic models",
+        "neural process",
+    ],
     packages=find_packages(),
     include_package_data=True,
     python_requires=">=3.9",
@@ -50,7 +56,7 @@ setup(
         "examples": ["matplotlib"],
     },
     classifiers=[
-        "Development Status :: 1 - Planning",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",

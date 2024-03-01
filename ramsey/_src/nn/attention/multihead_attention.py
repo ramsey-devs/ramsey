@@ -16,9 +16,9 @@ from jax import numpy as jnp
 from ramsey._src.nn.attention.attention import Attention
 
 
+# ruff: noqa: PLR0913
 class MultiHeadAttention(Attention):
-    """
-    Multi-head attention.
+    """Multi-head attention.
 
     As described in [1].
 
@@ -41,7 +41,7 @@ class MultiHeadAttention(Attention):
     head_size: int
     embedding: Optional[nn.Module]
 
-    def setup(self):
+    def setup(self) -> None:
         """Construct the networks."""
         self._attention = _MultiHeadAttention(
             num_heads=self.num_heads,
@@ -50,7 +50,7 @@ class MultiHeadAttention(Attention):
         )
 
     @nn.compact
-    def __call__(self, key: Array, value: Array, query: Array):
+    def __call__(self, key: Array, value: Array, query: Array) -> Array:
         """Apply attention to the query.
 
         Arguments
@@ -73,6 +73,7 @@ class MultiHeadAttention(Attention):
         return rep
 
 
+# ruff: noqa: E501
 class _MultiHeadAttention(nn.Module):
     num_heads: int
     dtype = None
@@ -99,7 +100,7 @@ class _MultiHeadAttention(nn.Module):
         value: Array,
         mask: Optional[Array] = None,
         deterministic: Optional[bool] = None,
-    ):
+    ) -> Array:
         features = self.out_features or query.shape[-1]
         qkv_features = self.qkv_features or query.shape[-1]
         assert (

@@ -11,8 +11,7 @@ from ramsey._src.family import Family, Gaussian
 
 
 class BNN(nn.Module):
-    """
-    A Bayesian neural network.
+    """A Bayesian neural network.
 
     The BNN layers can a mix of Bayesian layers and conventional layers.
     The training objective is the ELBO and is calculated according to [1].

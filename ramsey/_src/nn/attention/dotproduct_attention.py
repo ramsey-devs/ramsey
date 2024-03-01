@@ -5,10 +5,11 @@ from jax import numpy as jnp
 from ramsey._src.nn.attention.attention import Attention
 
 
+# ruff: noqa: PLR0913
 class DotProductAttention(Attention):
     """Dot-product attention."""
 
-    def __call__(self, key: Array, value: Array, query: Array):
+    def __call__(self, key: Array, value: Array, query: Array) -> Array:
         """Apply attention to the query.
 
         Arguments

@@ -1,6 +1,4 @@
-"""
-ramsey:  Probabilistic deep learning using JAX
-"""
+"""ramsey:  Probabilistic deep learning using JAX."""
 
 from ramsey._src.nn.attention.attention import Attention
 from ramsey._src.nn.attention.multihead_attention import MultiHeadAttention

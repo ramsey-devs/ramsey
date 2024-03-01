@@ -1,3 +1,5 @@
+"""Methods for downlaading data set."""
+
 from ramsey._src.data.data import (
     m4_data,
     sample_from_gaussian_process,

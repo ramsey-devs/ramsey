@@ -138,6 +138,7 @@ def _split_data(
     }
 
 
+# ruff: noqa: ANN001,ANN003,PLR0913
 def _create_train_state(rng, model, optimizer, **init_data):
     init_key, sample_key = jr.split(rng)
     params = model.init({"sample": sample_key, "params": init_key}, **init_data)

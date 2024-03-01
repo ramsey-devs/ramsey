@@ -38,15 +38,9 @@ def test_module_dimensionality():
     chex.assert_shape(params["latent_encoder_0"]["linear_0"]["kernel"], (2, 3))
     chex.assert_shape(params["latent_encoder_0"]["linear_1"]["kernel"], (3, 3))
     chex.assert_shape(params["latent_encoder_1"]["linear_0"]["kernel"], (3, 3))
-    chex.assert_shape(
-        params["latent_encoder_1"]["linear_1"]["kernel"], (3, 2 * 3)
-    )
-    chex.assert_shape(
-        params["deterministic_encoder"]["linear_0"]["kernel"], (2, 4)
-    )
-    chex.assert_shape(
-        params["deterministic_encoder"]["linear_1"]["kernel"], (4, 4)
-    )
+    chex.assert_shape(params["latent_encoder_1"]["linear_1"]["kernel"], (3, 2 * 3))
+    chex.assert_shape(params["deterministic_encoder"]["linear_0"]["kernel"], (2, 4))
+    chex.assert_shape(params["deterministic_encoder"]["linear_1"]["kernel"], (4, 4))
     chex.assert_shape(params["decoder"]["linear_0"]["kernel"], (3 + 4 + 1, 3))
     chex.assert_shape(params["decoder"]["linear_1"]["kernel"], (3, 2))
 

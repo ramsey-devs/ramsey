@@ -14,8 +14,7 @@ __all__ = ["GP"]
 
 # pylint: disable=too-many-instance-attributes,duplicate-code
 class GP(nn.Module):
-    """
-    A Gaussian process.
+    """A Gaussian process.
 
     Attributes
     ----------
@@ -30,8 +29,7 @@ class GP(nn.Module):
 
     @nn.compact
     def __call__(self, x: Array, **kwargs):
-        """
-        Evaluate the Gaussian process.
+        """Evaluate the Gaussian process.
 
         Parameters
         ----------

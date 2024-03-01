@@ -10,8 +10,7 @@ from ramsey._src.neural_process.neural_process import NP
 __all__ = ["ANP"]
 
 
-# pylint: disable=too-many-instance-attributes,duplicate-code
-# pylint: disable=unpacking-non-sequence,
+# ruff: noqa: PLR0913
 class ANP(NP):
     """An attentive neural process.
 

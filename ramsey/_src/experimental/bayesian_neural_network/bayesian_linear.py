@@ -115,6 +115,7 @@ class BayesianLinear(nn.Module):
         )
         return samples, params
 
+    # ruff: noqa: PLR0913
     def _init_param(self, weight_name, param_name, constraint, shape, dtype):
         init = initializers.xavier_normal()
 

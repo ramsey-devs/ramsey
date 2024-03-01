@@ -143,6 +143,7 @@ class M4Dataset:
         train, test = self._load(dataset, train_csv_path, test_csv_path)
         return train, test
 
+    # ruff: noqa: S310
     def _download(self, dataset):
         for url in dataset.urls:
             file = os.path.basename(urlparse(url).path)

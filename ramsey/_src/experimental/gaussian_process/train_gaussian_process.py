@@ -13,7 +13,7 @@ from ramsey._src.experimental.gaussian_process.sparse_gaussian_process import (
 )
 
 
-# pylint: disable=too-many-locals,invalid-name
+# ruff: noqa: PLR0913
 def train_gaussian_process(
     rng_key: jr.PRNGKey,
     gaussian_process: GP,
@@ -79,7 +79,7 @@ def train_gaussian_process(
     return state.params, objectives
 
 
-# pylint: disable=too-many-locals,invalid-name
+# ruff: noqa: D406
 def train_sparse_gaussian_process(
     rng_key: jr.PRNGKey,
     gaussian_process: SparseGP,

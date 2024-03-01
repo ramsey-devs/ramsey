@@ -1,54 +1,19 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 
-[tool.black]
-line-length = 80
-target-version = ['py38']
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-line_length = 80
-include_trailing_comma = true
-
-[tool.flake8]
-max-line-length = 80
-extend-ignore = ["E203", "W503", "E731", "E501"]
-per-file-ignores = [
-    '__init__.py:F401',
-]
-
-[tool.pylint.'MESSAGES CONTROL']
-max-line-length=80
-disable = [
-    "missing-module-docstring",
-    "missing-function-docstring",
-    "no-name-in-module",
-    "too-many-arguments",
-    "duplicate-code",
-    "invalid-name",
-    "attribute-defined-outside-init",
-    "unsubscriptable-object",
-    "unpacking-non-sequence",
-    "arguments-differ"
-]
-
 [tool.bandit]
 skips = ["B101", "B310"]
 
-[tool.pydocstyle]
+[tool.ruff]
+line-length = 80
+exclude = ["*_test.py", "setup.py"]
+
+[tool.ruff.lint]
+ignore= ["S101", "ANN1", "ANN2", "ANN0"]
+select = ["ANN", "D", "E", "F"]
+extend-select = [
+  "UP", "D", "I", "PL", "S"
+]
+
+[tool.ruff.lint.pydocstyle]
 convention= 'numpy'
-match = '^ramsey/.*/((?!test).)*\.py'
