@@ -8,8 +8,7 @@ from jax import Array
 
 
 class MLP(nn.Module):
-    """
-    A multi-layer perceptron.
+    """A multi-layer perceptron.
 
     Attributes
     ----------
@@ -56,19 +55,19 @@ class MLP(nn.Module):
             self.dropout_layer = nn.Dropout(self.dropout)
 
     # pylint: disable=too-many-function-args
-    def __call__(self, inputs: Array, is_training=False):
+    def __call__(self, inputs: Array, is_training: bool = False):
         """Transform the inputs through the MLP.
 
         Parameters
         ----------
-        inputs: jax.Array
+        inputs: Array
             input data of dimension (*batch_dims, spatial_dims..., feature_dims)
         is_training: boolean
             if true, uses training mode (i.e., dropout)
 
         Returns
         -------
-        jax.Array
+        Array
             returns the transformed inputs
         """
         num_layers = len(self.layers)

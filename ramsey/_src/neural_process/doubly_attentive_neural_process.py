@@ -12,8 +12,7 @@ __all__ = ["DANP"]
 
 # pylint: disable=too-many-instance-attributes
 class DANP(ANP):
-    """
-    A doubly-attentive neural process.
+    """A doubly-attentive neural process.
 
     Implements the core structure of a 'doubly-attentive' neural process [1],
     i.e., a deterministic encoder, a latent encoder with self-attention module,

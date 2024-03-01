@@ -10,8 +10,7 @@ from ramsey._src.experimental.gaussian_process.kernel.base import Kernel
 
 # pylint: disable=invalid-name
 class Periodic(Kernel, nn.Module):
-    """
-    Periodic covariance function.
+    """Periodic covariance function.
 
     Attributes
     ----------
@@ -60,8 +59,7 @@ class Periodic(Kernel, nn.Module):
 
 
 class ExponentiatedQuadratic(Kernel, nn.Module):
-    """
-    Exponentiated quadratic covariance function.
+    """Exponentiated quadratic covariance function.
 
     Attributes
     ----------

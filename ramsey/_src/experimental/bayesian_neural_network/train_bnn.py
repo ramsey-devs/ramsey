@@ -9,7 +9,7 @@ from jax import random as jr
 from rmsyutls import as_batch_iterator
 from tqdm import tqdm
 
-# pylint: disable=line-too-long
+# ruff: noqa: E501
 from ramsey._src.experimental.bayesian_neural_network.bayesian_neural_network import (
     BNN,
 )
@@ -24,7 +24,7 @@ def _create_train_state(rng, model, optimizer, **init_data):
     return state
 
 
-# pylint: disable=too-many-locals
+# ruff: noqa: PLR0913
 def train_bnn(
     rng_key,
     bnn: BNN,

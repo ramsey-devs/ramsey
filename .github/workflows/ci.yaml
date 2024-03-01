@@ -33,7 +33,7 @@ jobs:
         pip install tox
     - name: Run format, sort, lints and types
       run: |
-        tox -e format,sort,lints,types
+        tox -e format,lints,types
 
   test:
     name: unit tests

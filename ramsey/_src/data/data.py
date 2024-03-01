@@ -39,9 +39,7 @@ def m4_data(interval: str = "hourly", drop_na: bool = True):
     train_idxs = jnp.arange(train.shape[1])
     test_idxs = jnp.arange(test.shape[1]) + train.shape[1]
 
-    return namedtuple(
-        "data", ["y", "x", "train_idxs", "test_idxs"]
-    )(  # type: ignore
+    return namedtuple("data", ["y", "x", "train_idxs", "test_idxs"])(  # type: ignore
         y, x, train_idxs, test_idxs
     )
 

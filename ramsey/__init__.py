@@ -1,6 +1,4 @@
-"""
-ramsey:  Probabilistic deep learning using JAX
-"""
+"""ramsey:  Probabilistic deep learning using JAX."""
 
 from ramsey._src.neural_process.attentive_neural_process import ANP
 from ramsey._src.neural_process.doubly_attentive_neural_process import DANP
