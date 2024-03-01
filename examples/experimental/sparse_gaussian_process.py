@@ -1,6 +1,4 @@
-"""
-Sparse Gaussian process regression
-==================================
+"""Sparse Gaussian process regression example.
 
 This example implements the training and prediction of a sparse Gaussian process
 regression model.
@@ -13,12 +11,12 @@ References
 """
 
 import argparse
+import jax
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from jax import random as jr
-from jax.config import config
 
 from ramsey.data import sample_from_gaussian_process
 from ramsey.experimental import (
@@ -27,7 +25,7 @@ from ramsey.experimental import (
     train_sparse_gaussian_process,
 )
 
-config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", True)
 
 
 def data(key, rho, sigma, n=1000):
