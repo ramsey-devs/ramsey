@@ -31,7 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install tox
-    - name: Run format, sort, lints and types
+    - name: Run format, lints and types
       run: |
         tox -e format,lints,types
 
