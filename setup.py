@@ -1,5 +1,4 @@
-import re
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname
 
 from setuptools import find_packages, setup
 
@@ -10,20 +9,9 @@ def readme():
     with open("README.md") as fl:
         return fl.read()
 
-
-def _version():
-    version = None
-    for line in open(join(PROJECT_PATH, "ramsey", "__init__.py")):
-        if line.startswith("__version__"):
-            version = re.match(r"__version__.*(\d+\.\d+\.\d+).*", line).group(1)
-    if version is None:
-        raise ValueError("couldn't parse version number from __init__.py")
-    return version
-
-
 setup(
     name="ramsey",
-    version=_version(),
+    version="0.2.2",
     description="Probabilistic deep learning using JAX",
     long_description=readme(),
     long_description_content_type="text/markdown",
