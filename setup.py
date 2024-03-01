@@ -52,7 +52,7 @@ setup(
         "tqdm",
     ],
     extras_require={
-        "dev": ["pre-commit", "black", "isort", "pylint", "tox", "pytest"],
+        "dev": ["pre-commit", "tox", "ruff"],
         "examples": ["matplotlib"],
     },
     classifiers=[
