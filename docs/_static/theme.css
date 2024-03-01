@@ -1,22 +1,31 @@
-html[data-theme="dark"], html[data-theme="light"] {
-    --pst-color-primary: #204a87;
-    --pst-color-link: #204a87;
-    --sd-color-primary: #204a87;
+html[data-theme="light"] {
+    --pst-color-primary: rgb(121, 40, 161);
+    --pst-color-primary-bg: #ffe9dd;
+    --pst-color-secondary: #b26679;
+    --pst-color-inline-code-links: #b26679;
 }
 
 h1 > code > span {
     font-family: var(--pst-font-family-monospace);
-    /*color: #204a87;*/
     font-weight: 700;
 }
 
 nav > li > a > code.literal {
-    padding-top: 0rem;
-    padding-bottom: 0rem;
+    padding-top: 0;
+    padding-bottom: 0;
     background-color: white;
-    border: 0px;
+    border: 0;
 }
 
+nav.bd-links p.caption {
+    text-transform: uppercase;
+}
+
+code.literal {
+  background-color: white;
+  border: 0;
+  border-radius: 0;
+}
 a:hover {
       text-decoration-thickness: 1px !important;
 }
@@ -34,12 +43,6 @@ nav.bd-links li > a:hover {
   text-decoration: none !important;
 }
 
-nav.bd-links p.caption {
-    text-transform: uppercase;
-}
-
-code.literal {
-  background-color: white;
-  border: 0px;
-  border-radius: 0px;
+button.theme-switch-button {
+    display: none !important;
 }
