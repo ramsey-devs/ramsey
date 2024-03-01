@@ -7,11 +7,11 @@ regression model.
 
 References
 ----------
-
 [1] Titsias, Michalis K.
     "Variational Learning of Inducing Variables in Sparse Gaussian Processes".
     AISTATS, 2009.
 """
+
 import argparse
 
 import matplotlib.patches as mpatches

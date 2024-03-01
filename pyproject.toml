@@ -1,18 +1,21 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 
+#[tool.mypy]
+#skips = ["B101", "B310"]
+
 [tool.bandit]
 skips = ["B101", "B310"]
 
 [tool.ruff]
 line-length = 80
-exclude = ["*_test.py", "setup.py"]
+exclude = ["*_test.py", "setup.py", "docs/**", "examples/experimental/**"]
 
 [tool.ruff.lint]
 ignore= ["S101", "ANN1", "ANN2", "ANN0"]
 select = ["ANN", "D", "E", "F"]
 extend-select = [
-  "UP", "D", "I", "PL", "S"
+  "UP", "I", "PL", "S"
 ]
 
 [tool.ruff.lint.pydocstyle]

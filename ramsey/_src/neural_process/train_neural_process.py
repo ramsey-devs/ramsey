@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple, Union
+from typing import Tuple, Union
 
 import jax
 import numpy as np
@@ -117,21 +117,20 @@ def train_neural_process(
     return state.params, objectives
 
 
-# pylint: disable=too-many-locals
 def _split_data(
     rng_key: jr.PRNGKey,
-    x: Array,  # pylint: disable=invalid-name
-    y: Array,  # pylint: disable=invalid-name
+    x: Array,
+    y: Array,
     batch_size: int,
-    n_context: Union[int, Tuple[int]],
-    n_target: Union[int, Tuple[int]],
+    n_context,
+    n_target,
 ):
-    if isinstance(n_context, Tuple):
+    if isinstance(n_context, tuple):
         cnt_key, rng_key = jr.split(rng_key)
         n_context = jr.randint(
             cnt_key, minval=n_context[0], maxval=n_context[1], shape=()
         )
-    if isinstance(n_target, Tuple):
+    if isinstance(n_target, tuple):
         trg_key, rng_key = jr.split(rng_key)
         n_target = jr.randint(
             trg_key, minval=n_target[0], maxval=n_target[1], shape=()
@@ -143,8 +142,12 @@ def _split_data(
         batch_rng_key, x.shape[0], shape=(batch_size,), replace=False
     )
     idxs = jr.choice(
-        idx_rng_key, x.shape[1], shape=(n_context + n_target,), replace=False
+        idx_rng_key,
+        x.shape[1],
+        shape=(n_context + n_target,),
+        replace=False,
     )
+    ibatch = np.asarray(ibatch, dtype=np.int32)
     x_context = x[ibatch][:, idxs[:n_context], :]
     y_context = y[ibatch][:, idxs[:n_context], :]
     x_target = x[ibatch][:, idxs, :]

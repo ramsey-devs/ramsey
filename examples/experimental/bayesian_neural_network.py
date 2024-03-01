@@ -8,7 +8,6 @@ the same data are shown as a reference.
 
 References
 ----------
-
 [1] Blundell C., Cornebise J., Kavukcuoglu K., Wierstra D.
     "Weight Uncertainty in Neural Networks". ICML, 2015.
 """

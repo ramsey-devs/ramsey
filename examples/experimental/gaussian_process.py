@@ -7,10 +7,10 @@ regression model.
 
 References
 ----------
-
 [1] Rasmussen, Carl E and Williams, Chris KI.
     "Gaussian Processes for Machine Learning". MIT press, 2006.
 """
+
 import argparse
 
 import matplotlib.patches as mpatches

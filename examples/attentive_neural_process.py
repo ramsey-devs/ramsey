@@ -1,21 +1,17 @@
-"""
-Attentive neural process
-========================
+# ruff: noqa: D103,PLR0913
+"""Attentive neural process example.
 
 Here, we implement and train an attentive neural process
 and visualize predictions thereof.
 
 References
 ----------
-
 [1] Kim, Hyunjik, et al. "Attentive Neural Processes."
     International Conference on Learning Representations. 2019.
 """
+
 import argparse
 
-import matplotlib
-
-matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from jax import random as jr
