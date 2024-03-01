@@ -1,9 +1,6 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 
-[tool.mypy]
-skips = ["B101"]
-
 [tool.bandit]
 skips = ["B101", "B310"]
 
