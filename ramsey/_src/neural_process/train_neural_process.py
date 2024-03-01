@@ -71,7 +71,7 @@ def train_neural_process(
         The number of target points includes the
         number of context points, that means, if n_context=5 and n_target=10
         then the target set contains 5 more points than the context set but
-        includes the contexts, too. In
+        includes the contexts, too.
     batch_size: int
         number of elements that are samples for each gradient step, i.e.,
         number of elements in first axis of :math:`x` and :math:`y`
@@ -144,7 +144,7 @@ def _split_data(
     idxs = jr.choice(
         idx_rng_key,
         x.shape[1],
-        shape=(n_context + n_target,),
+        shape=(n_target,),
         replace=False,
     )
     ibatch = np.asarray(ibatch, dtype=np.int32)

@@ -12,7 +12,6 @@ def test_neural_process_training(module):
     data = sample_from_gaussian_process(key)
     x_target, y_target = data.x, data.y
 
-    print(module)
     key, train_key = jr.split(key)
     train_neural_process(
         train_key,
@@ -20,7 +19,7 @@ def test_neural_process_training(module):
         x=x_target,
         y=y_target,
         n_context=10,
-        n_target=10,
+        n_target=20,
         n_iter=10,
         batch_size=2,
     )
