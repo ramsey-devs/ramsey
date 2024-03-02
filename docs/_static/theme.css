@@ -1,4 +1,4 @@
-html[data-theme="light"] {
+:root {
     --pst-color-primary: rgb(121, 40, 161);
     --pst-color-primary-bg: #ffe9dd;
     --pst-color-secondary: #b26679;

@@ -1,0 +1,11 @@
+site_name: Ramsey
+
+nav:
+  - 🏠 Home: 'index.md'
+  - 📰 News: 'news.md'
+  - 🎓 Tutorials:
+      - notebooks/inference_with_flax_and_numpyro
+      - notebooks/neural_processes
+  - 🎓 Example code:
+      - 'examples.md'
+  - 🧱 API

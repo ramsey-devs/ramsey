@@ -70,8 +70,7 @@ html_theme_options = {
         {
             "media": "(prefers-color-scheme: light)",
             "scheme": "default",
-            "primary": "white",
-            "accent": "dark-purple",
+
         },
     ],
     "toc_title_is_page_title": True,
