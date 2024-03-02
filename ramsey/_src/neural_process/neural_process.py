@@ -41,8 +41,7 @@ class NP(nn.Module):
 
     References
     ----------
-    .. [1] Garnelo, Marta, et al. "Neural processes".
-       CoRR. 2018.
+    [1] Garnelo, Marta, et al. "Neural processes".  CoRR. 2018.
     """
 
     decoder: nn.Module

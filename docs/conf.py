@@ -51,30 +51,6 @@ html_theme_options = {
     "repo_name": "ramsey",
     "extra_navbar": "",
     "launch_buttons": {"colab_url": "https://colab.research.google.com"},
-    "icon": {
-        "repo": "fontawesome/brands/github",
-        "edit": "material/file-edit-outline",
-    },
-    "globaltoc_collapse": True,
-    "features": [
-        "navigation.expand",
-        "navigation.sections",
-        "navigation.top",
-        "search.share",
-        "toc.follow",
-        "toc.sticky",
-        "content.tabs.link",
-        "announce.dismiss",
-    ],
-    "palette": [
-        {
-            "media": "(prefers-color-scheme: light)",
-            "scheme": "default",
-
-        },
-    ],
-    "toc_title_is_page_title": True,
-    'globaltoc_depth': 1
 }
 
 html_title = "Ramsey 🚀"
