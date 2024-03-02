@@ -121,7 +121,6 @@ Ramsey is licensed under the Apache 2.0 License.
 
 ..  toctree::
     :caption: 🧱 API
-    :maxdepth: 2
     :hidden:
 
     ramsey

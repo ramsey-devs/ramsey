@@ -12,6 +12,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
+    "sphinx_immaterial",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
@@ -42,15 +43,39 @@ exclude_patterns = [
     "examples/*py",
 ]
 
-html_theme = "sphinx_book_theme"
+html_theme = "sphinx_immaterial"
 
 html_theme_options = {
-    "repository_url": "https://github.com/ramsey-devs/ramsey",
-    "use_repository_button": True,
-    "use_download_button": False,
-    "use_fullscreen_button": False,
+    "site_url": "https://ramsey.readthedocs.io",
+    "repo_url": "https://github.com/ramsey-devs/ramsey",
+    "repo_name": "ramsey",
     "extra_navbar": "",
     "launch_buttons": {"colab_url": "https://colab.research.google.com"},
+    "icon": {
+        "repo": "fontawesome/brands/github",
+        "edit": "material/file-edit-outline",
+    },
+    "globaltoc_collapse": True,
+    "features": [
+        "navigation.expand",
+        "navigation.sections",
+        "navigation.top",
+        "search.share",
+        "toc.follow",
+        "toc.sticky",
+        "content.tabs.link",
+        "announce.dismiss",
+    ],
+    "palette": [
+        {
+            "media": "(prefers-color-scheme: light)",
+            "scheme": "default",
+            "primary": "white",
+            "accent": "dark-purple",
+        },
+    ],
+    "toc_title_is_page_title": True,
+    'globaltoc_depth': 1
 }
 
 html_title = "Ramsey 🚀"
