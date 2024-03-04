@@ -1,24 +1,25 @@
-# ``ramsey``
+# `ramsey`
 
 Module containing all implemented probabilistic models and training functions.
 
 ## Models
 
-### Neural process
-
 ::: ramsey.NP
-    options: 
-      heading_level: 3
+    options:
       members:
-      - __init__
       - __call__
 
 ::: ramsey.ANP
-
+    options:
+      members:
+      - __call__
 
 ::: ramsey.DANP
+    options:
+      members:
+      - __call__
 
 
-## Train functions
+## Functions
 
 ::: ramsey.train_neural_process

@@ -14,7 +14,11 @@ nav:
   - 🎓 Example code:
       - 'examples.md'
   - 🧱 API:
-      - ramsey: 'ramsey.md'
+      - <code>ramsey</code>: ramsey.md
+      - <code>ramsey.data</code>: ramsey.data.md
+      - <code>ramsey.experimental</code>: ramsey.experimental.md
+      - <code>ramsey.family</code>: ramsey.family.md
+      - <code>ramsey.nn</code>: ramsey.nn.md
 
 theme:
   name: material
@@ -33,6 +37,8 @@ theme:
 
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -50,15 +56,15 @@ plugins:
       default_handler: python
       handlers:
         python:
-          rendering:
+          options:
+            heading_level: 3
             show_root_heading: true
-            show_root_full_path: false
+            show_root_full_path: true
             show_root_toc_entry: true
             show_symbol_type_heading: true
             show_if_no_docstring: true
             show_signature_annotations: true
-            show_source: true
-          options:
+            show_source: false
             inherited_members: true
             docstring_style: "numpy"
 
