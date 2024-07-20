@@ -48,10 +48,7 @@ html_theme_options = {
     "use_repository_button": True,
     "use_download_button": False,
     "use_fullscreen_button": False,
-    "extra_navbar": "",
     "launch_buttons": {"colab_url": "https://colab.research.google.com"},
 }
 
-html_title = " 🚀 Ramsey"
-
-pygments_style= "emacs"
+html_title = "Ramsey"
