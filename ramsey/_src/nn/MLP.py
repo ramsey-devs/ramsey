@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Optional
+from collections.abc import Callable, Iterable
 
 import jax
 from flax import linen as nn
@@ -29,7 +29,7 @@ class MLP(nn.Module):
     """
 
     output_sizes: Iterable[int]
-    dropout: Optional[float] = None
+    dropout: float | None = None
     kernel_init: initializers.Initializer = default_kernel_init
     bias_init: initializers.Initializer = initializers.zeros_init()
     use_bias: bool = True

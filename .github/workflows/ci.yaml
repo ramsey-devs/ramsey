@@ -7,18 +7,17 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  precommit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.0
 
-  lint:
-    name: lints
+  build:
     runs-on: ubuntu-latest
     needs:
-      - build
+      - precommit
     strategy:
       matrix:
         python-version: [3.11]
@@ -30,50 +29,19 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install tox
-    - name: Run format, lints and types
+        pip install hatch
+    - name: Build package
       run: |
-        tox -e format,lints,types
+        hatch build
 
-  test:
-    name: unit tests
+  lints:
     runs-on: ubuntu-latest
     needs:
-      - build
+      - precommit
     strategy:
       matrix:
         python-version: [3.11]
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        pip install tox
-    - name: Run tests and coverage
-      run: |
-        tox -e tests
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    - name: Run codacy-coverage-reporter
-      uses: codacy/codacy-coverage-reporter-action@v1
-      with:
-        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: coverage.xml
-
-  examples:
-      name: examples
-      runs-on: ubuntu-latest
-      needs:
-        - test
-      strategy:
-        matrix:
-          python-version: [3.11]
-      steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
@@ -81,7 +49,61 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install tox
+          pip install hatch
+      - name: Run lints
+        run: |
+          hatch run test:lints
+
+  tests:
+    runs-on: ubuntu-latest
+    needs:
+      - lints
+    strategy:
+      matrix:
+        python-version: [3.11]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install hatch
+      - name: Build package
+        run: |
+          pip install jaxlib==0.4.24 jax==0.4.24
+      - name: Run tests
+        run: |
+          hatch run test:tests
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  examples:
+    runs-on: ubuntu-latest
+    needs:
+      - tests
+    strategy:
+      matrix:
+        python-version: [3.11]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install hatch
+      - name: Build package
+        run: |
+          pip install jaxlib==0.4.24 jax==0.4.24
       - name: Run examples
         run: |
-          tox -e examples
+          hatch run test:examples
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

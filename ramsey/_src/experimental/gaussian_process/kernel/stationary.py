@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from flax import linen as nn
 from flax.linen import initializers
 from jax import Array
@@ -26,9 +24,9 @@ class Periodic(Kernel, nn.Module):
     """
 
     period: float
-    active_dims: Optional[list] = None
-    rho_init: Optional[initializers.Initializer] = initializers.uniform()
-    sigma_init: Optional[initializers.Initializer] = initializers.uniform()
+    active_dims: list | None = None
+    rho_init: initializers.Initializer | None = initializers.uniform()
+    sigma_init: initializers.Initializer | None = initializers.uniform()
 
     def setup(self):
         """Construct the covariance function."""
@@ -74,9 +72,9 @@ class ExponentiatedQuadratic(Kernel, nn.Module):
         name of the layer
     """
 
-    active_dims: Optional[list] = None
-    rho_init: Optional[initializers.Initializer] = None
-    sigma_init: Optional[initializers.Initializer] = None
+    active_dims: list | None = None
+    rho_init: initializers.Initializer | None = None
+    sigma_init: initializers.Initializer | None = None
 
     def setup(self):
         """Construct a stationary covariance."""
@@ -117,7 +115,7 @@ def exponentiated_quadratic(
     x1: Array,
     x2: Array,
     sigma: float,
-    rho: Union[float, jnp.ndarray],
+    rho: float | jnp.ndarray,
 ):
     """Exponentiated-quadratic convariance function.
 

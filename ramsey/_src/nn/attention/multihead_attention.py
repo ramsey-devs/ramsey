@@ -1,5 +1,5 @@
 import functools
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from flax import linen as nn
 from flax.linen import dot_product_attention, initializers
@@ -39,7 +39,7 @@ class MultiHeadAttention(Attention):
 
     num_heads: int
     head_size: int
-    embedding: Optional[nn.Module]
+    embedding: nn.Module | None
 
     def setup(self) -> None:
         """Construct the networks."""
@@ -78,11 +78,11 @@ class _MultiHeadAttention(nn.Module):
     num_heads: int
     dtype = None
     param_dtype = jnp.float32
-    qkv_features: Optional[int] = None
-    out_features: Optional[int] = None
+    qkv_features: int | None = None
+    out_features: int | None = None
     broadcast_dropout: bool = True
     dropout_rate: float = 0.0
-    deterministic: Optional[bool] = None
+    deterministic: bool | None = None
     precision: PrecisionLike = None
     kernel_init: Callable = default_kernel_init
     bias_init: Callable = initializers.zeros_init()
@@ -98,8 +98,8 @@ class _MultiHeadAttention(nn.Module):
         query: Array,
         key: Array,
         value: Array,
-        mask: Optional[Array] = None,
-        deterministic: Optional[bool] = None,
+        mask: Array | None = None,
+        deterministic: bool | None = None,
     ) -> Array:
         features = self.out_features or query.shape[-1]
         qkv_features = self.qkv_features or query.shape[-1]

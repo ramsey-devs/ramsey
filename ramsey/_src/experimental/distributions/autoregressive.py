@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Optional
 
 import jax
 import numpy as np
@@ -53,8 +52,8 @@ class Autoregressive(dist.Distribution):
     def sample(
         self,
         rng_key: jr.PRNGKey,
-        length: Optional[int] = None,
-        initial_state: Optional[float] = None,
+        length: int | None = None,
+        initial_state: float | None = None,
         sample_shape=(),
     ):
         """Sample from the distribution.
@@ -125,8 +124,8 @@ class Autoregressive(dist.Distribution):
 
     def mean(
         self,
-        length: Optional[int] = None,
-        initial_state: Optional[float] = None,
+        length: int | None = None,
+        initial_state: float | None = None,
     ):
         """Compute the mean of the autoregressive distribution.
 

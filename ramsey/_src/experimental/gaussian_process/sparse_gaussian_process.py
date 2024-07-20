@@ -1,5 +1,3 @@
-from typing import Optional
-
 from flax import linen as nn
 from flax.linen import initializers
 from jax import Array
@@ -38,11 +36,11 @@ class SparseGP(nn.Module):
 
     kernel: Kernel
     n_inducing: int
-    jitter: Optional[float] = 10e-8
-    log_sigma_init: Optional[initializers.Initializer] = initializers.constant(
+    jitter: float | None = 10e-8
+    log_sigma_init: initializers.Initializer | None = initializers.constant(
         jnp.log(1.0)
     )
-    inducing_init: Optional[initializers.Initializer] = initializers.uniform(1)
+    inducing_init: initializers.Initializer | None = initializers.uniform(1)
 
     @nn.compact
     def __call__(self, x: Array, **kwargs):

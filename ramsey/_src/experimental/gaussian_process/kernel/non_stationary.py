@@ -1,5 +1,3 @@
-from typing import Optional
-
 from flax import linen as nn
 from flax.linen import initializers
 from jax import Array
@@ -23,10 +21,10 @@ class Linear(Kernel, nn.Module):
         an initializer object from Flax or None
     """
 
-    active_dims: Optional[list] = None
-    sigma_b_init: Optional[initializers.Initializer] = initializers.uniform()
-    sigma_v_init: Optional[initializers.Initializer] = initializers.uniform()
-    offset_init: Optional[initializers.Initializer] = initializers.uniform()
+    active_dims: list | None = None
+    sigma_b_init: initializers.Initializer | None = initializers.uniform()
+    sigma_v_init: initializers.Initializer | None = initializers.uniform()
+    offset_init: initializers.Initializer | None = initializers.uniform()
 
     def setup(self):
         """Construct parameters."""

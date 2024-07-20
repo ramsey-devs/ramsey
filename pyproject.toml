@@ -1,5 +1,82 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ramsey"
+description = "Probabilistic deep learning using JAX"
+authors = [{name = "Simon Dirmeier", email = "sfyrbnd@pm.me"}]
+readme = "README.md"
+license = "Apache-2.0"
+homepage = "https://github.com/ramsey-devs/ramsey"
+keywords=[
+  "Bayes",
+  "jax",
+  "probabilistic deep learning",
+  "probabilistic models",
+  "neural process",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.10"
+dependencies = [
+  "chex",
+  "flax>=0.7.2",
+  "jax>=0.4.4",
+  "jaxlib>=0.4.4",
+  "numpyro",
+  "optax",
+  "pandas",
+  "rmsyutls",
+  "tqdm",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = ["pre-commit", "tox", "ruff"]
+examples = ["matplotlib"]
+
+[project.urls]
+Documentation = "https://ramsey.rtfd.io"
+Homepage = "https://github.com/ramsey-devs/ramsey"
+
+[tool.hatch.version]
+path = "ramsey/__init__.py"
+
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.github",
+    "./gitignore",
+    "/.pre-commit-config.yaml"
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "ruff>=0.3.0",
+    "pytest>=7.2.0",
+    "pytest-cov>=4.0.0",
+    "matplotlib"
+]
+
+[tool.hatch.envs.test.scripts]
+lints = 'ruff check ramsey examples'
+format = 'ruff format ramsey examples'
+tests = 'pytest -v --doctest-modules --cov=./ramsey --cov-report=xml ramsey'
+examples = """
+    python ./examples/attentive_neural_process.py -n 10
+    python ./examples/experimental/bayesian_neural_network.py -n 10
+    python ./examples/experimental/gaussian_process.py -n 10
+    python ./examples/experimental/recurrent_attentive_neural_process.py -n 10
+    python ./examples/experimental/sparse_gaussian_process.py -n 10
+"""
 
 [tool.bandit]
 skips = ["B101", "B310"]
@@ -9,11 +86,11 @@ line-length = 80
 exclude = ["*_test.py", "setup.py", "docs/**", "examples/experimental/**"]
 
 [tool.ruff.lint]
-ignore= ["S101", "ANN1", "ANN2", "ANN0"]
 select = ["ANN", "D", "E", "F"]
 extend-select = [
   "UP", "I", "PL", "S"
 ]
+ignore= ["S101", "ANN1", "ANN2", "ANN0"]
 
 [tool.ruff.lint.pydocstyle]
 convention= 'numpy'
