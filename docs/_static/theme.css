@@ -1,11 +1,79 @@
-:root {
-    --md-primary-fg-color: #b26679;
-    --md-primary-bg-color: #ffe9dd;
-    --pst-color-secondary: rgb(121, 40, 161);
-    --pst-color-inline-code-links: rgb(121, 40, 161);
-    --md-accent-fg-color: rgb(121, 40, 161);
+html[data-theme="light"] {
+    --pst-color-primary: rgb(121, 40, 161);
+    --pst-color-secondary: #b26679;
+    --pst-color-inline-code-links: #b26679;
 }
 
-html {
-    font-size: 130%;
+pre > span {
+    line-height: 20px;
+}
+
+span.kn {
+     color: rgb(0, 120, 161) !important;
+}
+
+span.ml, span.mi, span.nb {
+     color: lightcoral !important;
+}
+
+span.k, span.nn {
+     color: rgb(168, 70, 185) !important;
+}
+
+h1 > code > span {
+    font-weight: 700 !important;
+}
+
+pre {
+    border: 0;
+    font-size: 13px;
+    background-color: rgb(245, 245, 245) !important;
+}
+
+h1 {
+    margin-bottom: 50px;
+}
+h3, h2, h1 {
+    font-weight: 300 !important;
+}
+
+nav > li > a > code.literal {
+    padding-top: 0;
+    padding-bottom: 0;
+    background-color: white;
+    border: 0;
+}
+
+nav.bd-links p.caption {
+    text-transform: uppercase;
+}
+
+code.literal {
+  background-color: white;
+  border: 0;
+  border-radius: 0;
+}
+
+a > code {
+    font-weight: 575;
+}
+
+a:hover {
+      text-decoration-thickness: 1px !important;
+}
+
+ul.bd-breadcrumbs li.breadcrumb-item a:hover {
+  text-decoration-thickness: 1px;
+}
+
+nav.bd-links li > a:hover {
+  text-decoration-thickness: 1px;
+}
+
+.prev-next-area a p.prev-next-title {
+  text-decoration: none !important;
+}
+
+button.theme-switch-button {
+    display: none !important;
 }
