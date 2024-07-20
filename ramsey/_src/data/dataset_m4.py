@@ -1,7 +1,6 @@
 import os
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import Tuple
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
@@ -114,7 +113,7 @@ class M4Dataset:
         os.path.join(os.path.dirname(__file__), ".data")
     )
 
-    def load(self, interval: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def load(self, interval: str) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Load a M4 data set.
 
         Parameters
@@ -156,7 +155,7 @@ class M4Dataset:
 
     def _load(
         self, dataset, train_csv_path: str, test_csv_path: str
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         self._download(dataset)
         train_df = pd.read_csv(train_csv_path, sep=",", header=0, index_col=0)
         test_df = pd.read_csv(test_csv_path, sep=",", header=0, index_col=0)

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from chex import assert_axis_dimension
 from flax import linen as nn
 from jax import numpy as jnp
@@ -43,8 +41,8 @@ class ANP(NP):
     """
 
     decoder: nn.Module
-    latent_encoder: Optional[nn.Module] = None
-    deterministic_encoder: Optional[nn.Module] = None
+    latent_encoder: nn.Module | None = None
+    deterministic_encoder: nn.Module | None = None
     family: Family = Gaussian()
 
     def setup(self):

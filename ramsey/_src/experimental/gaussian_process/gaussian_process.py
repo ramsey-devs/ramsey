@@ -1,5 +1,3 @@
-from typing import Optional
-
 from flax import linen as nn
 from flax.linen import initializers
 from jax import Array
@@ -25,7 +23,7 @@ class GP(nn.Module):
     """
 
     kernel: Kernel
-    sigma_init: Optional[initializers.Initializer] = None
+    sigma_init: initializers.Initializer | None = None
 
     @nn.compact
     def __call__(self, x: Array, **kwargs):

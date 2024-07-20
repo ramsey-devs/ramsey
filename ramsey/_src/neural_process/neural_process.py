@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import flax
 import jax
 import numpyro.distributions as dist
@@ -45,8 +43,8 @@ class NP(nn.Module):
     """
 
     decoder: nn.Module
-    latent_encoder: Optional[Tuple[flax.linen.Module, flax.linen.Module]] = None
-    deterministic_encoder: Optional[flax.linen.Module] = None
+    latent_encoder: tuple[flax.linen.Module, flax.linen.Module] | None = None
+    deterministic_encoder: flax.linen.Module | None = None
     family: Family = Gaussian()
 
     def setup(self):

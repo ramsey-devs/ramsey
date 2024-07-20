@@ -1,5 +1,3 @@
-from typing import Tuple, Union
-
 import jax
 import numpy as np
 import optax
@@ -33,8 +31,8 @@ def train_neural_process(
     neural_process: NP,  # pylint: disable=invalid-name
     x: Array,  # pylint: disable=invalid-name
     y: Array,  # pylint: disable=invalid-name
-    n_context: Union[int, Tuple[int]],
-    n_target: Union[int, Tuple[int]],
+    n_context: int | tuple[int],
+    n_target: int | tuple[int],
     batch_size: int,
     optimizer=optax.adam(3e-4),
     n_iter=20000,

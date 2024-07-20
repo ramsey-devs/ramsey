@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from chex import assert_axis_dimension, assert_rank
 from flax import linen as nn
 from jax import Array
@@ -39,8 +37,8 @@ class RANP(ANP):
     """
 
     decoder: nn.Module
-    latent_encoder: Optional[Tuple[nn.Module, nn.Module]] = None
-    deterministic_encoder: Optional[Tuple[nn.Module, Attention]] = None
+    latent_encoder: tuple[nn.Module, nn.Module] | None = None
+    deterministic_encoder: tuple[nn.Module, Attention] | None = None
     family: Family = Gaussian()
 
     def setup(self):

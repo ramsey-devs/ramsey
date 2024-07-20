@@ -1,5 +1,3 @@
-from typing import Optional
-
 import chex
 from flax import linen as nn
 from jax import Array
@@ -17,7 +15,7 @@ class Attention(nn.Module):
         an optional embedding network that embeds keys and queries
     """
 
-    embedding: Optional[nn.Module]
+    embedding: nn.Module | None
 
     @nn.compact
     def __call__(self, key: Array, value: Array, query: Array):

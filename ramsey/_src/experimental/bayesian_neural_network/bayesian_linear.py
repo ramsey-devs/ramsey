@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from flax import linen as nn
 from flax.linen import initializers
 from jax import Array
@@ -49,9 +47,9 @@ class BayesianLinear(nn.Module):
     output_size: int
     use_bias: bool = True
     mc_sample_size: int = 10
-    w_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0)
-    b_prior: Optional[dist.Distribution] = dist.Normal(loc=0.0, scale=1.0)
-    name: Optional[str] = None
+    w_prior: dist.Distribution | None = dist.Normal(loc=0.0, scale=1.0)
+    b_prior: dist.Distribution | None = dist.Normal(loc=0.0, scale=1.0)
+    name: str | None = None
 
     def setup(self):
         """Construct a linear Bayesian layer."""
@@ -119,7 +117,7 @@ class BayesianLinear(nn.Module):
     def _init_param(self, weight_name, param_name, constraint, shape, dtype):
         init = initializers.xavier_normal()
 
-        shape = (shape,) if not isinstance(shape, Tuple) else shape
+        shape = (shape,) if not isinstance(shape, tuple) else shape
         params = self.param(f"{weight_name}_{param_name}", init, shape, dtype)
 
         params = jnp.where(
