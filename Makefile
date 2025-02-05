@@ -1,22 +1,13 @@
-.PHONY: tag, tests, lints, docs, format, examples
-
-PKG_VERSION=`hatch version`
-
-tag:
-	 git tag -a v${PKG_VERSION} -m v${PKG_VERSION}
-	 git push --tag
+.PHONY: tests, lints, docs, format
 
 tests:
-	hatch run test:tests
+	uv run pytest
 
 lints:
-	hatch run test:lints
+	uv run ruff check ramsey examples
 
 format:
-	hatch run test:format
+	uv run ruff format ramsey examples
 
 docs:
 	cd docs && make html
-
-examples:
-	hatch run test:examples
