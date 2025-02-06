@@ -26,9 +26,6 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install -e .
       - uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
@@ -37,6 +34,6 @@ jobs:
           uv sync --all-extras
       - name: Run tests
         run: |
-          python examples/neural_processes.py -n 10 -m NP
-          python examples/neural_processes.py -n 10 -m ANP
-          python examples/neural_processes.py -n 10 -m DANP
+          uv run python examples/neural_processes.py -n 10 -m NP
+          uv run python examples/neural_processes.py -n 10 -m ANP
+          uv run python examples/neural_processes.py -n 10 -m DANP
