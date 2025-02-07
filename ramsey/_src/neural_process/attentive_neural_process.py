@@ -1,13 +1,14 @@
 import flax
 from chex import assert_axis_dimension
+from flax import nnx
+from flax.nnx import rnglib
 from jax import numpy as jnp
 
 from ramsey._src.family import Family, Gaussian
 from ramsey._src.neural_process.neural_process import NP
+from ramsey._src.nn.attention.attention import Attention
 
 __all__ = ["ANP"]
-
-from ramsey._src.nn.attention.attention import Attention
 
 
 # ruff: noqa: PLR0913
@@ -30,24 +31,26 @@ class ANP(NP):
     family: distributional family of the response variable
   """
 
-  decoder: flax.linen.Module
-  deterministic_encoder: tuple[flax.linen.Module, Attention] | None = None
-  latent_encoder: tuple[flax.linen.Module, flax.linen.Module] | None = None
-  family: Family = Gaussian()
-
-  def setup(self):
-    """Construct the neural process parameters."""
-    if self.latent_encoder is None and self.deterministic_encoder is None:
-      raise ValueError("either latent or deterministic encoder needs to be set")
-    self._decoder = self.decoder
-    if self.latent_encoder is not None:
-      (self._latent_encoder, self._latent_variable_encoder) = (
-        self.latent_encoder[0],
-        self.latent_encoder[1],
+  def __init__(
+    self,
+    decoder: nnx.Module,
+    deterministic_encoder: tuple[flax.nnx.Module, Attention] | None = None,
+    latent_encoder: tuple[flax.nnx.Module, flax.nnx.Module] | None = None,
+    family: Family = Gaussian(),
+    *,
+    rngs: rnglib.Rngs | None = None,
+  ):
+    super().__init__(
+      decoder, deterministic_encoder, latent_encoder, family, rngs=rngs
+    )
+    if latent_encoder is not None:
+      self._latent_encoder, self._latent_variable_encoder = (
+        latent_encoder[0],
+        latent_encoder[1],
       )
-    self._deterministic_encoder = self.deterministic_encoder[0]
-    self._deterministic_cross_attention = self.deterministic_encoder[1]
-    self._family = self.family
+    if deterministic_encoder is not None:
+      self._deterministic_encoder = deterministic_encoder[0]
+      self._deterministic_cross_attention = deterministic_encoder[1]
 
   @staticmethod
   def _concat_and_tile(z_deterministic, z_latent, num_observations):

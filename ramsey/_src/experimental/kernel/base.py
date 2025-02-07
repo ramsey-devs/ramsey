@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import jax
-from flax import linen as nn
+from flax import nnx
 
 
 class Kernel(ABC):
@@ -30,19 +30,17 @@ class Kernel(ABC):
     return _Prod(self, other)
 
 
-class _Sum(Kernel, nn.Module):
+class _Sum(Kernel, nnx.Module):
   k1: Kernel
   k2: Kernel
 
-  @nn.compact
   def __call__(self, x1: jax.Array, x2: jax.Array):
     return self.k1(x1, x2) + self.k2(x1, x2)
 
 
-class _Prod(Kernel, nn.Module):
+class _Prod(Kernel, nnx.Module):
   k1: Kernel
   k2: Kernel
 
-  @nn.compact
   def __call__(self, x1: jax.Array, x2: jax.Array):
     return self.k1(x1, x2) * self.k2(x1, x2)

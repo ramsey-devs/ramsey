@@ -1,13 +1,14 @@
 import flax
 import jax
+from flax import nnx
+from flax.nnx import rnglib
 from jax import numpy as jnp
 
 from ramsey._src.family import Family, Gaussian
 from ramsey._src.neural_process.attentive_neural_process import ANP
+from ramsey._src.nn.attention.attention import Attention
 
 __all__ = ["DANP"]
-
-from ramsey._src.nn.attention.attention import Attention
 
 
 # ruff: noqa: PLR0913
@@ -24,40 +25,44 @@ class DANP(ANP):
     latent_encoder: a tuple of two `flax.linen.Module`s and an attention object.
       The first and last elements are the usual modules required for a
       neural process, the attention object computes self-attention before the
-       aggregation
+      aggregation
     deterministic_encoder: a tuple of a `flax.linen.Module` and an Attention
       object. The first `attention` object is used for self-attention,
       the second one is used for cross-attention
     family: distributional family of the response variable
   """
 
-  decoder: flax.linen.Module
-  deterministic_encoder: (
-    tuple[flax.linen.Module, Attention, Attention] | None
-  ) = None  # type: ignore[assignment]
-  latent_encoder: (
-    tuple[flax.linen.Module, Attention, flax.linen.Module] | None
-  ) = None  # type: ignore[assignment]
-  family: Family = Gaussian()
-
-  def setup(self):
+  def __init__(
+    self,
+    decoder: nnx.Module,
+    deterministic_encoder: tuple[flax.nnx.Module, Attention, Attention]
+    | None = None,
+    latent_encoder: tuple[flax.nnx.Module, Attention, flax.nnx.Module]
+    | None = None,
+    family: Family = Gaussian(),
+    *,
+    rngs: rnglib.Rngs | None = None,
+  ):
     """Construct all networks."""
-    if self.latent_encoder is None and self.deterministic_encoder is None:
-      raise ValueError("either latent or deterministic encoder needs to be set")
-    if self.latent_encoder is not None:
+    super().__init__(
+      decoder,
+      deterministic_encoder,  # type: ignore[arg-type]
+      latent_encoder,  # type: ignore[arg-type]
+      family,
+      rngs=rngs,
+    )
+    if latent_encoder is not None:
       (
         self._latent_encoder,
         self._latent_self_attention,
         self._latent_variable_encoder,
-      ) = self.latent_encoder
-    if self.deterministic_encoder is not None:
+      ) = latent_encoder
+    if deterministic_encoder is not None:
       (
         self._deterministic_encoder,
         self._deterministic_self_attention,
         self._deterministic_cross_attention,
-      ) = self.deterministic_encoder
-    self._decoder = self.decoder
-    self._family = self.family
+      ) = deterministic_encoder  # type: ignore[var-annotated]
 
   def _encode_latent(self, x_context: jax.Array, y_context: jax.Array):
     xy_context = jnp.concatenate([x_context, y_context], axis=-1)

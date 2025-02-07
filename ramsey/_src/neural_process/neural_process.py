@@ -3,7 +3,9 @@ import jax
 import numpyro.distributions
 import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
-from flax import linen as nn
+from flax import nnx
+from flax.nnx import rnglib
+from flax.nnx.module import first_from
 from jax import numpy as jnp
 from numpyro.distributions import kl_divergence
 
@@ -12,53 +14,56 @@ from ramsey._src.family import Family, Gaussian
 __all__ = ["NP"]
 
 
-class NP(nn.Module):
+class NP(nnx.Module):
   """A neural process.
 
   Implements the core structure of a vanilla (latent) neural process
   :cite:p:`garnelo18conditional,garnelo2018neural`.
 
   Args:
-      decoder: the decoder can be any network, but is typically an MLP. Note
-          that the _last_ layer of the decoder needs to
-          have twice the number of nodes as the data you try to model
-      latent_encoder: the latent encoder
-          can be any network, but is typically an MLP. The first element of
-          the tuple is a neural network used before the aggregation step,
-          while the second element of the tuple encodes is a neural network
-          used to compute mean(s) and standard deviation(s) of the latent
-          Gaussian.
-      deterministic_encoder: the deterministic encoder can be any network,
-          but is typically an MLP
-      family: distributional family of the response variable
-      rngs: a rnglib.Rngs object for random seeds
+    decoder: the decoder can be any network, but is typically an MLP. Note
+      that the _last_ layer of the decoder needs to
+      have twice the number of nodes as the data you try to model
+    latent_encoder: the latent encoder
+      can be any network, but is typically an MLP. The first element of
+      the tuple is a neural network used before the aggregation step,
+      while the second element of the tuple encodes is a neural network
+      used to compute mean(s) and standard deviation(s) of the latent
+      Gaussian.
+    deterministic_encoder: the deterministic encoder can be any network,
+      but is typically an MLP
+    family: distributional family of the response variable
   """
 
-  decoder: nn.Module
-  latent_encoder: tuple[flax.linen.Module, flax.linen.Module] | None = None
-  deterministic_encoder: flax.linen.Module | None = None
-  family: Family = Gaussian()
-
-  def setup(self):
-    """Construct the networks of the class."""
-    if self.latent_encoder is None and self.deterministic_encoder is None:
+  def __init__(
+    self,
+    decoder: nnx.Module,
+    deterministic_encoder: flax.nnx.Module | None = None,
+    latent_encoder: tuple[flax.nnx.Module, flax.nnx.Module] | None = None,
+    family: Family = Gaussian(),
+    *,
+    rngs: rnglib.Rngs | None = None,
+  ):
+    self.rngs = rngs
+    self._decoder = decoder
+    self._family = family
+    self._latent_encoder = latent_encoder
+    self._deterministic_encoder = deterministic_encoder
+    if latent_encoder is None and deterministic_encoder is None:
       raise ValueError("either latent or deterministic encoder needs to be set")
-
-    self._decoder = self.decoder
-    if self.latent_encoder is not None:
-      [self._latent_encoder, self._latent_variable_encoder] = (
-        self.latent_encoder[0],
-        self.latent_encoder[1],
+    if latent_encoder is not None:
+      self._latent_encoder, self._latent_variable_encoder = (
+        latent_encoder[0],
+        latent_encoder[1],
       )
-    if self.deterministic_encoder is not None:
-      self._deterministic_encoder = self.deterministic_encoder
-    self._family = self.family
 
   def __call__(
     self,
     x_context: jax.Array,
     y_context: jax.Array,
     x_target: jax.Array,
+    *,
+    rngs: rnglib.Rngs | None = None,
   ) -> numpyro.distributions.Distribution:
     """Transform the inputs through the neural process.
 
@@ -69,6 +74,7 @@ class NP(nn.Module):
         (*batch_dims, spatial_dims..., response_dims)
       x_target: input data of dimension
         (*batch_dims, spatial_dims..., feature_dims)
+      rngs: a rnglib.Rngs object for random seeds
 
     Returns:
         returns the predictive distribution of y_target
@@ -77,7 +83,10 @@ class NP(nn.Module):
     _, num_observations, _ = x_target.shape
 
     if self._latent_encoder is not None:
-      rng = self.make_rng("sample")
+      rngs = first_from(
+        rngs, self.rngs, error_msg="no 'rngs' argument provided"
+      )
+      rng = rngs["sample"]()
       z_latent = self._encode_latent(x_context, y_context).sample(rng)
     else:
       z_latent = None
@@ -96,6 +105,8 @@ class NP(nn.Module):
     y_context: jax.Array,
     x_target: jax.Array,
     y_target: jax.Array,
+    *,
+    rngs: rnglib.Rngs | None = None,
   ) -> jax.Array:
     """Transform the inputs through the neural process.
 
@@ -108,14 +119,18 @@ class NP(nn.Module):
         (*batch_dims, spatial_dims..., feature_dims)
       y_target: input data of dimension
         (*batch_dims, spatial_dims..., response_dims)
+      rngs: a rnglib.Rngs object for random seeds
 
     Returns:
       returns the negative ELBO
     """
     _, num_observations, _ = x_target.shape
 
-    if self.latent_encoder is not None:
-      rng = self.make_rng("sample")
+    if self._latent_encoder is not None:
+      rngs = first_from(
+        rngs, self.rngs, error_msg="no 'rngs' argument provided"
+      )
+      rng = rngs["sample"]()
       prior = self._encode_latent(x_context, y_context)
       posterior = self._encode_latent(x_target, y_target)
       z_latent = posterior.sample(rng)
@@ -151,9 +166,9 @@ class NP(nn.Module):
     self,
     x_context: jax.Array,
     y_context: jax.Array,
-    x_target: jax.Array,  # pylint: disable=unused-argument
+    x_target: jax.Array,
   ):
-    if self.deterministic_encoder is None:
+    if self._deterministic_encoder is None:
       return None
     xy_context = jnp.concatenate([x_context, y_context], axis=-1)
     z_deterministic = self._deterministic_encoder(xy_context)
@@ -165,7 +180,6 @@ class NP(nn.Module):
     z_latent = self._latent_encoder(xy_context)  # type: ignore[operator,misc]
     return self._encode_latent_gaussian(z_latent)
 
-  # pylint: disable=duplicate-code
   def _encode_latent_gaussian(self, z_latent):
     z_latent = jnp.mean(z_latent, axis=1, keepdims=True)
     z_latent = self._latent_variable_encoder(z_latent)

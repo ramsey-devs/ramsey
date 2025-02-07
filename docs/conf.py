@@ -42,10 +42,8 @@ exclude_patterns = [
     "examples/*py",
 ]
 
-autosummary_generate = True
+autosummary_generate = False
 autodoc_typehints = 'none'
-typehints_fully_qualified = True
-always_document_param_types = True
 
 html_theme = "sphinx_book_theme"
 html_theme_options = {
