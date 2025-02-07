@@ -30,7 +30,7 @@ You can, for instance, construct a simple neural process like this:
     def get_neural_process(in_features, out_features):
       dim = 128
       np = NP(
-        decoder=MLP(in_features, [dim, dim, out_features * 2], rngs=nnx.Rngs(0)),\
+        decoder=MLP(in_features, [dim, dim, out_features * 2], rngs=nnx.Rngs(0)),
         latent_encoder=(
           MLP(in_features, [dim, dim], rngs=nnx.Rngs(1)),
           MLP(dim, [dim, dim * 2], rngs=nnx.Rngs(2))
@@ -39,9 +39,6 @@ You can, for instance, construct a simple neural process like this:
       return np
 
     neural_process = get_neural_process(1, 1)
-
-    neural_process = get_neural_process()
-    params = neural_process.init(key, x_context=data.x, y_context=data.y, x_target=data.x)
 
 The neural process takes a decoder and a set of two latent encoders as arguments. All of these are typically `flax.nnx` MLPs, but
 Ramsey is flexible enough that you can change them, for instance, to CNNs or RNNs. Once the model is defined, you can train

@@ -94,15 +94,15 @@ def get_neural_process(method):
         MLP(in_features_latent, [dim, out_features_latent], rngs=nnx.Rngs(2)),
       ),
       deterministic_encoder=(
-        MLP(in_features, [dim], rngs=nnx.Rngs(3)),
+        MLP(in_features, [dim, out_features_det], rngs=nnx.Rngs(3)),
         MultiHeadAttention(
-          in_features=dim,
+          in_features=out_features_det,
           num_heads=4,
           embedding=lambda x: x,  # not needed since dims fit
           rngs=nnx.Rngs(4),
         ),
         MultiHeadAttention(
-          in_features=dim,
+          in_features=out_features_det,
           num_heads=4,
           embedding=MLP(x_dim, [dim, out_features_det], rngs=nnx.Rngs(5)),
           rngs=nnx.Rngs(6),
