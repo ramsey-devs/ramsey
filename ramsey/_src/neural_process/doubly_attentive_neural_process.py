@@ -13,7 +13,7 @@ __all__ = ["DANP"]
 
 # ruff: noqa: PLR0913
 class DANP(ANP):
-  """A doubly-attentive neural process.
+  r"""A doubly-attentive neural process.
 
   Implements the core structure of a 'doubly-attentive' neural process
   :cite:p:`kim2018attentive`.
@@ -22,12 +22,12 @@ class DANP(ANP):
     decoder: the decoder can be any network, but is typically an MLP. Note
       that the _last_ layer of the decoder needs to
       have twice the number of nodes as the data you try to model
-    latent_encoder: a tuple of two `flax.linen.Module`s and an attention object.
+    latent_encoder: a tuple of two flax.nnx.Modules and an attention object.
       The first and last elements are the usual modules required for a
       neural process, the attention object computes self-attention before the
       aggregation
-    deterministic_encoder: a tuple of a `flax.linen.Module` and an Attention
-      object. The first `attention` object is used for self-attention,
+    deterministic_encoder: a tuple of a`flax.nnx.Module and an Attention
+      object. The first Attention object is used for self-attention,
       the second one is used for cross-attention
     family: distributional family of the response variable
   """

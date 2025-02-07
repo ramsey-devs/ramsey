@@ -121,7 +121,6 @@ Ramsey is licensed under the Apache 2.0 License.
     :hidden:
 
     🏠 Home <self>
-    📰 News <news>
     📚 References <references>
 
 ..  toctree::

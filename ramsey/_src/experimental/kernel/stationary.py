@@ -16,7 +16,7 @@ class Periodic(Kernel, nnx.Module):
       Specified the dimensions of the data on which the kernel operates on
     rho_init: an initializer object
     sigma_init: an initializer object from Haiku or None
-    param_dtype : parameter type
+    param_dtype: parameter type
     rngs: a random seed generator
   """
 
@@ -43,7 +43,6 @@ class Periodic(Kernel, nnx.Module):
     )
 
   def __call__(self, x1: jax.Array, x2: jax.Array = None):
-    """Call the covariance function."""
     if x2 is None:
       x2 = x1
     cov = periodic(
@@ -66,7 +65,7 @@ class ExponentiatedQuadratic(Kernel, nnx.Module):
       an initializer object from Haiku or None
     sigma_init: Optional[Initializer]
       an initializer object from Haiku or None
-    param_dtype : parameter type
+    param_dtype: parameter type
     rngs: a random seed generator
   """
 

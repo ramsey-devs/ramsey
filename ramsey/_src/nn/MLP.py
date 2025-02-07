@@ -63,7 +63,7 @@ class MLP(nnx.Module):
 
     Args:
       inputs: input data of dimension
-        (*batch_dims, spatial_dims..., feature_dims)
+        (batch_dim, spatial_dims..., feature_dim)
       is_training: if true, uses training mode (i.e., dropout)
       rngs: a random seed generator
 

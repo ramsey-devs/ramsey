@@ -15,7 +15,7 @@ __all__ = ["NP"]
 
 
 class NP(nnx.Module):
-  """A neural process.
+  r"""A neural process.
 
   Implements the core structure of a vanilla (latent) neural process
   :cite:p:`garnelo18conditional,garnelo2018neural`.
@@ -65,15 +65,15 @@ class NP(nnx.Module):
     *,
     rngs: rnglib.Rngs | None = None,
   ) -> numpyro.distributions.Distribution:
-    """Transform the inputs through the neural process.
+    """Transform inputs through the neural process.
 
     Args:
-      x_context: input data of dimension
-        (*batch_dims, spatial_dims..., feature_dims)
-      y_context: input data of dimension
-        (*batch_dims, spatial_dims..., response_dims)
-      x_target: input data of dimension
-        (*batch_dims, spatial_dims..., feature_dims)
+      x_context: context input data of dimension
+        (batch_dim, spatial_dims..., feature_dim)
+      y_context: context output data of dimension
+        (batch_dim, spatial_dims..., response_dim)
+      x_target: target input data of dimension
+        (batch_dim, spatial_dims..., feature_dim)
       rngs: a rnglib.Rngs object for random seeds
 
     Returns:
@@ -108,17 +108,20 @@ class NP(nnx.Module):
     *,
     rngs: rnglib.Rngs | None = None,
   ) -> jax.Array:
-    """Transform the inputs through the neural process.
+    """Compute the loss for a set of input-output pairs.
+
+    The loss is computed by approximating the marginal likelihood via a lower
+    bound (the ELBO) of which the negative is returned.
 
     Args:
-      x_context: input data of dimension
-        (*batch_dims, spatial_dims..., feature_dims)
-      y_context: input data of dimension
-        (*batch_dims, spatial_dims..., response_dims)
-      x_target: input data of dimension
-        (*batch_dims, spatial_dims..., feature_dims)
-      y_target: input data of dimension
-        (*batch_dims, spatial_dims..., response_dims)
+      x_context: context input data of dimension
+        (batch_dim, spatial_dims..., feature_dim)
+      y_context: context output data of dimension
+        (batch_dim, spatial_dims..., response_dim)
+      x_target: target input data of dimension
+        (batch_dim, spatial_dims..., feature_dim)
+      y_target: target output data of dimension
+        (batch_dim, spatial_dims..., response_dim)
       rngs: a rnglib.Rngs object for random seeds
 
     Returns:

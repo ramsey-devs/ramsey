@@ -25,23 +25,23 @@ Covariance functions
 ExponentiatedQuadratic
 ~~~~~~~~~~~~~~~~~~~~~~
 
-..  autoclass:: ExponentiatedQuadratic
-    :members: __call__
+.. autoclass:: ExponentiatedQuadratic
+   :members: __call__
 
 .. autofunction:: exponentiated_quadratic
 
 Linear
 ~~~~~~
 
-..  autoclass:: Linear
-    :members: __call__
+.. autoclass:: Linear
+   :members: __call__
 
 .. autofunction:: linear
 
 Periodic
 ~~~~~~~~~
 
-..  autoclass:: Periodic
-    :members: __call__
+.. autoclass:: Periodic
+   :members: __call__
 
 .. autofunction:: periodic

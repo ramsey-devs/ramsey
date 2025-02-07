@@ -13,7 +13,7 @@ __all__ = ["ANP"]
 
 # ruff: noqa: PLR0913
 class ANP(NP):
-  """An attentive neural process.
+  r"""An attentive neural process.
 
   Implements the core structure of an attentive neural process
   :cite:p:`kim2018attentive`.
@@ -22,8 +22,8 @@ class ANP(NP):
     decoder: the decoder can be any network, but is typically an MLP. Note
       that the _last_ layer of the decoder needs to
       have twice the number of nodes as the data you try to model
-    deterministic_encoder: a tuple of a `flax.linen.Module` and an Attention obj
-    latent_encoder: an optional tuple of two `flax.linen.Module`s. The latent
+    deterministic_encoder: a tuple of a flax.nnx.Module and an Attention obj
+    latent_encoder: an optional tuple of two flax.nnx.Modules. The latent
       encoder can be any network, but is typically an MLP. The first element of
       the tuple is a neural network used before the aggregation step, while the
       second   element of the tuple encodes is a neural network used to

@@ -14,18 +14,13 @@ from ramsey._src.experimental.kernel.stationary import exponentiated_quadratic
 def m4_data(interval: str = "hourly", drop_na: bool = True):
   """Load a data set from the M4 competition.
 
-  Parameters
-  ----------
-  interval: str
-      either of "hourly", "daily", "weekly", "monthly", "yearly"
-  drop_na: bool
-      drop rows that contain NA values
+  Args:
+    interval: either of "hourly", "daily", "weekly", "monthly", "yearly"
+    drop_na: drop rows that contain NA values
 
   Returns:
-  -------
-  NamedTuple
-      returns a named tuple with outputs (y), inputs (x), and training and
-      testing indexes for the input-output paris
+    returns a named tuple with outputs (y), inputs (x), and training and
+    testing indexes for the input-output paris
   """
   train, test = M4Dataset().load(interval)
   df = pd.concat([train, test.reindex(train.index)], axis=1)
