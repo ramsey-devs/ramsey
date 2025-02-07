@@ -1,0 +1,39 @@
+name: examples
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  precommit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+  examples:
+    runs-on: ubuntu-latest
+    needs:
+      - precommit
+    strategy:
+      matrix:
+        python-version: [ 3.11, 3.12 ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras
+      - name: Run tests
+        run: |
+          uv run python examples/neural_processes.py -n 10 -m NP
+          uv run python examples/neural_processes.py -n 10 -m ANP
+          uv run python examples/neural_processes.py -n 10 -m DANP

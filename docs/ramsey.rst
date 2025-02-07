@@ -9,21 +9,21 @@ Models
 ------
 
 .. autosummary::
+    NP
     ANP
     DANP
-    NP
 
 Neural processes
 ~~~~~~~~~~~~~~~~
 
-..  autoclass:: NP
-    :members: __call__
+.. autoclass:: NP
+   :members: __call__
 
-..  autoclass:: ANP
-    :members: __call__
+.. autoclass:: ANP
+   :members: __call__
 
-..  autoclass:: DANP
-    :members: __call__
+.. autoclass:: DANP
+   :members: __call__
 
 Train functions
 ---------------

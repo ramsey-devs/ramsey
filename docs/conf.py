@@ -13,6 +13,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+    'sphinxcontrib.bibtex',
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
@@ -41,8 +42,12 @@ exclude_patterns = [
     "examples/*py",
 ]
 
-html_theme = "sphinx_book_theme"
+autosummary_generate = True
+autodoc_typehints = 'none'
+typehints_fully_qualified = True
+always_document_param_types = True
 
+html_theme = "sphinx_book_theme"
 html_theme_options = {
     "repository_url": "https://github.com/ramsey-devs/ramsey",
     "use_repository_button": True,
@@ -50,5 +55,19 @@ html_theme_options = {
     "use_fullscreen_button": False,
     "launch_buttons": {"colab_url": "https://colab.research.google.com"},
 }
-
 html_title = "Ramsey"
+
+
+def skip(app, what, name, obj, would_skip, options):
+    if name == "__init__":
+        return True
+    return would_skip
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
+
+
+bibtex_bibfiles = ['references.bib']
+bibtex_default_style = 'plain'
+bibtex_reference_style = 'label'

@@ -1,20 +1,19 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ramsey"
 description = "Probabilistic deep learning using JAX"
 authors = [{name = "Simon Dirmeier", email = "sfyrbnd@pm.me"}]
 readme = "README.md"
-license = "Apache-2.0"
-homepage = "https://github.com/ramsey-devs/ramsey"
+license = { file = "LICENCE" }
 keywords=[
   "Bayes",
   "jax",
   "probabilistic deep learning",
   "probabilistic models",
-  "neural process",
+  "neural processes",
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -27,70 +26,62 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-  "chex",
-  "flax>=0.7.2",
-  "jax>=0.4.4",
-  "jaxlib>=0.4.4",
-  "numpyro",
-  "optax",
-  "pandas",
+  "chex>=0.1.85",
+  "flax>=0.10.2",
+  "jax>=0.5.0",
+  "jaxlib>=0.5.0",
+  "optax>=0.1.7",
+  "pandas>=2.1.3",
   "rmsyutls",
   "tqdm",
+  "numpyro>=0.16.1",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["pre-commit", "tox", "ruff"]
-examples = ["matplotlib"]
+all = ["matplotlib"]
 
 [project.urls]
 Documentation = "https://ramsey.rtfd.io"
 Homepage = "https://github.com/ramsey-devs/ramsey"
 
-[tool.hatch.version]
-path = "ramsey/__init__.py"
+[tool.setuptools]
+packages = ["ramsey"]
 
-
-[tool.hatch.build.targets.sdist]
-exclude = [
-    "/.github",
-    "./gitignore",
-    "/.pre-commit-config.yaml"
-]
-
-[tool.hatch.envs.test]
-dependencies = [
-    "ruff>=0.3.0",
-    "pytest>=7.2.0",
-    "pytest-cov>=4.0.0",
-    "matplotlib"
-]
-
-[tool.hatch.envs.test.scripts]
-lints = 'ruff check ramsey examples'
-format = 'ruff format ramsey examples'
-tests = 'pytest -v --doctest-modules --cov=./ramsey --cov-report=xml ramsey'
-examples = """
-    python ./examples/attentive_neural_process.py -n 10
-    python ./examples/experimental/bayesian_neural_network.py -n 10
-    python ./examples/experimental/gaussian_process.py -n 10
-    python ./examples/experimental/recurrent_attentive_neural_process.py -n 10
-    python ./examples/experimental/sparse_gaussian_process.py -n 10
-"""
+[tool.setuptools.dynamic]
+version = {attr = "ramsey.__init__.__version__"}
 
 [tool.bandit]
 skips = ["B101", "B310"]
 
+[tool.mypy]
+show_error_codes = true
+no_implicit_optional = true
+
+[tool.pytest]
+addopts = "-v --doctest-modules --cov=./ramsey --cov-report=xml"
+
 [tool.ruff]
+indent-width = 2
 line-length = 80
-exclude = ["*_test.py", "setup.py", "docs/**", "examples/experimental/**"]
+exclude = ["*_test.py", "docs/**"]
 
 [tool.ruff.lint]
-select = ["ANN", "D", "E", "F"]
+select = ["ANN", "D", "E", "F", "W", "I001"]
 extend-select = [
   "UP", "I", "PL", "S"
 ]
-ignore= ["S101", "ANN1", "ANN2", "ANN0"]
+ignore= ["S101", "ANN1", "ANN2", "ANN0", "E111", "PLR0913"]
 
 [tool.ruff.lint.pydocstyle]
-convention= 'numpy'
+convention= 'google'
+
+[tool.uv]
+upgrade-package = ["jax", "jaxlib", "flax"]
+dev-dependencies = [
+    "pre-commit",
+    "ruff",
+    "matplotlib",
+    "pytest>=7.2.0",
+    "pytest-cov>=4.0.0",
+]
