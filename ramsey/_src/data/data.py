@@ -1,14 +1,13 @@
 from collections import namedtuple
 
+import jax
 import pandas as pd
 from jax import numpy as jnp
 from jax import random as jr
 from numpyro import distributions as dist
 
 from ramsey._src.data.dataset_m4 import M4Dataset
-from ramsey._src.experimental.kernel.stationary import (
-  exponentiated_quadratic,
-)
+from ramsey._src.experimental.kernel.stationary import exponentiated_quadratic
 
 
 # pylint: disable=too-many-locals,invalid-name
@@ -91,7 +90,11 @@ def sample_from_sine_function(rng_key, batch_size=10, num_observations=100):
 
 # pylint: disable=too-many-locals,invalid-name
 def sample_from_gaussian_process(
-  rng_key, batch_size=10, num_observations=100, rho=None, sigma=None
+  rng_key: jax.Array,
+  batch_size: int = 10,
+  num_observations: int = 100,
+  rho: float | None = None,
+  sigma: float | None = None,
 ):
   r"""Sample from a Gaussian process.
 
@@ -106,24 +109,16 @@ def sample_from_gaussian_process(
   number of observations per batch. The outputs and latent functions
   realizations have dimension :math:`b \times n \times 1` as well.
 
-  Parameters
-  ----------
-  rng_key: jax.random.PRNGKey
-      a random key for seeding
-  batch_size: int
-      size of batch
-  num_observations: int
-      number of observations per batch
-  rho: Optional[float]
-      the lengthscale of the kernel function
-  sigma: Optional[float]
-      the standard deviation of the kernel function
+  Args:
+    rng_key: a random key for seeding
+    batch_size: size of batch
+    num_observations: number of observations per batch
+    rho: the lengthscale of the kernel function
+    sigma: the standard deviation of the kernel function
 
   Returns:
-  -------
-  NamedTuple
-      a tuple consisting of outputs (y), inputs (x) and latent GP
-      realization (f) where
+    a tuple consisting of outputs (y), inputs (x) and latent GP
+    realization (f) where
   """
   x = jnp.linspace(-jnp.pi, jnp.pi, num_observations).reshape(
     (num_observations, 1)
@@ -155,4 +150,4 @@ def sample_from_gaussian_process(
   y = jnp.vstack(jnp.array(ys))
   f = jnp.vstack(jnp.array(fs))
 
-  return namedtuple("data", "y x f")(y, x, f)
+  return namedtuple("data", "y x f")(y, x, f)  # type: ignore[call-arg]

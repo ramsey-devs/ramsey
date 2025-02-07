@@ -1,13 +1,12 @@
-import dataclasses
 from collections.abc import Callable, Iterable
 
 import jax
-from flax import nnx
-from flax.nnx import rnglib
+from flax import linen as nn
+from flax.linen import initializers
+from flax.linen.linear import default_kernel_init
 
 
-@dataclasses.dataclass
-class MLP(nnx.Module):
+class MLP(nn.Module):
   """A multi-layer perceptron.
 
   Args:
@@ -21,43 +20,36 @@ class MLP(nnx.Module):
     rngs: a random seed generator
   """
 
-  input_size: int
   output_sizes: Iterable[int]
   dropout: float | None = None
-  kernel_init: nnx.initializers.Initializer = nnx.initializers.lecun_normal()
-  bias_init: nnx.initializers.Initializer = nnx.initializers.zeros_init()
+  kernel_init: initializers.Initializer = default_kernel_init
+  bias_init: initializers.Initializer = initializers.zeros_init()
   use_bias: bool = True
   activation: Callable = jax.nn.relu
   activate_final: bool = False
-  rngs: rnglib.Rngs | None = None
 
-  def __post_init__(self):
+  def setup(self):
     """Construct all networks."""
-    output_sizes = (self.input_size,) + tuple(self.output_sizes)
+    output_sizes = tuple(self.output_sizes)
     layers = []
-    for index, (din, dout) in enumerate(
-      zip(output_sizes[:-1], output_sizes[1:])
-    ):
+    for index, output_size in enumerate(output_sizes):
       layers.append(
-        nnx.Linear(
-          in_features=din,
-          out_features=dout,
+        nn.Dense(
+          features=output_size,
           kernel_init=self.kernel_init,
           bias_init=self.bias_init,
           use_bias=self.use_bias,
-          rngs=self.rngs,
+          name=f"linear_{index}",
         )
       )
     self.layers = tuple(layers)
     if self.dropout is not None:
-      self.dropout_layer = nnx.Dropout(self.dropout)
+      self.dropout_layer = nn.Dropout(self.dropout)
 
   def __call__(
     self,
     inputs: jax.Array,
     is_training: bool = False,
-    *,
-    rngs: rnglib.Rngs | None = None,
   ) -> jax.Array:
     """Transform the inputs through the MLP.
 
@@ -65,7 +57,6 @@ class MLP(nnx.Module):
       inputs: input data of dimension
         (*batch_dims, spatial_dims..., feature_dims)
       is_training: if true, uses training mode (i.e., dropout)
-      rngs: a random seed generator
 
     Returns:
         returns the transformed inputs

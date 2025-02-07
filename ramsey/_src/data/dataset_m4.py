@@ -116,14 +116,10 @@ class M4Dataset:
   def load(self, interval: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Load a M4 data set.
 
-    Parameters
-    ----------
-    interval: str
-        either of "hourly", "daily", "weekly", "monthly", "yearly"
+    Args:
+      interval: either of "hourly", "daily", "weekly", "monthly", "yearly"
 
     Returns:
-    -------
-    Tuple[pd.DataFrame, pd.DataFrame]
         a tuple of data frames where the first is the training data and
         the last the testing data used during the M4 competition
     """

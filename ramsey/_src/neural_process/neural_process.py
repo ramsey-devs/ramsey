@@ -3,9 +3,7 @@ import jax
 import numpyro.distributions
 import numpyro.distributions as dist
 from chex import assert_axis_dimension, assert_rank
-from flax import nnx
-from flax.nnx import rnglib
-from flax.nnx.module import first_from
+from flax import linen as nn
 from jax import numpy as jnp
 from numpyro.distributions import kl_divergence
 
@@ -14,7 +12,7 @@ from ramsey._src.family import Family, Gaussian
 __all__ = ["NP"]
 
 
-class NP(nnx.Module):
+class NP(nn.Module):
   """A neural process.
 
   Implements the core structure of a vanilla (latent) neural process
@@ -36,35 +34,31 @@ class NP(nnx.Module):
       rngs: a rnglib.Rngs object for random seeds
   """
 
-  def __init__(
-    self,
-    decoder: nnx.Module,
-    deterministic_encoder: flax.nnx.Module | None = None,
-    latent_encoder: tuple[flax.nnx.Module, flax.nnx.Module] | None = None,
-    family: Family = Gaussian(),
-    *,
-    rngs: rnglib.Rngs | None = None,
-  ):
-    self.rngs = rngs
-    self._decoder = decoder
-    self._family = family
-    self._latent_encoder = latent_encoder
-    self._deterministic_encoder = deterministic_encoder
-    if latent_encoder is None and deterministic_encoder is None:
+  decoder: nn.Module
+  latent_encoder: tuple[flax.linen.Module, flax.linen.Module] | None = None
+  deterministic_encoder: flax.linen.Module | None = None
+  family: Family = Gaussian()
+
+  def setup(self):
+    """Construct the networks of the class."""
+    if self.latent_encoder is None and self.deterministic_encoder is None:
       raise ValueError("either latent or deterministic encoder needs to be set")
-    if latent_encoder is not None:
-      self._latent_encoder, self._latent_variable_encoder = (
-        latent_encoder[0],
-        latent_encoder[1],
+
+    self._decoder = self.decoder
+    if self.latent_encoder is not None:
+      [self._latent_encoder, self._latent_variable_encoder] = (
+        self.latent_encoder[0],
+        self.latent_encoder[1],
       )
+    if self.deterministic_encoder is not None:
+      self._deterministic_encoder = self.deterministic_encoder
+    self._family = self.family
 
   def __call__(
     self,
     x_context: jax.Array,
     y_context: jax.Array,
     x_target: jax.Array,
-    *,
-    rngs: rnglib.Rngs | None = None,
   ) -> numpyro.distributions.Distribution:
     """Transform the inputs through the neural process.
 
@@ -75,7 +69,6 @@ class NP(nnx.Module):
         (*batch_dims, spatial_dims..., response_dims)
       x_target: input data of dimension
         (*batch_dims, spatial_dims..., feature_dims)
-      rngs: a rnglib.Rngs object for random seeds
 
     Returns:
         returns the predictive distribution of y_target
@@ -84,10 +77,7 @@ class NP(nnx.Module):
     _, num_observations, _ = x_target.shape
 
     if self._latent_encoder is not None:
-      rngs = first_from(
-        rngs, self.rngs, error_msg="no 'rngs' argument provided"
-      )
-      rng = rngs["sample"]()
+      rng = self.make_rng("sample")
       z_latent = self._encode_latent(x_context, y_context).sample(rng)
     else:
       z_latent = None
@@ -106,8 +96,6 @@ class NP(nnx.Module):
     y_context: jax.Array,
     x_target: jax.Array,
     y_target: jax.Array,
-    *,
-    rngs: rnglib.Rngs | None = None,
   ) -> jax.Array:
     """Transform the inputs through the neural process.
 
@@ -120,18 +108,14 @@ class NP(nnx.Module):
         (*batch_dims, spatial_dims..., feature_dims)
       y_target: input data of dimension
         (*batch_dims, spatial_dims..., response_dims)
-      rngs: a rnglib.Rngs object for random seeds
 
     Returns:
       returns the negative ELBO
     """
     _, num_observations, _ = x_target.shape
 
-    if self._latent_encoder is not None:
-      rngs = first_from(
-        rngs, self.rngs, error_msg="no 'rngs' argument provided"
-      )
-      rng = rngs["sample"]()
+    if self.latent_encoder is not None:
+      rng = self.make_rng("sample")
       prior = self._encode_latent(x_context, y_context)
       posterior = self._encode_latent(x_target, y_target)
       z_latent = posterior.sample(rng)
@@ -169,7 +153,7 @@ class NP(nnx.Module):
     y_context: jax.Array,
     x_target: jax.Array,  # pylint: disable=unused-argument
   ):
-    if self._deterministic_encoder is None:
+    if self.deterministic_encoder is None:
       return None
     xy_context = jnp.concatenate([x_context, y_context], axis=-1)
     z_deterministic = self._deterministic_encoder(xy_context)

@@ -1,7 +1,5 @@
 import flax
 import jax
-from flax import nnx
-from flax.nnx import rnglib
 from jax import numpy as jnp
 
 from ramsey._src.family import Family, Gaussian
@@ -33,37 +31,33 @@ class DANP(ANP):
     family: distributional family of the response variable
   """
 
-  def __init__(
-    self,
-    decoder: nnx.Module,
-    deterministic_encoder: tuple[flax.nnx.Module, Attention, Attention]
-    | None = None,
-    latent_encoder: tuple[flax.nnx.Module, Attention, flax.nnx.Module]
-    | None = None,
-    family: Family = Gaussian(),
-    *,
-    rngs: rnglib.Rngs | None = None,
-  ):
+  decoder: flax.linen.Module
+  deterministic_encoder: (
+    tuple[flax.linen.Module, Attention, Attention] | None
+  ) = None  # type: ignore[assignment]
+  latent_encoder: (
+    tuple[flax.linen.Module, Attention, flax.linen.Module] | None
+  ) = None  # type: ignore[assignment]
+  family: Family = Gaussian()
+
+  def setup(self):
     """Construct all networks."""
-    super().__init__(
-      decoder,
-      deterministic_encoder,  # type: ignore[arg-type]
-      latent_encoder,  # type: ignore[arg-type]
-      family,
-      rngs=rngs,
-    )
-    if latent_encoder is not None:
+    if self.latent_encoder is None and self.deterministic_encoder is None:
+      raise ValueError("either latent or deterministic encoder needs to be set")
+    if self.latent_encoder is not None:
       (
         self._latent_encoder,
         self._latent_self_attention,
         self._latent_variable_encoder,
-      ) = latent_encoder
-    if deterministic_encoder is not None:
+      ) = self.latent_encoder
+    if self.deterministic_encoder is not None:
       (
         self._deterministic_encoder,
         self._deterministic_self_attention,
         self._deterministic_cross_attention,
-      ) = deterministic_encoder  # type: ignore[var-annotated]
+      ) = self.deterministic_encoder
+    self._decoder = self.decoder
+    self._family = self.family
 
   def _encode_latent(self, x_context: jax.Array, y_context: jax.Array):
     xy_context = jnp.concatenate([x_context, y_context], axis=-1)

@@ -13,7 +13,6 @@ References:
 import argparse
 
 import matplotlib.pyplot as plt
-from flax import nnx
 from jax import numpy as jnp
 from jax import random as jr
 
@@ -28,90 +27,55 @@ def data(key):
 
 
 def get_neural_process(method):
-  x_dim = y_dim = 1
-  # any dimensionality
   dim = 128
-  # we concat x and y
-  in_features = x_dim + y_dim
-  # in features latent is same as dim
-  in_features_latent = dim
-  # 2 * latent dim to parameterize Gaussian
-  out_features_latent = dim * 2
-  # just the dim
-  out_features_det = dim
-  # latent + deterministic + y dims
-  in_features_decoder = out_features_latent // 2 + out_features_det + 1
-  # dimensionality of the family, e.g., Gaussian has two parameters, so 2
-  out_features_decoder = 2
   if method == "NP":
     model = NP(
       latent_encoder=(
-        MLP(in_features, [dim, in_features_latent], rngs=nnx.Rngs(0)),
+        MLP([dim, dim]),
         MLP(
-          in_features_latent,
-          [dim, out_features_latent],
-          rngs=nnx.Rngs(1),
+          [dim, 2 * dim],
         ),
       ),
-      deterministic_encoder=MLP(
-        in_features, [dim, out_features_det], rngs=nnx.Rngs(2)
-      ),
-      decoder=MLP(
-        in_features_decoder, [dim, dim, out_features_decoder], rngs=nnx.Rngs(3)
-      ),
-      rngs=nnx.Rngs(4),
+      deterministic_encoder=MLP([dim, dim]),
+      decoder=MLP([dim, dim, 2]),
     )
   elif method == "ANP":
     model = ANP(
       latent_encoder=(
-        MLP(in_features, [dim, in_features_latent], rngs=nnx.Rngs(0)),
-        MLP(in_features_latent, [dim, out_features_latent], rngs=nnx.Rngs(1)),
+        MLP([dim, dim]),
+        MLP([dim, 2 * dim]),
       ),
       deterministic_encoder=(
-        MLP(in_features, [dim, out_features_det], rngs=nnx.Rngs(2)),
+        MLP([dim, dim]),
         MultiHeadAttention(
-          in_features=out_features_det,
           num_heads=4,
-          embedding=MLP(x_dim, [dim, out_features_det], rngs=nnx.Rngs(3)),
-          rngs=nnx.Rngs(4),
+          embedding=MLP([dim, dim]),
         ),
       ),
-      decoder=MLP(
-        in_features_decoder, [dim, dim, out_features_decoder], rngs=nnx.Rngs(5)
-      ),
-      rngs=nnx.Rngs(6),
+      decoder=MLP([dim, dim, 2]),
     )
   elif method == "DANP":
     model = DANP(
       latent_encoder=(
-        MLP(in_features, [dim, in_features_latent], rngs=nnx.Rngs(0)),
+        MLP([dim, dim]),
         MultiHeadAttention(
-          in_features=in_features_latent,
           num_heads=4,
           embedding=lambda x: x,  # not needed since dims fit
-          rngs=nnx.Rngs(1),
         ),
-        MLP(in_features_latent, [dim, out_features_latent], rngs=nnx.Rngs(2)),
+        MLP([dim, 2 * dim]),
       ),
       deterministic_encoder=(
-        MLP(in_features, [dim, out_features_det], rngs=nnx.Rngs(3)),
+        MLP([dim, dim]),
         MultiHeadAttention(
-          in_features=out_features_det,
           num_heads=4,
           embedding=lambda x: x,  # not needed since dims fit
-          rngs=nnx.Rngs(4),
         ),
         MultiHeadAttention(
-          in_features=out_features_det,
           num_heads=4,
-          embedding=MLP(x_dim, [dim, out_features_det], rngs=nnx.Rngs(5)),
-          rngs=nnx.Rngs(6),
+          embedding=MLP([dim, dim]),
         ),
       ),
-      decoder=MLP(
-        in_features_decoder, [dim, dim, out_features_decoder], rngs=nnx.Rngs(7)
-      ),
-      rngs=nnx.Rngs(8),
+      decoder=MLP([dim, dim, 2]),
     )
   else:
     raise ValueError("model incorrectly specified")
@@ -122,7 +86,7 @@ def train_np(
   rng_key, n_context, n_target, x_target, y_target, method, num_iter
 ):
   neural_process = get_neural_process(method)
-  neural_process = train_neural_process(
+  params, _ = train_neural_process(
     rng_key,
     neural_process,
     x=x_target,
@@ -132,19 +96,20 @@ def train_np(
     n_iter=num_iter,
     batch_size=2,
   )
-  return neural_process
+  return neural_process, params
 
 
 def plot(
-  seed,
+  rng_key,
   neural_process,
+  params,
   x_target,
   y_target,
   f_target,
   n_context,
   n_target,
 ):
-  sample_key, seed = jr.split(seed)
+  sample_key, rng_key = jr.split(rng_key)
   sample_idxs = jr.choice(
     sample_key,
     x_target.shape[1],
@@ -169,10 +134,11 @@ def plot(
       alpha=0.75,
     )
 
-    neural_process.eval()
     for _ in range(20):
-      sample_rng_key, seed = jr.split(seed, 2)
-      y_star = neural_process(
+      sample_rng_key, rng_key = jr.split(rng_key, 2)
+      y_star = neural_process.apply(
+        variables=params,
+        rngs={"sample": sample_rng_key},
         x_context=x[jnp.newaxis, sample_idxs, jnp.newaxis],
         y_context=y[jnp.newaxis, sample_idxs, jnp.newaxis],
         x_target=x_target[[idx], :, :],
@@ -190,7 +156,7 @@ def run(args):
   data_rng_key, train_rng_key, plot_rng_key = jr.split(jr.PRNGKey(0), 3)
   (x_target, y_target), f_target = data(data_rng_key)
 
-  neural_process = train_np(
+  neural_process, params = train_np(
     train_rng_key,
     n_context,
     n_target,
@@ -199,9 +165,11 @@ def run(args):
     args.method,
     args.num_iter,
   )
+
   plot(
     plot_rng_key,
     neural_process,
+    params,
     x_target,
     y_target,
     f_target,

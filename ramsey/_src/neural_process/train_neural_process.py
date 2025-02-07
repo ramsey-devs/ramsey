@@ -1,7 +1,7 @@
 import jax
 import numpy as np
 import optax
-from flax import nnx
+from flax.training.train_state import TrainState
 from jax import random as jr
 from tqdm import tqdm
 
@@ -11,15 +11,17 @@ from ramsey._src.neural_process.neural_process import NP
 __all__ = ["train_neural_process"]
 
 
-@nnx.jit
-def step(model, optimizer, metrics, batch):
-  def loss_fn(model, batch):
-    model.train()
-    return model.loss(**batch)
+@jax.jit
+def _step(rngs, state, **batch):
+  current_step = state.step
+  rngs = {name: jr.fold_in(rng, current_step) for name, rng in rngs.items()}
 
-  loss, grads = nnx.value_and_grad(loss_fn)(model, batch)
-  optimizer.update(grads)
-  metrics.update(loss=loss)
+  def obj_fn(params):
+    return state.apply_fn(variables=params, rngs=rngs, method="loss", **batch)
+
+  obj, grads = jax.value_and_grad(obj_fn)(state.params)
+  new_state = state.apply_gradients(grads=grads)
+  return new_state, obj
 
 
 # pylint: disable=too-many-locals
@@ -60,7 +62,7 @@ def train_neural_process(
       then the target set contains 5 more points than the context set but
       includes the contexts, too.
     batch_size: number of elements that are samples for each gradient step,
-      i.e.,   number of elements in first axis of :math:`x` and :math:`y`
+      i.e., number of elements in first axis of :math:`x` and :math:`y`
     optimizer: an optax optimizer object
     n_iter: number of training iterations
     verbose: true if print training progress
@@ -68,13 +70,19 @@ def train_neural_process(
   Returns:
     returns a tuple of trained parameters and training loss profile
   """
-  optimizer = nnx.Optimizer(neural_process, optimizer)
-  metrics = nnx.MultiMetric(
-    loss=nnx.metrics.Average("loss"),
+  train_state_rng, rng_key = jr.split(rng_key)
+  state = _create_train_state(
+    train_state_rng,
+    neural_process,
+    optimizer,
+    x_context=x,
+    y_context=y,
+    x_target=x,
   )
 
+  objectives = np.zeros(n_iter)
   for i in tqdm(range(n_iter)):
-    split_rng_key, rng_key = jr.split(rng_key)
+    split_rng_key, sample_rng_key, rng_key = jr.split(rng_key, 3)
     batch = _split_data(
       split_rng_key,
       x,
@@ -83,13 +91,13 @@ def train_neural_process(
       n_target=n_target,
       batch_size=batch_size,
     )
-    step(neural_process, optimizer, metrics, batch)
+    state, obj = _step({"sample": sample_rng_key}, state, **batch)
+    objectives[i] = obj
     if (i % 100 == 0 or i == n_iter - 1) and verbose:
-      for metric, value in metrics.compute().items():
-        print(f"{metric} at step {i}: {value:.2f}")
-      metrics.reset()
+      elbo = -float(obj)
+      print(f"ELBO at itr {i}: {elbo:.2f}")
 
-  return neural_process
+  return state.params, objectives
 
 
 def _split_data(
@@ -133,3 +141,11 @@ def _split_data(
     "x_target": x_target,
     "y_target": y_target,
   }
+
+
+# ruff: noqa: ANN001,ANN003,PLR0913
+def _create_train_state(rng, model, optimizer, **init_data):
+  init_key, sample_key = jr.split(rng)
+  params = model.init({"sample": sample_key, "params": init_key}, **init_data)
+  state = TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)
+  return state

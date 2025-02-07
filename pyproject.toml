@@ -67,7 +67,7 @@ line-length = 80
 exclude = ["*_test.py", "docs/**"]
 
 [tool.ruff.lint]
-select = ["ANN", "D", "E", "F"]
+select = ["ANN", "D", "E", "F", "W", "I001"]
 extend-select = [
   "UP", "I", "PL", "S"
 ]

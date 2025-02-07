@@ -1,9 +1,9 @@
 import chex
 import jax
-from flax import nnx
+from flax import linen as nn
 
 
-class Attention(nnx.Module):
+class Attention(nn.Module):
   """Abstract attention base class.
 
   Can be used for designing attention modules.
@@ -12,15 +12,13 @@ class Attention(nnx.Module):
       embedding: an optional embedding network that embeds keys and queries
   """
 
-  def __init__(self, embedding: nnx.Module):
-    self._embedding = embedding
+  embedding: nn.Module | None
 
-  def __call__(
-    self, key: jax.Array, value: jax.Array, query: jax.Array
-  ) -> jax.Array:
+  def __call__(self, key: jax.Array, value: jax.Array, query: jax.Array):
     """Pay attention to some key-value pairs."""
     self._check_dimensions(key, value, query)
-    key, query = self._embedding(key), self._embedding(query)
+    if self.embedding is not None:
+      key, query = self.embedding(key), self.embedding(query)
     return key, value, query
 
   @staticmethod

@@ -1,13 +1,12 @@
-import jax
-from flax import nnx
-from flax.nnx import rnglib
-from flax.typing import Dtype
+from flax import linen as nn
+from flax.linen import initializers
+from jax import Array
 from jax import numpy as jnp
 
 from ramsey._src.experimental.kernel.base import Kernel
 
 
-class Linear(Kernel, nnx.Module):
+class Linear(Kernel, nn.Module):
   """Linear covariance function.
 
   Args:
@@ -15,58 +14,59 @@ class Linear(Kernel, nnx.Module):
     sigma_b_init: an initializer object from Flax or None
     sigma_v_init: an initializer object from Flax or None
     offset_init: an initializer object from Flax or None
-    rngs: a random seed generator
   """
 
-  def __init__(
-    self,
-    active_dims: list | None = None,
-    *,
-    sigma_b_init: nnx.initializers.Initializer = nnx.initializers.uniform(),
-    sigma_v_init: nnx.initializers.Initializer = nnx.initializers.uniform(),
-    offset_init: nnx.initializers.Initializer = nnx.initializers.zeros_init(),
-    param_dtype: Dtype = jnp.float32,
-    rngs: rnglib.Rngs,
-  ):
+  active_dims: list | None = None
+  sigma_b_init: initializers.Initializer = initializers.uniform()
+  sigma_v_init: initializers.Initializer = initializers.uniform()
+  offset_init: initializers.Initializer = initializers.uniform()
+
+  def setup(self):
+    """Construct parameters."""
     self._active_dims = (
-      active_dims if isinstance(active_dims, list) else slice(active_dims)
+      self.active_dims
+      if isinstance(self.active_dims, list)
+      else slice(self.active_dims)
     )
 
-    self.log_sigma_b = nnx.Param(sigma_b_init(rngs.params(), (), param_dtype))
-    self.log_sigma_v = nnx.Param(sigma_v_init(rngs.params(), (), param_dtype))
-    self.offset = nnx.Param(offset_init(rngs.params(), (), param_dtype))
-
-  def __call__(self, x1: jax.Array, x2: jax.Array = None):
+  @nn.compact
+  def __call__(self, x1: Array, x2: Array = None):
     """Call the covariance function."""
     if x2 is None:
       x2 = x1
+    dtype = x1.dtype
+
+    log_sigma_b = self.param("log_sigma_b", self.sigma_b_init, [], dtype)
+
+    log_sigma_v = self.param("log_sigma_v", self.sigma_v_init, [], dtype)
+
+    offset = self.param("offset", self.offset_init, [], dtype)
+
     cov = linear(
       x1[..., self._active_dims],
       x2[..., self._active_dims],
-      jnp.exp(self.log_sigma_b.value),
-      jnp.exp(self.log_sigma_v.value),
-      self.offset.value,
+      jnp.exp(log_sigma_b),
+      jnp.exp(log_sigma_v),
+      offset,
     )
     return cov
 
 
-def linear(
-  x1: jax.Array, x2: jax.Array, sigma_b: float, sigma_v: float, offset: float
-):
+def linear(x1: Array, x2: Array, sigma_b, sigma_v, offset):
   r"""Linear convariance function.
 
   Args:
-    x1: :math:`n x p`-dimensional set of data points
-    x2: :math:`m x p`-dimensional set of data points
+    x1: :math:`n x p`-dimensional array of data points
+    x2: :math:`m x p`-dimensional array of data points
     sigma_b: the standard deviation of the kernel function
     sigma_v: the standard deviation of the kernel function
     offset: float
 
   Returns:
-      returns a :math:`n x m`-dimensional Gram matrix
+    returns a :math:`n x m`-dimensional Gram matrix
   """
 
-  def _linear(x1, x2, sigma_b, sigma_v, offset):
+  def _linear(x1: Array, x2: Array, sigma_b, sigma_v, offset):
     x_e = x1 - offset
     y_e = x2 - offset
     x_e = jnp.expand_dims(x_e, 1)

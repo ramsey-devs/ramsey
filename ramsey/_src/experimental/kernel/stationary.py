@@ -1,124 +1,117 @@
-import jax
-from flax import nnx
-from flax.nnx import rnglib
-from flax.typing import Dtype
+from flax import linen as nn
+from flax.linen import initializers
+from jax import Array
 from jax import numpy as jnp
 
 from ramsey._src.experimental.kernel.base import Kernel
 
 
-# pylint: disable=invalid-name
-class Periodic(Kernel, nnx.Module):
+class Periodic(Kernel, nn.Module):
   """Periodic covariance function.
 
   Args:
     period: the period of the periodic kernel
-    active_dims: either None or a list of integers.
-      Specified the dimensions of the data on which the kernel operates on
-    rho_init: an initializer object
+    active_dims: either None or a list of integers. Specified the
+      dimensions of the data on which the kernel operates on
+    rho_init: an initializer object from Haiku or None
     sigma_init: an initializer object from Haiku or None
-    param_dtype : parameter type
-    rngs: a random seed generator
   """
 
-  def __init__(
-    self,
-    period,
-    active_dims: list | None = None,
-    *,
-    rho_init: nnx.initializers.Initializer = nnx.initializers.constant(
-      jnp.log(1.0)
-    ),
-    sigma_init: nnx.initializers.Initializer = nnx.initializers.constant(
-      jnp.log(1.0)
-    ),
-    param_dtype: Dtype = jnp.float32,
-    rngs: rnglib.Rngs,
-  ):
-    self.period = period
-    self.log_rho = nnx.Param(rho_init(rngs.params(), (), param_dtype))
-    self.log_sigma = nnx.Param(sigma_init(rngs.params(), (), param_dtype))
+  period: float
+  active_dims: list | None = None
+  rho_init: initializers.Initializer | None = initializers.uniform()
+  sigma_init: initializers.Initializer | None = initializers.uniform()
 
+  def setup(self):
+    """Construct the covariance function."""
     self._active_dims = (
-      active_dims if isinstance(active_dims, list) else slice(active_dims)
+      self.active_dims
+      if isinstance(self.active_dims, list)
+      else slice(self.active_dims)
     )
 
-  def __call__(self, x1: jax.Array, x2: jax.Array = None):
+  @nn.compact
+  def __call__(self, x1: Array, x2: Array = None):
     """Call the covariance function."""
     if x2 is None:
       x2 = x1
+    dtype = x1.dtype
+
+    log_rho = self.param("log_rho", self.rho_init, [], dtype)
+    log_sigma = self.param("log_sigma", self.sigma_init, [], dtype)
+
     cov = periodic(
       x1[..., self._active_dims],
       x2[..., self._active_dims],
       self.period,
-      jnp.exp(self.log_sigma),
-      jnp.exp(self.log_rho),
+      jnp.exp(log_sigma),
+      jnp.exp(log_rho),
     )
     return cov
 
 
-class ExponentiatedQuadratic(Kernel, nnx.Module):
+class ExponentiatedQuadratic(Kernel, nn.Module):
   """Exponentiated quadratic covariance function.
 
   Args:
     active_dims: either None or a list of integers. Specified the dimensions
       of the data on which the kernel operates on
-    rho_init: Optional[Initializer]
-      an initializer object from Haiku or None
-    sigma_init: Optional[Initializer]
-      an initializer object from Haiku or None
-    param_dtype : parameter type
-    rngs: a random seed generator
+    rho_init: an initializer object from Haiku or None
+    sigma_init: an initializer object from Haiku or None
   """
 
-  def __init__(
-    self,
-    active_dims: list | None = None,
-    *,
-    rho_init: nnx.initializers.Initializer = nnx.initializers.constant(
-      jnp.log(1.0)
-    ),
-    sigma_init: nnx.initializers.Initializer = nnx.initializers.constant(
-      jnp.log(1.0)
-    ),
-    param_dtype: Dtype = jnp.float32,
-    rngs: rnglib.Rngs,
-  ):
-    self.log_rho = nnx.Param(rho_init(rngs.params(), (), param_dtype))
-    self.log_sigma = nnx.Param(sigma_init(rngs.params(), (), param_dtype))
+  active_dims: list | None = None
+  rho_init: initializers.Initializer | None = None
+  sigma_init: initializers.Initializer | None = None
 
+  def setup(self):
+    """Construct a stationary covariance."""
     self._active_dims = (
-      active_dims if isinstance(active_dims, list) else slice(active_dims)
+      self.active_dims
+      if isinstance(self.active_dims, list)
+      else slice(self.active_dims)
     )
 
-  def __call__(self, x1: jax.Array, x2: jax.Array = None):
+  @nn.compact
+  def __call__(self, x1: Array, x2: Array = None):
+    """Call the covariance function."""
     if x2 is None:
       x2 = x1
+    dtype = x1.dtype
+
+    rho_init = self.rho_init
+    if rho_init is None:
+      rho_init = initializers.constant(jnp.log(1.0))
+    log_rho = self.param("log_rho", rho_init, [], dtype)
+
+    sigma_init = self.sigma_init
+    if sigma_init is None:
+      sigma_init = initializers.constant(jnp.log(1.0))
+    log_sigma = self.param("log_sigma", sigma_init, [], dtype)
 
     cov = exponentiated_quadratic(
       x1[..., self._active_dims],
       x2[..., self._active_dims],
-      jnp.square(jnp.exp(self.log_sigma)),
-      jnp.exp(self.log_rho),
+      jnp.square(jnp.exp(log_sigma)),
+      jnp.exp(log_rho),
     )
     return cov
 
 
-# pylint: disable=invalid-name
 def exponentiated_quadratic(
-  x1: jax.Array,
-  x2: jax.Array,
+  x1: Array,
+  x2: Array,
   sigma: float,
-  rho: float | jax.Array,
+  rho: float | jnp.ndarray,
 ):
   """Exponentiated-quadratic convariance function.
 
   Args:
-    x1:   (`n x p`)-dimensional set of data points
-    x2: (`m x p`)-dimensional set of data points
+    x1: (`n x p`)-dimensional array of data points
+    x2: (`m x p`)-dimensional attay of data points
     sigma: the standard deviation of the kernel function
     rho: the length-scale of the kernel function. Can be a float or a
-      :math:`p`-dimensional vector if ARD-behaviour is desired
+        :math:`p`-dimensional vector if ARD-behaviour is desired
 
   Returns:
     returns a (`n x m`)-dimensional kernel matrix
@@ -134,17 +127,16 @@ def exponentiated_quadratic(
   return _exponentiated_quadratic(x1, x2, sigma, rho)
 
 
-# pylint: disable=invalid-name
-def periodic(x1: jax.Array, x2: jax.Array, period, sigma, rho):
+def periodic(x1: Array, x2: Array, period, sigma, rho):
   """Periodic convariance function.
 
   Args:
-    x1: (`n x p`)-dimensional set of data points
-    x2: (`m x p`)-dimensional set of data points
+    x1: (`n x p`)-dimensional array of data points
+    x2: (`m x p`)-dimensional array of data points
     period: the period
     sigma: the standard deviation of the kernel function
-    rho: the length-scale of the kernel function. Can be a float or a
-      :math:`p`-dimensional vector if ARD-behaviour is desired
+    rho: the lengthscale of the kernel function. Can be a float or a
+        :math:`p`-dimensional vector if ARD-behaviour is desired
 
   Returns:
     returns a (`n x m`)-dimensional Gram matrix
