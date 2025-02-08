@@ -44,8 +44,10 @@ exclude_patterns = [
 
 autosummary_generate = True
 autodoc_typehints = 'none'
-typehints_fully_qualified = True
-always_document_param_types = True
+# typehints_fully_qualified = True
+# always_document_param_types = True
+# autodoc_inherit_docstrings = False
+# typehints_document_rtype= False
 
 html_theme = "sphinx_book_theme"
 html_theme_options = {

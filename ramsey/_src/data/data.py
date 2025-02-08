@@ -14,18 +14,13 @@ from ramsey._src.experimental.kernel.stationary import exponentiated_quadratic
 def m4_data(interval: str = "hourly", drop_na: bool = True):
   """Load a data set from the M4 competition.
 
-  Parameters
-  ----------
-  interval: str
-      either of "hourly", "daily", "weekly", "monthly", "yearly"
-  drop_na: bool
-      drop rows that contain NA values
+  Args:
+    interval: either of "hourly", "daily", "weekly", "monthly", "yearly"
+    drop_na: drop rows that contain NA values
 
   Returns:
-  -------
-  NamedTuple
-      returns a named tuple with outputs (y), inputs (x), and training and
-      testing indexes for the input-output paris
+    returns a named tuple with outputs (y), inputs (x), and training and
+    testing indexes for the input-output paris
   """
   train, test = M4Dataset().load(interval)
   df = pd.concat([train, test.reindex(train.index)], axis=1)
@@ -44,7 +39,9 @@ def m4_data(interval: str = "hourly", drop_na: bool = True):
 
 
 # pylint: disable=too-many-locals,invalid-name
-def sample_from_sine_function(rng_key, batch_size=10, num_observations=100):
+def sample_from_sine_function(
+  rng_key: jax.Array, batch_size: int = 10, num_observations: int = 100
+):
   r"""Sample from a noisy sine function.
 
   Creates samples from a noisy sine functions. For each batch,
@@ -85,7 +82,7 @@ def sample_from_sine_function(rng_key, batch_size=10, num_observations=100):
   y = jnp.vstack(jnp.array(ys))
   f = jnp.vstack(jnp.array(fs))
 
-  return namedtuple("data", "y x f")(y, x, f)
+  return namedtuple("data", "y x f")(y, x, f)  # type: ignore[call-arg]
 
 
 # pylint: disable=too-many-locals,invalid-name

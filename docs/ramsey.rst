@@ -17,13 +17,13 @@ Neural processes
 ~~~~~~~~~~~~~~~~
 
 .. autoclass:: NP
-   :members: __call__
+   :members: __call__, loss
 
 .. autoclass:: ANP
-   :members: __call__
+   :members: __call__, loss
 
 .. autoclass:: DANP
-   :members: __call__
+   :members: __call__, loss
 
 Train functions
 ---------------
